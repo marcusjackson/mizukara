@@ -1,0 +1,54 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libmysqlclient-dev \
+            libpq-dev \
+            libsqlite3-dev \
+            pkg-config \
+            tzdata \
+            git \
+            curl \
+            fonts-noto-cjk \
+            fonts-ipafont
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm installation
+        run: |
+          echo "pnpm version: $(pnpm --version)"
+          echo "Node version: $(node --version)"
+          echo "npm version: $(npm --version)"

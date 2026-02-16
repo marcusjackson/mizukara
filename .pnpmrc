@@ -1,0 +1,3 @@
+# pnpm configuration
+optional-dependencies=true
+shamefully-hoist=true

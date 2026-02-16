@@ -1,0 +1,174 @@
+---
+agent: 'agent'
+description: Generate implementation tasks for a specification
+---
+
+<meta>
+description: Generate implementation tasks for a specification
+argument-hint: <feature-name:$1>
+</meta>
+
+# Implementation Tasks Generator
+
+<background_information>
+
+- **Mission**: Generate detailed, actionable implementation tasks that translate technical design into executable work items
+- **Success Criteria**:
+  - All requirements mapped to specific tasks
+  - Tasks properly sized (1-3 hours each)
+  - Clear task progression with proper hierarchy
+  - Natural language descriptions focused on capabilities
+    </background_information>
+
+<instructions>
+## Core Task
+Generate implementation tasks for feature **$1** based on approved requirements and design.
+
+## Execution Steps
+
+### Step 1: Load Context
+
+**Read all necessary context**:
+
+- `.kiro/specs/$1/spec.json`, `requirements.md`, `design.md`
+- `.kiro/specs/$1/tasks.md` (if exists, for merge mode)
+- **Entire `.kiro/steering/` directory** for complete project memory
+
+**Approval Model**:
+
+- Running this prompt constitutes implicit approval of requirements and design
+- Spec.json will be updated to mark both phases as approved
+
+### Step 2: Generate Implementation Tasks
+
+**Load generation rules and template**:
+
+- Read `.kiro/settings/rules/tasks-generation.md` for principles
+- If sequential mode is **false**: Read `.kiro/settings/rules/tasks-parallel-analysis.md` for parallel judgement criteria
+- Read `.kiro/settings/templates/specs/tasks.md` for format (supports `(P)` markers)
+
+**Generate task list following all rules**:
+
+- Use language specified in spec.json
+- Map all requirements to tasks and list numeric requirement IDs only (comma-separated) without extra narration, descriptive suffixes, parentheses, translations, or free-form labels
+- Ensure all design components included
+- Verify task progression is logical and incremental
+- Collapse single-subtask structures by promoting them to major tasks and keep container summaries concise
+- Apply `(P)` markers to tasks that satisfy parallel criteria (omit markers when sequential mode is requested)
+- Mark optional acceptance-criteria-focused test coverage subtasks with `- [ ]*` only when deferrable post-MVP
+- If existing tasks.md found, merge with new content
+
+**Validate File Size and Split if Necessary**:
+
+- Count total lines of generated task content (excluding blank lines)
+- **If content would exceed 600 lines**:
+  1. Create splitting plan by logical grouping:
+     - Common splits: `tasks-setup.md`, `tasks-core.md`, `tasks-integration.md`, `tasks-testing.md`
+     - Or by layer: `tasks-frontend.md`, `tasks-backend.md`, `tasks-infrastructure.md`
+     - Or by feature area based on design component groups
+  2. Create `tasks.md` as index:
+     - Include task execution order and dependencies
+     - List all task document parts with descriptions
+     - Provide navigation links to all parts
+     - Show high-level progress tracking structure
+  3. Split tasks into themed files:
+     - Each file MUST start with cross-references to other task files
+     - Maintain sequential numbering across files (e.g., tasks-setup.md has 1-5, tasks-core.md has 6-12)
+     - Include clear "Prerequisites" section if tasks depend on other files
+     - Keep logically related tasks together
+  4. Format all files with prettier/markdown formatter
+  5. Verify no single file exceeds 600 lines after formatting
+- **If single file acceptable** (under 600 lines):
+  1. Write to `tasks.md` and format
+  2. Re-check after formatting; split if needed
+
+### Step 3: Finalize
+
+**Write and update**:
+
+- Create/update `.kiro/specs/$1/tasks.md` (and parts if split)
+- Update spec.json metadata:
+  - Set `phase: "tasks-generated"`
+  - Set `approvals.tasks.generated: true, approved: false`
+  - Set `approvals.requirements.approved: true`
+  - Set `approvals.design.approved: true`
+  - If tasks split, add `task_files: ["tasks.md", "tasks-setup.md", ...]` array
+  - Update `updated_at` timestamp
+
+## Critical Constraints
+
+- **Follow rules strictly**: All principles in tasks-generation.md are mandatory
+- **Natural Language**: Describe what to do, not code structure details
+- **Complete Coverage**: ALL requirements must map to tasks
+- **Maximum 2 Levels**: Major tasks and sub-tasks only (no deeper nesting)
+- **Sequential Numbering**: Major tasks increment (1, 2, 3...), never repeat
+- **Task Integration**: Every task must connect to the system (no orphaned work)
+  </instructions>
+
+## Tool Guidance
+
+- **Read first**: Load all context, rules, and templates before generation
+- **Write last**: Generate tasks.md only after complete analysis and verification
+
+## Output Description
+
+Provide brief summary in the language specified in spec.json:
+
+1. **Status**: Confirm tasks generated at `.kiro/specs/$1/tasks.md` (XXX lines) [+ parts if split]
+2. **Task Summary**:
+   - Total: X major tasks, Y sub-tasks
+   - All Z requirements covered
+   - Average task size: 1-3 hours per sub-task
+3. **File Organization** (if split): How tasks were grouped into multiple files
+4. **Quality Validation**:
+   - ✅ All requirements mapped to tasks
+   - ✅ Task dependencies verified
+   - ✅ Testing tasks included
+   - ✅ All files under 600 lines
+5. **Next Action**: Review task files and proceed when ready
+
+**Format**: Concise (under 200 words)
+
+## Safety & Fallback
+
+### Error Scenarios
+
+**Missing Requirements or Design**:
+
+- **Stop Execution**: Both documents must exist
+- **User Message**: "Missing requirements.md or design.md at `.kiro/specs/$1/`"
+- **Suggested Action**: "Complete requirements and design phases first"
+
+**Incomplete Requirements Coverage**:
+
+- **Warning**: "Not all requirements mapped to tasks. Review coverage."
+- **User Action Required**: Confirm intentional gaps or regenerate tasks
+
+**Template/Rules Missing**:
+
+- **User Message**: "Template or rules files missing in `.kiro/settings/`"
+- **Fallback**: Use inline basic structure with warning
+- **Suggested Action**: "Check repository setup or restore template files"
+- **Missing Numeric Requirement IDs**:
+  - **Stop Execution**: All requirements in requirements.md MUST have numeric IDs. If any requirement lacks a numeric ID, stop and request that requirements.md be fixed before generating tasks.
+
+### Next Phase: Implementation
+
+**Before Starting Implementation**:
+
+- **IMPORTANT**: Clear conversation history and free up context before running `/kiro-spec-impl`
+- This applies when starting first task OR switching between tasks
+- Fresh context ensures clean state and proper task focus
+
+**If Tasks Approved**:
+
+- Execute specific task: `/kiro-spec-impl $1 1.1` (recommended: clear context between each task)
+- Execute multiple tasks: `/kiro-spec-impl $1 1.1,1.2` (use cautiously, clear context between tasks)
+- Without arguments: `/kiro-spec-impl $1` (executes all pending tasks - NOT recommended due to context bloat)
+
+**If Modifications Needed**:
+
+- Provide feedback and re-run `/kiro-spec-tasks $1`
+- Existing tasks used as reference (merge mode)
+
+**Note**: The implementation phase will guide you through executing tasks with appropriate context and validation.
