@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+*.local
+
+# Coverage & test reports
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.playwright-mcp/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Files to manually ignore
+ignore/
+
+# To ensure use of pnpm
+package-lock.json
+yarn.lock
