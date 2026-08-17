@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-08-18
+
+### Fixed
+
+- In-app displayed version was still showing `0.1.0` after the `v0.2.0` release.
+- Service worker updates now prompt the user to reload instead of silently waiting until every open tab/window is fully closed.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added
