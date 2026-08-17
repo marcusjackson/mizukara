@@ -8,17 +8,18 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import pkg from '../../../../package.json'
+
 import AppSettingsSectionAppearance from './AppSettingsSectionAppearance.vue'
 
 // Mock useTheme composable
-const mockToggleTheme = vi.fn()
+const mockSetTheme = vi.fn()
 const mockTheme = { value: 'light' as 'light' | 'dark' }
 
 vi.mock('@/shared/composables/use-theme', () => ({
   useTheme: () => ({
     theme: mockTheme,
-    toggleTheme: mockToggleTheme,
-    setTheme: vi.fn()
+    setTheme: mockSetTheme
   })
 }))
 
@@ -59,8 +60,8 @@ describe('AppSettingsSectionAppearance', () => {
   it('displays app version from __APP_VERSION__', () => {
     const wrapper = mountAppearance()
 
-    // vitest.config.ts defines __APP_VERSION__ as '0.3.0'
-    expect(wrapper.text()).toContain('0.3.0')
+    // __APP_VERSION__ is read from package.json version
+    expect(wrapper.text()).toContain(pkg.version)
   })
 
   it('renders theme toggle switch', () => {
@@ -86,13 +87,26 @@ describe('AppSettingsSectionAppearance', () => {
     expect(switchElement.attributes('aria-checked')).toBe('true')
   })
 
-  it('calls toggleTheme when switch is clicked', async () => {
+  it('calls setTheme with dark when toggling to dark mode', async () => {
+    mockTheme.value = 'light' // Switch starts unchecked (false)
     const wrapper = mountAppearance()
     const switchElement = wrapper.find('[role="switch"]')
 
-    await switchElement.trigger('click')
+    await switchElement.trigger('click') // Emits true (toggled from false)
 
-    expect(mockToggleTheme).toHaveBeenCalledTimes(1)
+    expect(mockSetTheme).toHaveBeenCalledTimes(1)
+    expect(mockSetTheme).toHaveBeenCalledWith('dark')
+  })
+
+  it('calls setTheme with light when toggling off dark mode', async () => {
+    mockTheme.value = 'dark' // Switch starts checked (true)
+    const wrapper = mountAppearance()
+    const switchElement = wrapper.find('[role="switch"]')
+
+    await switchElement.trigger('click') // Emits false (toggled from true)
+
+    expect(mockSetTheme).toHaveBeenCalledTimes(1)
+    expect(mockSetTheme).toHaveBeenCalledWith('light')
   })
 
   it('switch has accessible ARIA label', () => {

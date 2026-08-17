@@ -12,6 +12,7 @@ import { useTheme } from '@/shared/composables/use-theme'
 useTheme()
 
 // Initialize database on app startup
+// initError aliased to 'error' for concise template references (source: useDatabase)
 const { initError: error, initialize, isInitialized: isReady } = useDatabase()
 
 // Trigger database initialization when app mounts
@@ -31,12 +32,14 @@ onMounted(async () => {
   <template v-else-if="isReady">
     <RouterView />
   </template>
-  <div
+  <output
     v-else
+    aria-label="Application loading"
+    aria-live="polite"
     class="app-loading"
   >
     <p>Loading...</p>
-  </div>
+  </output>
 </template>
 
 <style>
@@ -45,7 +48,7 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: var(--spacing-lg);
   text-align: center;
 }
@@ -59,6 +62,6 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 </style>

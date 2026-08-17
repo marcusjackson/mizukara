@@ -86,10 +86,10 @@ const selectRootProps = computed(() => {
       <SelectTrigger
         :id="selectId"
         :aria-describedby="error ? `${selectId}-error` : undefined"
-        :aria-invalid="!!error"
+        :aria-invalid="Boolean(error)"
         :class="[
           'base-select-trigger',
-          { 'base-select-trigger-error': !!error }
+          { 'base-select-trigger-error': Boolean(error) }
         ]"
       >
         <SelectValue
@@ -199,7 +199,7 @@ const selectRootProps = computed(() => {
     box-shadow var(--transition-fast);
 }
 
-.base-select-trigger:focus {
+.base-select-trigger:focus-visible {
   border: var(--input-border-focus);
   box-shadow: var(--focus-ring);
   outline: none;
@@ -218,7 +218,7 @@ const selectRootProps = computed(() => {
   border: var(--input-border-error);
 }
 
-.base-select-trigger-error:focus {
+.base-select-trigger-error:focus-visible {
   border: var(--input-border-error);
   box-shadow: var(--focus-ring-error);
 }
@@ -247,6 +247,8 @@ const selectRootProps = computed(() => {
   These cannot be scoped because the content is rendered outside the component tree.
 -->
 <style>
+/* Reka UI injects inline z-index on the portal wrapper that cannot be overridden
+   without !important. */
 [data-reka-popper-content-wrapper='']:has(.base-select-content) {
   z-index: var(--z-dropdown) !important;
 }

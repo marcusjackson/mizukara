@@ -103,13 +103,6 @@ function downloadBlob(blob: Blob, filename: string): void {
 }
 
 /**
- * Read a file as ArrayBuffer using modern File API
- */
-async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return await file.arrayBuffer()
-}
-
-/**
  * Validate that data is a valid SQLite database with expected schema.
  * Ensures the test database instance is always closed, even on error.
  */
@@ -127,7 +120,7 @@ async function validateSqliteData(data: Uint8Array): Promise<boolean> {
       locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
     })
 
-    testDb = new SQL.Database(data) as unknown as SqlJsDatabase
+    testDb = new SQL.Database(data)
 
     const result = testDb.exec(
       "SELECT name FROM sqlite_master WHERE type='table'"
@@ -135,8 +128,7 @@ async function validateSqliteData(data: Uint8Array): Promise<boolean> {
 
     const tables = result[0]?.values.map((row: unknown[]) => row[0]) ?? []
     return tables.includes('entries')
-  } catch (err) {
-    console.error('Database validation failed:', err)
+  } catch {
     return false
   } finally {
     testDb?.close()
@@ -163,13 +155,21 @@ async function performValidate(file: File): Promise<boolean> {
 
     if (!hasValidMimeType && !hasValidExtension) return false
 
-    const buffer = await readFileAsArrayBuffer(file)
+    const buffer = await file.arrayBuffer()
     const data = new Uint8Array(buffer)
     return await validateSqliteData(data)
   } catch {
     return false
   }
 }
+
+// =============================================================================
+// Singleton State
+// =============================================================================
+
+const isExporting = ref(false)
+const isImporting = ref(false)
+const isClearing = ref(false)
 
 // =============================================================================
 // Perform Functions
@@ -207,7 +207,8 @@ function performExport(
 
 /**
  * Execute database import operation.
- * Validates and replaces the current database with imported data.
+ * Validates (MIME type, extension, file size, and SQLite structure) and
+ * replaces the current database with imported data.
  */
 async function performImport(
   file: File,
@@ -216,13 +217,13 @@ async function performImport(
 ): Promise<boolean> {
   isImporting.value = true
   try {
-    const buffer = await readFileAsArrayBuffer(file)
-    const data = new Uint8Array(buffer)
-    const isValid = await validateSqliteData(data)
+    const isValid = await performValidate(file)
     if (!isValid) {
       toast.error('Invalid database file')
       return false
     }
+    const buffer = await file.arrayBuffer()
+    const data = new Uint8Array(buffer)
     await replaceDatabase(data)
     toast.success('Database imported successfully')
     return true
@@ -260,14 +261,6 @@ async function performClear(
     isClearing.value = false
   }
 }
-
-// =============================================================================
-// Singleton State
-// =============================================================================
-
-const isExporting = ref(false)
-const isImporting = ref(false)
-const isClearing = ref(false)
 
 // =============================================================================
 // Composable

@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted } from 'vue'
 
-interface KeyboardShortcut {
+export interface KeyboardShortcut {
   /** Key combination (e.g., "cmd+n", "k", "escape") */
   key: string
   /** Callback function */
@@ -134,14 +134,15 @@ function shouldTriggerShortcut(keyCombo: string): boolean {
     return !isInputElement(activeElement)
   }
 
+  // Escape always triggers, but context handled in handler
+  // Must be checked before includes('s') — 'escape' contains the letter 's'
+  if (normalizedCombo === 'escape') {
+    return true
+  }
+
   // Save shortcut (cmd/ctrl+s) when textarea focused
   if (normalizedCombo.includes('s')) {
     return activeElement?.tagName === 'TEXTAREA'
-  }
-
-  // Escape always triggers, but context handled in handler
-  if (normalizedCombo === 'escape') {
-    return true
   }
 
   // Other shortcuts (like cmd+n) when no input focused

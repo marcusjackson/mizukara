@@ -5,38 +5,40 @@
  * Delegates all UI to AppSettingsRoot module component.
  */
 
-import { mount } from '@vue/test-utils'
+import { render, screen } from '@testing-library/vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import SettingsPage from './SettingsPage.vue'
 
-// Mock child components
+// Mock child components to isolate the page wrapper
 vi.mock('@/modules/app-settings/components/AppSettingsRoot.vue', () => ({
   default: {
     name: 'AppSettingsRoot',
-    template: '<div data-testid="app-settings-root">AppSettingsRoot</div>'
+    template: '<main aria-label="App Settings">AppSettingsRoot</main>'
   }
 }))
 
-vi.mock('@/base/components', () => ({
-  BaseToast: {
-    name: 'BaseToast',
-    template: '<div data-testid="base-toast" />'
+vi.mock('@/shared/components', () => ({
+  SharedToast: {
+    name: 'SharedToast',
+    template: '<div role="status" aria-label="Notifications"></div>'
   }
 }))
 
 describe('SettingsPage', () => {
   it('renders AppSettingsRoot component', () => {
-    const wrapper = mount(SettingsPage)
+    render(SettingsPage)
 
-    expect(wrapper.find('[data-testid="app-settings-root"]').exists()).toBe(
-      true
-    )
+    expect(
+      screen.getByRole('main', { name: /app settings/i })
+    ).toBeInTheDocument()
   })
 
-  it('renders BaseToast for notifications', () => {
-    const wrapper = mount(SettingsPage)
+  it('renders SharedToast for notifications', () => {
+    render(SettingsPage)
 
-    expect(wrapper.find('[data-testid="base-toast"]').exists()).toBe(true)
+    expect(
+      screen.getByRole('status', { name: /notifications/i })
+    ).toBeInTheDocument()
   })
 })

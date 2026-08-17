@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /* Add Vitest global types (describe, it, expect, vi) for unit tests only.
+       This prevents test globals from leaking into production source files. */
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["src/**/*.test.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

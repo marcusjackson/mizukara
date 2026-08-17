@@ -22,6 +22,7 @@
 
 import { expect, test } from '@playwright/test'
 
+import { TIMEOUTS } from './helpers/test-constants'
 import { TEST_ENTRY_CONTENT } from './helpers/test-data'
 import {
   createEntry,
@@ -31,6 +32,7 @@ import {
   navigateToDay,
   saveEntryEdit,
   startEditingEntry,
+  waitForEntries,
   waitForPageReady
 } from './helpers/test-utils'
 
@@ -185,9 +187,13 @@ test.describe('Offline Functionality', () => {
     // Create third entry
     await createEntry(page, TEST_ENTRY_CONTENT.THIRD)
 
-    // Verify all three entries are visible
+    // Verify all three entries are visible and list is stable
+    await waitForEntries(page, [
+      TEST_ENTRY_CONTENT.FIRST,
+      TEST_ENTRY_CONTENT.SECOND,
+      TEST_ENTRY_CONTENT.THIRD
+    ])
     const entryCards = page.getByTestId('entry-card')
-    await expect(entryCards).toHaveCount(3)
 
     // Go back online
     await context.setOffline(false)
@@ -196,8 +202,12 @@ test.describe('Offline Functionality', () => {
     await page.reload({ waitUntil: 'networkidle' })
     await waitForPageReady(page)
 
-    // Verify all entries still exist and are in correct order
-    await expect(entryCards).toHaveCount(3)
+    // Wait for all entries to be restored from database after reload
+    await waitForEntries(page, [
+      TEST_ENTRY_CONTENT.FIRST,
+      TEST_ENTRY_CONTENT.SECOND,
+      TEST_ENTRY_CONTENT.THIRD
+    ])
     await expect(entryCards.nth(0).getByTestId('entry-content')).toContainText(
       TEST_ENTRY_CONTENT.FIRST
     )
@@ -250,21 +260,24 @@ test.describe('Offline Functionality', () => {
     // Create another entry offline
     await createEntry(page, TEST_ENTRY_CONTENT.SECOND)
 
-    // Verify both entries exist
+    // Verify both entries exist (wait for update + creation to appear)
+    const updatedEntry = page
+      .getByTestId('entry-card')
+      .filter({ hasText: TEST_ENTRY_CONTENT.UPDATED })
+    const secondEntry = page
+      .getByTestId('entry-card')
+      .filter({ hasText: TEST_ENTRY_CONTENT.SECOND })
+
+    await expect(updatedEntry).toBeVisible({ timeout: TIMEOUTS.long })
+    await expect(secondEntry).toBeVisible({ timeout: TIMEOUTS.long })
+
     const entries = page.getByTestId('entry-card')
-    await expect(entries).toHaveCount(2)
+    await expect(entries).toHaveCount(2, { timeout: TIMEOUTS.long })
 
     // Verify first entry was updated
     await expect(entries.first().getByTestId('entry-content')).toContainText(
       TEST_ENTRY_CONTENT.UPDATED
     )
-
-    // Verify second entry exists
-    await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.SECOND })
-    ).toBeVisible()
 
     // Go back online
     await context.setOffline(false)

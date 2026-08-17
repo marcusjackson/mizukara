@@ -5,7 +5,19 @@
  * Sets up testing-library matchers and global test utilities.
  */
 
+import { cleanup } from '@testing-library/vue'
+import { afterEach } from 'vitest'
+
+import { detachLifecycleListeners } from '@/db/lifecycle'
+
 import '@testing-library/jest-dom/vitest'
+
+// Clean up DOM after each test
+// eslint-disable-next-line vitest/require-top-level-describe
+afterEach(() => {
+  cleanup()
+  detachLifecycleListeners()
+})
 
 // Mock scrollIntoView for jsdom (not implemented)
 // This is needed for Reka UI components that use scrollIntoView
@@ -15,7 +27,7 @@ Element.prototype.scrollIntoView = () => {
 
 // Mock matchMedia for jsdom (not implemented)
 // This is needed for theme detection with prefers-color-scheme
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
     matches: false,
@@ -50,19 +62,15 @@ class ResizeObserverMock {
     // No-op
   }
 }
-global.ResizeObserver = ResizeObserverMock
+globalThis.ResizeObserver = ResizeObserverMock
 
 // Mock URL.createObjectURL and revokeObjectURL for jsdom
 // This is needed for blob URL creation in file input components
-let urlCounter = 0
-const urlMap = new Map<string, Blob>()
-
-global.URL.createObjectURL = (blob: Blob): string => {
-  const url = `blob:mock-url-${String(urlCounter++)}`
-  urlMap.set(url, blob)
-  return url
+// UUID-based URLs avoid test-order dependencies from counter-based values
+globalThis.URL.createObjectURL = (_blob: Blob): string => {
+  return `blob:mock-url-${crypto.randomUUID()}`
 }
 
-global.URL.revokeObjectURL = (url: string): void => {
-  urlMap.delete(url)
+globalThis.URL.revokeObjectURL = (_url: string): void => {
+  // No-op for jsdom environment
 }

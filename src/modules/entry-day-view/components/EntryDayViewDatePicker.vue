@@ -15,11 +15,12 @@
  * @emits close - Emitted on cancel
  */
 
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import { BaseDialog } from '@/base/components'
 
 import { isValidISODate } from '@/shared/utils/date-utils'
+import { ENTRY_VALIDATION_ERRORS } from '@/shared/validation/validation-errors'
 
 interface Props {
   /** Whether date picker dialog is open */
@@ -42,13 +43,17 @@ const selectedDate = ref(props.initialDate)
 const validationError = ref<string | null>(null)
 const dateInputRef = ref<HTMLInputElement | null>(null)
 
-// Sync internal open state with BaseDialog's v-model
-const dialogOpen = ref(props.open)
+// Writable computed for v-model:open on BaseDialog
+const dialogOpen = computed({
+  get: () => props.open,
+  set: (value) => {
+    if (!value) emit('close')
+  }
+})
 
 watch(
   () => props.open,
   (newValue) => {
-    dialogOpen.value = newValue
     if (newValue) {
       selectedDate.value = props.initialDate
       validationError.value = null
@@ -81,7 +86,7 @@ const handleDialogUpdate = (value: boolean) => {
 
 const handleConfirm = () => {
   if (!isValidISODate(selectedDate.value)) {
-    validationError.value = 'Invalid date. Please use YYYY-MM-DD format.'
+    validationError.value = ENTRY_VALIDATION_ERRORS.DATE_FORMAT
     return
   }
   emit('date-selected', selectedDate.value)
@@ -106,10 +111,7 @@ const handleKeydown = (event: KeyboardEvent) => {
     title="Jump to Date"
     @update:open="handleDialogUpdate"
   >
-    <div
-      class="date-picker-content"
-      @keydown="handleKeydown"
-    >
+    <div class="date-picker-content">
       <div class="date-picker-field">
         <label
           class="date-picker-label"
@@ -122,11 +124,14 @@ const handleKeydown = (event: KeyboardEvent) => {
           id="date-picker-input"
           ref="dateInputRef"
           v-model="selectedDate"
+          :aria-describedby="validationError ? 'date-picker-error' : undefined"
           class="date-picker-input"
           type="date"
+          @keydown="handleKeydown"
         />
         <p
           v-if="validationError"
+          id="date-picker-error"
           class="date-picker-error"
           role="alert"
         >
@@ -193,8 +198,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 .date-picker-input:focus {
   border-color: var(--color-border-focus);
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 1px;
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .date-picker-error {
@@ -224,8 +229,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .date-picker-button:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+  outline: none;
 }
 
 .date-picker-button--primary {

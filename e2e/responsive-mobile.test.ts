@@ -25,7 +25,9 @@ import {
 import { TEST_ENTRY_CONTENT } from './helpers/test-data'
 import {
   createEntry,
+  getEditorTextarea,
   startEditingEntry,
+  waitForEntries,
   waitForPageReady
 } from './helpers/test-utils'
 
@@ -53,15 +55,17 @@ test.describe('Responsive Design (Mobile)', () => {
 
     // Verify previous button meets minimum touch target size
     const prevBox = await prevButton.boundingBox()
-    expect(prevBox).not.toBeNull()
-    expect(prevBox!.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
-    expect(prevBox!.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    if (!prevBox)
+      throw new Error('prevButton has no bounding box — is it visible?')
+    expect(prevBox.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    expect(prevBox.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
 
     // Verify next button meets minimum touch target size
     const nextBox = await nextButton.boundingBox()
-    expect(nextBox).not.toBeNull()
-    expect(nextBox!.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
-    expect(nextBox!.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    if (!nextBox)
+      throw new Error('nextButton has no bounding box — is it visible?')
+    expect(nextBox.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    expect(nextBox.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
   })
 
   test('Edit button is visible without hover on mobile', async ({ page }) => {
@@ -74,9 +78,10 @@ test.describe('Responsive Design (Mobile)', () => {
 
     // Verify edit button is touch-friendly
     const editBox = await editButton.boundingBox()
-    expect(editBox).not.toBeNull()
-    expect(editBox!.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
-    expect(editBox!.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    if (!editBox)
+      throw new Error('editButton has no bounding box — is it visible?')
+    expect(editBox.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    expect(editBox.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
   })
 
   test('Save button in create form is touch-friendly', async ({ page }) => {
@@ -87,9 +92,10 @@ test.describe('Responsive Design (Mobile)', () => {
 
     // Verify save button meets minimum touch target size
     const saveBox = await saveButton.boundingBox()
-    expect(saveBox).not.toBeNull()
-    expect(saveBox!.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
-    expect(saveBox!.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    if (!saveBox)
+      throw new Error('saveButton has no bounding box — is it visible?')
+    expect(saveBox.width).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
+    expect(saveBox.height).toBeGreaterThanOrEqual(TOUCH_TARGET.MINIMUM)
   })
 
   test('text content is readable with appropriate font size', async ({
@@ -118,13 +124,15 @@ test.describe('Responsive Design (Mobile)', () => {
     const containerBox = await container.boundingBox()
     const cardBox = await entryCard.boundingBox()
 
-    expect(containerBox).not.toBeNull()
-    expect(cardBox).not.toBeNull()
+    if (!containerBox)
+      throw new Error('container has no bounding box — is it visible?')
+    if (!cardBox)
+      throw new Error('entryCard has no bounding box — is it visible?')
 
     // Card should be close to full container width (allowing for padding)
     const expectedMinWidth =
-      containerBox!.width - MOBILE_LAYOUT.PADDING_ALLOWANCE
-    expect(cardBox!.width).toBeGreaterThanOrEqual(expectedMinWidth)
+      containerBox.width - MOBILE_LAYOUT.PADDING_ALLOWANCE
+    expect(cardBox.width).toBeGreaterThanOrEqual(expectedMinWidth)
   })
 
   test('spacing is appropriate for mobile', async ({ page }) => {
@@ -132,19 +140,24 @@ test.describe('Responsive Design (Mobile)', () => {
     await createEntry(page, TEST_ENTRY_CONTENT.FIRST)
     await createEntry(page, TEST_ENTRY_CONTENT.SECOND)
 
-    // Get entry cards
+    // Wait for both entries to be visible and list to be stable
+    await waitForEntries(page, [
+      TEST_ENTRY_CONTENT.FIRST,
+      TEST_ENTRY_CONTENT.SECOND
+    ])
     const entryCards = page.getByTestId('entry-card')
-    await expect(entryCards).toHaveCount(2)
 
     // Verify spacing between cards (vertical gap)
     const firstCardBox = await entryCards.nth(0).boundingBox()
     const secondCardBox = await entryCards.nth(1).boundingBox()
 
-    expect(firstCardBox).not.toBeNull()
-    expect(secondCardBox).not.toBeNull()
+    if (!firstCardBox)
+      throw new Error('firstCard has no bounding box — is it visible?')
+    if (!secondCardBox)
+      throw new Error('secondCard has no bounding box — is it visible?')
 
     // Calculate gap between cards
-    const gap = secondCardBox!.y - (firstCardBox!.y + firstCardBox!.height)
+    const gap = secondCardBox.y - (firstCardBox.y + firstCardBox.height)
 
     // Verify gap is reasonable (at least 12px, typically 16px-24px)
     expect(gap).toBeGreaterThanOrEqual(12)
@@ -188,7 +201,7 @@ test.describe('Responsive Design (Mobile)', () => {
     await expect(editor).toBeVisible()
 
     // Edit content
-    const editorTextarea = editor.getByPlaceholder(/enter your thoughts/i)
+    const editorTextarea = getEditorTextarea(page)
     await editorTextarea.clear()
     await editorTextarea.fill(TEST_ENTRY_CONTENT.UPDATED)
 

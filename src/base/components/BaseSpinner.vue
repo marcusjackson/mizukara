@@ -22,15 +22,13 @@ withDefaults(
 </script>
 
 <template>
-  <div
+  <output
     :aria-label="label"
     class="base-spinner"
     :class="`base-spinner-${size}`"
-    role="status"
   >
     <span class="base-spinner-circle" />
-    <span class="visually-hidden">{{ label }}</span>
-  </div>
+  </output>
 </template>
 
 <style scoped>
@@ -61,19 +59,7 @@ withDefaults(
   border: 2px solid var(--color-border);
   border-top-color: var(--color-primary);
   border-radius: var(--radius-full);
-  animation: spin 0.8s linear infinite;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  border: 0;
-  white-space: nowrap;
+  animation: spin var(--transition-slow) linear infinite;
 }
 
 @keyframes spin {

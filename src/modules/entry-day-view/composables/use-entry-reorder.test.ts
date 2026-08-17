@@ -9,6 +9,7 @@ import { useDatabase } from '@/shared/composables/use-database'
 import { useEntryReorder } from './use-entry-reorder'
 
 import type { Entry } from '@/shared/types/entry-types'
+import type { Database } from 'sql.js'
 
 // Mock the database composable
 vi.mock('@/shared/composables/use-database', () => ({
@@ -26,7 +27,7 @@ describe('useEntryReorder', () => {
     exec: vi.fn(),
     close: vi.fn(),
     export: vi.fn()
-  }
+  } as unknown as Database
   const mockOnRefetch = vi.fn()
 
   beforeEach(() => {

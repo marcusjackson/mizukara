@@ -20,26 +20,29 @@ vi.mock('./use-database', () => ({
 // Mock useToast
 const mockShowSuccess = vi.fn()
 const mockShowError = vi.fn()
+const mockShowInfo = vi.fn()
 
 vi.mock('./use-toast', () => ({
   useToast: () => ({
     error: mockShowError,
+    info: mockShowInfo,
     success: mockShowSuccess
   })
 }))
 
 import { useSeedData } from './use-seed-data'
 
-describe('useSeedData', () => {
-  function resetMocks() {
-    mockExec.mockReset()
-    mockRun.mockReset()
-    mockPersist.mockReset()
-    mockPersist.mockResolvedValue(undefined)
-    mockShowSuccess.mockReset()
-    mockShowError.mockReset()
-  }
+function resetMocks() {
+  mockExec.mockReset()
+  mockRun.mockReset()
+  mockPersist.mockReset()
+  mockPersist.mockResolvedValue(undefined)
+  mockShowSuccess.mockReset()
+  mockShowError.mockReset()
+  mockShowInfo.mockReset()
+}
 
+describe('useSeedData', () => {
   describe('seed', () => {
     it('returns seed and clear functions', () => {
       resetMocks()
@@ -53,17 +56,16 @@ describe('useSeedData', () => {
 
     it('checks for existing data before seeding', async () => {
       resetMocks()
-      // Current implementation is a stub - no database checks
+      // With no seed records, no database checks are performed
       const { seed } = useSeedData()
       await seed()
 
-      // Stub implementation doesn't check existing data
       expect(mockExec).not.toHaveBeenCalled()
     })
 
     it('shows error if database already has data', async () => {
       resetMocks()
-      // Current implementation is a stub - no error checking
+      // With no seed records, the seed returns early — no error and no run
       const { seed } = useSeedData()
       await seed()
 
@@ -73,58 +75,40 @@ describe('useSeedData', () => {
 
     it('inserts seed data when database is empty', async () => {
       resetMocks()
-      // Current implementation is a stub
+      // Stub implementation has no records, so no inserts happen
       const { seed } = useSeedData()
       await seed()
 
-      // Stub implementation doesn't do database inserts
       expect(mockRun).not.toHaveBeenCalled()
     })
 
-    it('persists data after seeding', async () => {
+    it('shows info message when no seed data is available', async () => {
       resetMocks()
       const { seed } = useSeedData()
       await seed()
 
-      expect(mockPersist).toHaveBeenCalled()
-      expect(mockShowSuccess).toHaveBeenCalledWith('Seed data loaded')
+      // SEED_DATA_COUNTS.records === 0, so info is shown instead of success
+      expect(mockShowInfo).toHaveBeenCalledWith('No seed data available')
+      expect(mockShowSuccess).not.toHaveBeenCalled()
+      expect(mockPersist).not.toHaveBeenCalled()
     })
 
-    it('sets isSeeding during operation', async () => {
+    it('does not persist when no seed data is available', async () => {
       resetMocks()
-      mockExec.mockReturnValue([{ values: [[0]] }])
-
-      const { isSeeding, seed } = useSeedData()
-
-      expect(isSeeding.value).toBe(false)
-
-      const seedPromise = seed()
-      expect(isSeeding.value).toBe(true)
-
-      await seedPromise
-      expect(isSeeding.value).toBe(false)
-    })
-
-    it('handles errors during seeding', async () => {
-      resetMocks()
-      mockPersist.mockRejectedValue(new Error('Insert failed'))
-
       const { seed } = useSeedData()
       await seed()
 
-      expect(mockShowError).toHaveBeenCalledWith('Insert failed')
+      expect(mockPersist).not.toHaveBeenCalled()
     })
   })
 
   describe('clear', () => {
     it('deletes all data from tables', async () => {
       resetMocks()
-      // Current implementation is a stub
       const { clear } = useSeedData()
       await clear()
 
-      // Stub implementation doesn't do database deletes
-      expect(mockRun).not.toHaveBeenCalled()
+      expect(mockRun).toHaveBeenCalledWith('DELETE FROM entries')
     })
 
     it('persists after clearing', async () => {

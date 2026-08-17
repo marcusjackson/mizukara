@@ -1,0 +1,180 @@
+/**
+ * Toast Styles
+ *
+ * Global styles for Toast components rendered via Reka UI portal/teleport.
+ * ToastViewport and ToastRoot render outside the component tree, so scoped
+ * styles in SharedToast.vue cannot reach them — these must be global.
+ */
+
+.base-toast-viewport {
+  position: fixed;
+  top: calc(var(--spacing-lg) * 2);
+  left: 50%;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 360px;
+  max-width: calc(100vw - var(--spacing-lg) * 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+}
+
+.base-toast {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.base-toast-success {
+  border-left: 4px solid var(--color-success);
+}
+
+.base-toast-error {
+  border-left: 4px solid var(--color-error);
+}
+
+.base-toast-warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.base-toast-info {
+  border-left: 4px solid var(--color-info);
+}
+
+.base-toast-content {
+  display: flex;
+  flex: 1;
+  gap: var(--spacing-3);
+}
+
+.base-toast-icon {
+  flex-shrink: 0;
+}
+
+.base-toast-success .base-toast-icon {
+  color: var(--color-success);
+}
+
+.base-toast-error .base-toast-icon {
+  color: var(--color-error);
+}
+
+.base-toast-warning .base-toast-icon {
+  color: var(--color-warning);
+}
+
+.base-toast-info .base-toast-icon {
+  color: var(--color-info);
+}
+
+.base-toast-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.base-toast-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.base-toast-description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.base-toast-close {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.base-toast-close:hover {
+  background-color: var(--color-background);
+}
+
+.base-toast-close:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* Toast animations */
+.base-toast[data-state='open'] {
+  animation: toast-slide-down var(--transition-normal) ease-out;
+}
+
+.base-toast[data-state='closed'] {
+  animation: toast-slide-up var(--transition-fast) ease-in;
+}
+
+@keyframes toast-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+/* Swipe gesture support */
+.base-toast[data-swipe='move'] {
+  transform: translateX(var(--reka-toast-swipe-move-x));
+}
+
+.base-toast[data-swipe='cancel'] {
+  transition: transform var(--transition-normal) ease-out;
+  transform: translateX(0);
+}
+
+.base-toast[data-swipe='end'] {
+  animation: toast-swipe-out 100ms ease-out;
+}
+
+@keyframes toast-swipe-out {
+  from {
+    transform: translateX(var(--reka-toast-swipe-end-x));
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}

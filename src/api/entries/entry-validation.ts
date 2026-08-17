@@ -4,6 +4,8 @@
  * Validation logic for entry mutation operations.
  */
 
+import { RepositoryError } from '@/api/types'
+
 import { isValidISODate } from '@/shared/utils/date-utils'
 import { ENTRY_VALIDATION_ERRORS } from '@/shared/validation/validation-errors'
 
@@ -12,13 +14,15 @@ import { ENTRY_VALIDATION_ERRORS } from '@/shared/validation/validation-errors'
  *
  * Thrown when entry data fails validation constraints.
  * Includes the field name for targeted error display.
+ * Extends RepositoryError so callers catching the full error hierarchy
+ * will also handle validation failures.
  */
-export class EntryValidationError extends Error {
+export class EntryValidationError extends RepositoryError {
   constructor(
     public readonly field: string,
     message: string
   ) {
-    super(`${field}: ${message}`)
+    super(`${field}: ${message}`, 'validate', 'Entry')
     this.name = 'EntryValidationError'
   }
 }

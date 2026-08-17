@@ -7,6 +7,8 @@
 
 import { ref, watch } from 'vue'
 
+import type { Ref } from 'vue'
+
 export type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'mizukara-theme'
@@ -25,9 +27,11 @@ function getSystemTheme(): Theme {
  * Gets the initial theme: user's saved preference or system preference
  */
 function getInitialTheme(): Theme {
-  const storedTheme = localStorage.getItem(STORAGE_KEY) as Theme | null
-  if (storedTheme) {
-    return storedTheme
+  const stored = localStorage.getItem(STORAGE_KEY)
+  const isValidTheme = (value: string | null): value is Theme =>
+    value === 'light' || value === 'dark'
+  if (isValidTheme(stored)) {
+    return stored
   }
   return getSystemTheme()
 }
@@ -47,16 +51,44 @@ function applyTheme(theme: Theme): void {
 // Shared reactive state (singleton pattern)
 const theme = ref<Theme>(getInitialTheme())
 
-// Initialize theme on module load
-applyTheme(theme.value)
+let initialized = false
 
-// Watch for changes and persist
-watch(theme, (newTheme) => {
-  applyTheme(newTheme)
-  localStorage.setItem(STORAGE_KEY, newTheme)
-})
+/**
+ * Interface for theme management composable return value
+ */
+export interface UseTheme {
+  /** The current active theme */
+  theme: Ref<Theme>
+  /** Toggle between light and dark themes */
+  toggleTheme: () => void
+  /** Set the theme explicitly */
+  setTheme: (newTheme: Theme) => void
+}
 
-export function useTheme() {
+/**
+ * Composable for managing the application theme (light/dark mode).
+ *
+ * Uses a singleton pattern — state is shared across all callers.
+ * Persists the user preference to localStorage and falls back
+ * to the system preference on first load.
+ *
+ * @returns Reactive theme state and toggle/set functions
+ * @example
+ * const { theme, toggleTheme, setTheme } = useTheme()
+ * setTheme('dark')
+ */
+export function useTheme(): UseTheme {
+  if (!initialized) {
+    initialized = true
+    // Initialize theme on first use
+    applyTheme(theme.value)
+    // Watch for changes and persist
+    watch(theme, (newTheme) => {
+      applyTheme(newTheme)
+      localStorage.setItem(STORAGE_KEY, newTheme)
+    })
+  }
+
   /**
    * Toggles between light and dark themes
    */

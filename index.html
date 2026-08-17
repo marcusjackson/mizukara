@@ -5,6 +5,10 @@
 >
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="color-scheme"
+      content="light dark"
+    />
     <link
       rel="icon"
       type="image/svg+xml"
@@ -30,10 +34,43 @@
       name="google"
       content="notranslate"
     />
+    <meta
+      name="apple-mobile-web-app-capable"
+      content="yes"
+    />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="default"
+    />
+    <meta
+      name="apple-mobile-web-app-title"
+      content="Mizukara"
+    />
+    <meta
+      name="robots"
+      content="noindex, nofollow"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/apple-touch-icon.png"
+    />
+    <style>
+      .noscript-message {
+        font-family: sans-serif;
+        padding: 2rem;
+        text-align: center;
+      }
+    </style>
     <title>Mizukara</title>
   </head>
   <body class="notranslate">
     <div id="app"></div>
+    <noscript>
+      <p class="noscript-message">
+        Mizukara requires JavaScript to run. Please enable JavaScript in your
+        browser settings.
+      </p>
+    </noscript>
     <script
       type="module"
       src="/src/main.ts"

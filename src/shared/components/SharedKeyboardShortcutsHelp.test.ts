@@ -36,7 +36,7 @@ describe('SharedKeyboardShortcutsHelp', () => {
         name: /keyboard shortcuts/i
       })
       expect(trigger).toBeInTheDocument()
-      expect(trigger.textContent?.trim()).toBe('?')
+      expect(trigger.textContent.trim()).toBe('?')
     })
 
     it('has proper aria-label for accessibility', () => {
@@ -109,7 +109,7 @@ describe('SharedKeyboardShortcutsHelp', () => {
       })
 
       const dialog = screen.getByRole('dialog')
-      const dialogText = dialog.textContent ?? ''
+      const dialogText = dialog.textContent
 
       // Should contain modifier key (Cmd or Ctrl depending on platform)
       expect(dialogText).toMatch(/cmd|ctrl/i)

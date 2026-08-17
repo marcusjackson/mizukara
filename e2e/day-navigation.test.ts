@@ -18,6 +18,7 @@
 
 import { expect, test } from '@playwright/test'
 
+import { TIMEOUTS } from './helpers/test-constants'
 import { TEST_ENTRY_CONTENT } from './helpers/test-data'
 import {
   createEntry,
@@ -35,7 +36,7 @@ test.describe('Day Navigation Flow', () => {
 
     // Wait for database initialization and page ready
     await expect(page.getByTestId('entry-day-view-navigator')).toBeVisible({
-      timeout: 10000
+      timeout: TIMEOUTS.medium
     })
     await waitForPageReady(page)
   })
@@ -45,9 +46,9 @@ test.describe('Day Navigation Flow', () => {
     const dateDisplay = page.getByTestId('current-date')
     await expect(dateDisplay).toBeVisible()
 
-    // Should contain date information
+    // Should contain date information matching e.g. "Monday, March 15, 2024"
     const dateText = await dateDisplay.textContent()
-    expect(dateText).toBeTruthy()
+    expect(dateText).toMatch(/\w+,\s+\w+\s+\d{1,2},\s+\d{4}/)
   })
 
   test('navigates to previous day and displays entries', async ({ page }) => {
@@ -66,12 +67,8 @@ test.describe('Day Navigation Flow', () => {
     // Today's entry should not be visible on yesterday's page
     await expect(todayEntry).toHaveCount(0)
 
-    // Either empty state or entries should be visible
-    const emptyState = page.getByTestId('empty-state')
-    const entryCards = page.getByTestId('entry-card')
-    const hasEmpty = (await emptyState.count()) > 0
-    const hasEntries = (await entryCards.count()) > 0
-    expect(hasEmpty || hasEntries).toBe(true)
+    // Yesterday has no seeded entries — empty state must be visible
+    await expect(page.getByTestId('empty-state')).toBeVisible()
   })
 
   test('navigates to next day and displays entries', async ({ page }) => {
@@ -84,11 +81,8 @@ test.describe('Day Navigation Flow', () => {
     // Verify date display updated
     await expect(page.getByTestId('current-date')).toBeVisible()
 
-    // Tomorrow should likely have no entries (empty state)
-    const emptyState = page.getByTestId('empty-state')
-    if ((await emptyState.count()) > 0) {
-      await expect(emptyState).toBeVisible()
-    }
+    // Tomorrow should have no entries — context is cleared between tests
+    await expect(page.getByTestId('empty-state')).toBeVisible()
   })
 
   test('navigates from previous to next day correctly', async ({ page }) => {
@@ -170,11 +164,11 @@ test.describe('Day Navigation Flow', () => {
     await page.goBack()
 
     // Wait for navigation to complete by checking URL
-    await expect(page).toHaveURL(initialUrl, { timeout: 5000 })
+    await expect(page).toHaveURL(initialUrl, { timeout: TIMEOUTS.short })
 
     // Wait for page to fully load after back navigation
     await expect(page.getByTestId('entry-day-view-navigator')).toBeVisible({
-      timeout: 5000
+      timeout: TIMEOUTS.short
     })
 
     // Verify navigation UI is functional
@@ -194,14 +188,14 @@ test.describe('Day Navigation Flow', () => {
 
     // Press J key to go to next day
     await page.keyboard.press('j')
-    await expect(page).not.toHaveURL(initialUrl, { timeout: 3000 })
+    await expect(page).not.toHaveURL(initialUrl, { timeout: TIMEOUTS.short })
 
     const afterJUrl = page.url()
     expect(afterJUrl).not.toBe(initialUrl)
 
     // Press K key to go to previous day
     await page.keyboard.press('k')
-    await expect(page).not.toHaveURL(afterJUrl, { timeout: 3000 })
+    await expect(page).not.toHaveURL(afterJUrl, { timeout: TIMEOUTS.short })
 
     const afterKUrl = page.url()
     expect(afterKUrl).not.toBe(afterJUrl)
@@ -218,7 +212,7 @@ test.describe('Day Navigation Flow', () => {
     await page.keyboard.press('ArrowDown')
 
     // Wait for navigation by checking URL changed
-    await expect(page).not.toHaveURL(initialUrl, { timeout: 3000 })
+    await expect(page).not.toHaveURL(initialUrl, { timeout: TIMEOUTS.short })
 
     // Verify navigation occurred
     const afterDownUrl = page.url()
@@ -228,7 +222,7 @@ test.describe('Day Navigation Flow', () => {
     await page.keyboard.press('ArrowUp')
 
     // Wait for navigation by checking URL changed again
-    await expect(page).not.toHaveURL(afterDownUrl, { timeout: 3000 })
+    await expect(page).not.toHaveURL(afterDownUrl, { timeout: TIMEOUTS.short })
 
     // Verify navigation occurred again
     const afterUpUrl = page.url()
@@ -241,8 +235,8 @@ test.describe('Day Navigation Flow', () => {
     const urlBeforeArrow = page.url()
     await page.keyboard.press('ArrowDown')
 
-    // Give a moment for any potential navigation (should not happen)
-    await page.waitForLoadState('networkidle')
+    // Wait for any potential navigation to complete
+    await expect(page.getByLabel('Content')).toBeFocused()
 
     // URL should not change when textarea is focused
     expect(page.url()).toBe(urlBeforeArrow)

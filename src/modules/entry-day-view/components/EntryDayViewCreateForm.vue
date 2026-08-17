@@ -120,8 +120,10 @@ defineExpose({
     <BaseTextarea
       ref="textareaRef"
       v-model="content"
+      auto-expand
       :error="errorMessage"
       label="Content"
+      :max-rows="8"
       name="content"
       placeholder="What happened today?"
       :rows="3"

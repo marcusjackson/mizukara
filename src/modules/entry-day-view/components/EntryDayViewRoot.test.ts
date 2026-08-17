@@ -22,6 +22,20 @@ import EntryDayViewRoot from './EntryDayViewRoot.vue'
 
 import type { Database } from 'sql.js'
 
+// Hoist mock function instances so they can be referenced in vi.mock factories
+// and re-configured in beforeEach after clearMocks runs.
+const {
+  mockFetchTags,
+  mockFindByEntryId,
+  mockFindByEntryIds,
+  mockFindEntriesByTags
+} = vi.hoisted(() => ({
+  mockFetchTags: vi.fn(),
+  mockFindByEntryId: vi.fn(),
+  mockFindByEntryIds: vi.fn(),
+  mockFindEntriesByTags: vi.fn()
+}))
+
 // Mock database composable
 vi.mock('@/shared/composables/use-database', () => ({
   useDatabase: vi.fn()
@@ -30,6 +44,28 @@ vi.mock('@/shared/composables/use-database', () => ({
 // Mock keyboard shortcuts composable
 vi.mock('@/shared/composables/use-keyboard-shortcuts', () => ({
   useKeyboardShortcuts: vi.fn()
+}))
+
+// Mock entry-tag queries — the test database doesn't have the entry_tags table
+// (it uses only the entries schema). findByEntryIds was added in task 9.3.
+vi.mock('@/api/entry-tags/entry-tag-queries', () => ({
+  findByEntryIds: mockFindByEntryIds,
+  findByEntryId: mockFindByEntryId,
+  findEntriesByTags: mockFindEntriesByTags
+}))
+
+// Mock useTags composable — EntryDayViewRoot uses it to provide allTags to the
+// editor; the entries unit test database doesn't have the tags table, so the
+// real implementation would throw "no such table: tags".
+vi.mock('@/modules/tags/composables/use-tags', () => ({
+  useTags: () => ({
+    tags: [],
+    tagOptions: [],
+    filteredEntries: [],
+    isLoading: { value: false },
+    fetchTags: mockFetchTags,
+    fetchEntriesByTags: vi.fn().mockResolvedValue(undefined)
+  })
 }))
 
 // Mock date utils to return consistent test date
@@ -47,6 +83,14 @@ describe('EntryDayViewRoot', () => {
   beforeEach(async () => {
     db = await createTestDatabaseForEntries()
     vi.clearAllMocks()
+
+    // Re-setup entry-tag mock implementations after clearAllMocks.
+    // These are also declared via vi.hoisted so the vi.mock factory can
+    // reference them, but clearAllMocks may remove their implementations.
+    mockFindByEntryId.mockReturnValue([])
+    mockFindByEntryIds.mockReturnValue(new Map())
+    mockFindEntriesByTags.mockReturnValue([])
+    mockFetchTags.mockResolvedValue(undefined)
 
     // Mock useDatabase to return the test database
     vi.mocked(useDatabase).mockReturnValue({

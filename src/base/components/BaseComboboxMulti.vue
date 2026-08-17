@@ -7,7 +7,7 @@
  * Displays selected items as removable chips.
  */
 
-import { computed, ref, toRefs, useId } from 'vue'
+import { toRefs, useId } from 'vue'
 
 import {
   ComboboxAnchor,
@@ -19,15 +19,14 @@ import {
   ComboboxPortal,
   ComboboxRoot,
   ComboboxTrigger,
-  ComboboxViewport,
-  useFilter
+  ComboboxViewport
 } from 'reka-ui'
 
-export interface ComboboxOption {
-  value: string | number
-  label: string
-  disabled?: boolean
-}
+import { useComboboxMulti } from '@/base/composables/use-combobox-multi'
+
+import type { ComboboxOption } from '@/base/composables/use-combobox-multi'
+
+export type { ComboboxOption } from '@/base/composables/use-combobox-multi'
 
 const props = defineProps<{
   /** Combobox label text */
@@ -46,71 +45,35 @@ const props = defineProps<{
   options: ComboboxOption[]
 }>()
 
-const { disabled, name, options, placeholder, required } = toRefs(props)
+const { disabled, name, options, required } = toRefs(props)
 
 // Model is an array of values (numbers or strings)
 const model = defineModel<(string | number)[]>({ default: () => [] })
 
 const comboboxId = useId()
-const searchTerm = ref('')
 
-// Use Reka UI's filter utility for fuzzy matching
-const { contains } = useFilter({ sensitivity: 'base' })
-
-// Filter options based on search term
-const filteredOptions = computed(() => {
-  if (!searchTerm.value) {
-    return options.value
-  }
-  return options.value.filter((option) =>
-    contains(option.label, searchTerm.value)
-  )
-})
-
-// Get selected options as full objects (for chips display and Reka UI model)
-const selectedOptions = computed(() =>
-  options.value.filter((opt) => model.value.includes(opt.value))
-)
-
-// Watch for Reka UI model changes and sync back to our value array model
-function handleModelUpdate(newOptions: ComboboxOption[]) {
-  model.value = newOptions.map((opt) => opt.value)
-  // Clear search term after selection
-  searchTerm.value = ''
-}
-
-// Remove a selected item
-function removeItem(value: string | number) {
-  model.value = model.value.filter((v) => v !== value)
-}
-
-// Build props object for ComboboxRoot
-const comboboxRootProps = computed(() => {
-  const rootProps: Record<string, unknown> = {
-    disabled: disabled.value || false,
-    required: required.value || false,
-    ignoreFilter: true, // We're doing custom filtering
-    multiple: true
-  }
-  if (name.value) {
-    rootProps['name'] = name.value
-  }
-  return rootProps
-})
+const {
+  comboboxRootProps,
+  filteredOptions,
+  handleModelUpdate,
+  removeItem,
+  searchTerm,
+  selectedOptions
+} = useComboboxMulti(model, options, { disabled, name, required })
 </script>
 
 <template>
-  <div class="base-combobox-multi">
+  <div class="base-combobox">
     <label
       v-if="label"
-      class="base-combobox-multi-label"
+      class="base-combobox-label"
       :for="comboboxId"
     >
       {{ label }}
       <span
         v-if="required"
         aria-hidden="true"
-        class="base-combobox-multi-required"
+        class="base-combobox-required"
         >*</span
       >
     </label>
@@ -122,21 +85,21 @@ const comboboxRootProps = computed(() => {
     >
       <ComboboxAnchor
         :class="[
-          'base-combobox-multi-anchor',
-          { 'base-combobox-multi-anchor-error': !!error }
+          'base-combobox-anchor',
+          { 'base-combobox-anchor-error': Boolean(error) }
         ]"
       >
         <ComboboxInput
           :id="comboboxId"
           v-model="searchTerm"
           :aria-describedby="error ? `${comboboxId}-error` : undefined"
-          :aria-invalid="!!error"
-          class="base-combobox-multi-input"
+          :aria-invalid="Boolean(error)"
+          class="base-combobox-input"
           :placeholder="placeholder ?? 'Search...'"
         />
         <ComboboxTrigger
           aria-label="Toggle options"
-          class="base-combobox-multi-trigger"
+          class="base-combobox-trigger"
         >
           <svg
             aria-hidden="true"
@@ -156,12 +119,12 @@ const comboboxRootProps = computed(() => {
 
       <ComboboxPortal>
         <ComboboxContent
-          class="base-combobox-multi-content"
+          class="base-combobox-content"
           position="popper"
           :side-offset="4"
         >
-          <ComboboxViewport class="base-combobox-multi-viewport">
-            <ComboboxEmpty class="base-combobox-multi-empty">
+          <ComboboxViewport class="base-combobox-viewport">
+            <ComboboxEmpty class="base-combobox-empty">
               No results found
             </ComboboxEmpty>
 
@@ -172,7 +135,7 @@ const comboboxRootProps = computed(() => {
               :disabled="option.disabled ?? false"
               :value="option"
             >
-              <ComboboxItemIndicator class="base-combobox-multi-item-indicator">
+              <ComboboxItemIndicator class="base-combobox-item-indicator">
                 <svg
                   fill="none"
                   height="16"
@@ -186,9 +149,7 @@ const comboboxRootProps = computed(() => {
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               </ComboboxItemIndicator>
-              <span class="base-combobox-multi-item-text">{{
-                option.label
-              }}</span>
+              <span class="base-combobox-item-text">{{ option.label }}</span>
             </ComboboxItem>
           </ComboboxViewport>
         </ComboboxContent>
@@ -204,12 +165,17 @@ const comboboxRootProps = computed(() => {
       <button
         v-for="option in selectedOptions"
         :key="String(option.value)"
+        :aria-label="`Remove ${option.label}`"
         class="base-combobox-multi-chip"
         :disabled="disabled"
         type="button"
         @click="removeItem(option.value)"
       >
-        <span class="base-combobox-multi-chip-text">{{ option.label }}</span>
+        <span
+          aria-hidden="true"
+          class="base-combobox-multi-chip-text"
+          >{{ option.label }}</span
+        >
         <svg
           aria-hidden="true"
           class="base-combobox-multi-chip-remove"
@@ -224,14 +190,13 @@ const comboboxRootProps = computed(() => {
         >
           <path d="M18 6 6 18M6 6l12 12" />
         </svg>
-        <span class="sr-only">Remove {{ option.label }}</span>
       </button>
     </div>
 
     <p
       v-if="error"
       :id="`${comboboxId}-error`"
-      class="base-combobox-multi-error"
+      class="base-combobox-error"
       role="alert"
     >
       {{ error }}
@@ -240,99 +205,6 @@ const comboboxRootProps = computed(() => {
 </template>
 
 <style scoped>
-.base-combobox-multi {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
-.base-combobox-multi-label {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.base-combobox-multi-required {
-  margin-left: var(--spacing-1);
-  color: var(--color-error);
-}
-
-.base-combobox-multi-anchor {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: var(--input-height);
-  border: var(--input-border);
-  border-radius: var(--input-radius);
-  background-color: var(--input-bg);
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.base-combobox-multi-anchor:focus-within {
-  border: var(--input-border-focus);
-  box-shadow: var(--focus-ring);
-}
-
-.base-combobox-multi-anchor-error {
-  border: var(--input-border-error);
-}
-
-.base-combobox-multi-anchor-error:focus-within {
-  border: var(--input-border-error);
-  box-shadow: var(--focus-ring-error);
-}
-
-.base-combobox-multi-input {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  padding: var(--input-padding);
-  border: none;
-  background: transparent;
-  color: var(--color-text-primary);
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-base);
-}
-
-.base-combobox-multi-input:focus {
-  outline: none;
-}
-
-.base-combobox-multi-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.base-combobox-multi-trigger {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: center;
-  align-items: center;
-  width: 32px;
-  height: 100%;
-  padding-right: var(--spacing-2);
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-}
-
-.base-combobox-multi-trigger:hover {
-  color: var(--color-text-primary);
-}
-
-.base-combobox-multi-trigger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.base-combobox-multi-error {
-  margin: 0;
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-}
-
 /* Chips container */
 .base-combobox-multi-chips {
   display: flex;
@@ -369,7 +241,7 @@ const comboboxRootProps = computed(() => {
 }
 
 .base-combobox-multi-chip-text {
-  max-width: 150px;
+  max-width: var(--combobox-chip-max-width, 150px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -384,55 +256,20 @@ const comboboxRootProps = computed(() => {
   .base-combobox-multi-chip-remove {
   color: var(--color-error);
 }
-
-/* Screen reader only class */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  border: 0;
-  white-space: nowrap;
-}
 </style>
 
-<!-- 
-  Global styles for Combobox content rendered via Portal/Teleport.
-  These cannot be scoped because the content is rendered outside the component tree.
+<!--
+  Global styles for multi-select dropdown items.
+  Uses base-combobox-multi-item class (not base-combobox-item) to add
+  the checked-state highlight unique to multi-select behaviour.
 -->
 <style>
-.base-combobox-multi-content {
-  z-index: var(--z-dropdown);
-  overflow: hidden;
-  border: var(--card-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-  box-shadow: var(--shadow-lg);
-}
-
-.base-combobox-multi-viewport {
-  max-height: 200px;
-  padding: var(--spacing-1);
-  overflow-y: auto;
-}
-
-.base-combobox-multi-empty {
-  padding: var(--spacing-3);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  text-align: center;
-}
-
 .base-combobox-multi-item {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  padding-left: var(--spacing-8);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-8);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
@@ -460,20 +297,5 @@ const comboboxRootProps = computed(() => {
 
 .base-combobox-multi-item[data-state='checked'][data-highlighted] {
   background-color: var(--color-primary);
-}
-
-.base-combobox-multi-item-indicator {
-  position: absolute;
-  left: var(--spacing-2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.base-combobox-multi-item-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 </style>

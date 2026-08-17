@@ -2,8 +2,6 @@
  * Entry Schema and Types for Test Helpers
  */
 
-import type { Entry } from '@/shared/types/entry-types'
-
 /**
  * Test-only entry seeding data
  *
@@ -21,11 +19,19 @@ export interface SeedEntryInput {
   orderPosition?: number
   /** Test soft-deleted entries (defaults to false) */
   isDeleted?: boolean
+  /** Override auto-generated createdAt timestamp (Unix ms) */
+  createdAt?: number
+  /** Override auto-generated updatedAt timestamp (Unix ms) */
+  updatedAt?: number
 }
 
 // Re-export Entry type for convenience
 export type { Entry } from '@/shared/types/entry-types'
 
+/**
+ * SQL to create the entries table and indexes for use in test databases.
+ * Mirrors the production migration in 001-create-entries.sql.
+ */
 export const ENTRIES_SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS entries (
     id TEXT PRIMARY KEY,
@@ -43,18 +49,3 @@ export const ENTRIES_SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS idx_entries_is_deleted
     ON entries(is_deleted);
 `
-
-/**
- * Helper to convert SQL row to Entry object
- */
-export function rowToEntry(row: unknown[]): Entry {
-  return {
-    id: row[0] as string,
-    content: row[1] as string,
-    createdAt: row[2] as number,
-    updatedAt: row[3] as number,
-    assignedDay: row[4] as string,
-    orderPosition: row[5] as number,
-    isDeleted: Boolean(row[6])
-  }
-}

@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EntryDayViewSectionList from './EntryDayViewSectionList.vue'
 
 import type { Entry } from '@/shared/types/entry-types'
+import type { Tag } from '@/shared/types/tag-types'
 
 // Mock the mutations composable
 const mockCreateNewEntry = vi.fn()
@@ -111,6 +112,49 @@ describe('EntryDayViewSectionList', () => {
 
       const cards = screen.getAllByRole('article')
       expect(cards).toHaveLength(3)
+    })
+
+    it('passes tags from entryTagsMap to each entry card', () => {
+      const entry1 = createTestEntry({ id: 'entry-1', content: 'Entry one' })
+      const entry2 = createTestEntry({ id: 'entry-2', content: 'Entry two' })
+
+      const tag1: Tag = {
+        id: 'tag-1',
+        name: 'TypeScript',
+        createdAt: 1000,
+        updatedAt: 1000,
+        isDeleted: false
+      }
+      const tag2: Tag = {
+        id: 'tag-2',
+        name: 'Vue',
+        createdAt: 1000,
+        updatedAt: 1000,
+        isDeleted: false
+      }
+
+      const entryTagsMap = new Map<string, Tag[]>([
+        ['entry-1', [tag1]],
+        ['entry-2', [tag2]]
+      ])
+
+      render(EntryDayViewSectionList, {
+        props: { ...defaultProps, items: [entry1, entry2], entryTagsMap }
+      })
+
+      expect(screen.getByText('TypeScript')).toBeInTheDocument()
+      expect(screen.getByText('Vue')).toBeInTheDocument()
+    })
+
+    it('renders entry cards without tags when entryTagsMap is absent', () => {
+      const entry = createTestEntry({ id: 'entry-1', content: 'No tags' })
+
+      render(EntryDayViewSectionList, {
+        props: { ...defaultProps, items: [entry] }
+      })
+
+      // 'entry-tags' container should not be present when no tags
+      expect(screen.queryByTestId('entry-tags')).not.toBeInTheDocument()
     })
   })
 

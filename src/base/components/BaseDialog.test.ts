@@ -11,36 +11,36 @@ import { describe, expect, it } from 'vitest'
 
 import BaseDialog from './BaseDialog.vue'
 
-describe('BaseDialog', () => {
-  // Mount with stubs to avoid portal issues
-  function mountDialog(
-    props: { open?: boolean; title?: string; description?: string } = {},
-    slots: Record<string, string> = {}
-  ) {
-    return mount(BaseDialog, {
-      props: { open: true, ...props },
-      slots,
-      global: {
-        stubs: {
-          // Stub reka-ui components to render inline
-          DialogRoot: { template: '<div><slot /></div>' },
-          DialogPortal: {
-            template: '<div data-testid="portal"><slot /></div>'
-          },
-          DialogOverlay: { template: '<div class="overlay" />' },
-          DialogContent: {
-            template: '<div role="dialog" aria-modal="true"><slot /></div>'
-          },
-          DialogTitle: { template: '<h2><slot /></h2>' },
-          DialogDescription: { template: '<p><slot /></p>' },
-          DialogClose: {
-            template: '<button aria-label="Close"><slot /></button>'
-          }
+// Mount with stubs to avoid portal issues
+function mountDialog(
+  props: { open?: boolean; title?: string; description?: string } = {},
+  slots: Record<string, string> = {}
+) {
+  return mount(BaseDialog, {
+    props: { open: true, ...props },
+    slots,
+    global: {
+      stubs: {
+        // Stub reka-ui components to render inline
+        DialogRoot: { template: '<div><slot /></div>' },
+        DialogPortal: {
+          template: '<div data-testid="portal"><slot /></div>'
+        },
+        DialogOverlay: { template: '<div class="overlay" />' },
+        DialogContent: {
+          template: '<div role="dialog" aria-modal="true"><slot /></div>'
+        },
+        DialogTitle: { template: '<h2><slot /></h2>' },
+        DialogDescription: { template: '<p><slot /></p>' },
+        DialogClose: {
+          template: '<button aria-label="Close"><slot /></button>'
         }
       }
-    })
-  }
+    }
+  })
+}
 
+describe('BaseDialog', () => {
   it('renders dialog structure', () => {
     const wrapper = mountDialog({ title: 'Test Dialog' })
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true)

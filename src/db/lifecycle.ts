@@ -54,3 +54,14 @@ export function attachLifecycleListeners(): void {
 
   lifecycleListenersAttached = true
 }
+
+/**
+ * Detach lifecycle listeners.
+ * @internal For testing only.
+ */
+export function detachLifecycleListeners(): void {
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('pagehide', handlePageHide)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  lifecycleListenersAttached = false
+}

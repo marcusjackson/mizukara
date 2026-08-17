@@ -182,8 +182,8 @@ test.describe('Entry Editing Flow', () => {
     // Ensure textarea is focused
     await editorTextarea.focus()
 
-    // Save via keyboard shortcut (Control+s works across platforms)
-    await page.keyboard.press('Control+s')
+    // Save via keyboard shortcut (ControlOrMeta+s covers both Mac and Windows/Linux)
+    await page.keyboard.press('ControlOrMeta+s')
 
     // Wait for editor to close and card to reappear
     await expect(editor).not.toBeVisible()

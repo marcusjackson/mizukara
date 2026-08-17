@@ -7,7 +7,7 @@
  * Supports searching/filtering options with keyboard navigation.
  */
 
-import { computed, ref, toRefs, useId, watch } from 'vue'
+import { toRefs, useId } from 'vue'
 
 import {
   ComboboxAnchor,
@@ -19,17 +19,14 @@ import {
   ComboboxPortal,
   ComboboxRoot,
   ComboboxTrigger,
-  ComboboxViewport,
-  useFilter
+  ComboboxViewport
 } from 'reka-ui'
 
-export interface ComboboxOption {
-  value: string | number
-  label: string
-  disabled?: boolean
-  /** Additional fields for multi-field search */
-  [key: string]: unknown
-}
+import { useCombobox } from '@/base/composables/use-combobox'
+
+import type { ComboboxOption } from '@/base/composables/use-combobox'
+
+export type { ComboboxOption } from '@/base/composables/use-combobox'
 
 const props = defineProps<{
   /** Combobox label text */
@@ -54,85 +51,36 @@ const props = defineProps<{
   displayFn?: (option: ComboboxOption) => string
 }>()
 
-const { disabled, name, options, placeholder, required, searchKeys } =
-  toRefs(props)
+const {
+  disabled,
+  displayFn,
+  displayValue,
+  name,
+  options,
+  required,
+  searchKeys
+} = toRefs(props)
 
-const model = defineModel<string | number | null>()
+const model = defineModel<string | number | null>({ default: null })
 
 const comboboxId = useId()
-const searchTerm = ref('')
 
-// Use Reka UI's filter utility for fuzzy matching
-const { contains } = useFilter({ sensitivity: 'base' })
-
-// Clear search term when dropdown closes or selection changes
-watch(model, () => {
-  searchTerm.value = ''
-})
-
-// Handle input changes - update search term when user is typing
-function handleInputChange(event: Event): void {
-  const target = event.target as HTMLInputElement
-  searchTerm.value = target.value
-}
-
-// Filter options based on search term across multiple keys
-const filteredOptions = computed(() => {
-  if (!searchTerm.value) {
-    return options.value
-  }
-
-  const keys = searchKeys.value ?? ['label']
-
-  return options.value.filter((option) => {
-    return keys.some((key) => {
-      const val = option[key]
-      if (typeof val === 'string') {
-        return contains(val, searchTerm.value)
-      }
-      return false
-    })
-  })
-})
-
-// Get currently selected option
-const selectedOption = computed(
-  () => options.value.find((opt) => opt.value === model.value) ?? null
-)
-
-// Default display function - shows empty string when no selection
-const getDisplayValue = computed(() => {
-  if (props.displayValue) {
-    return props.displayValue
-  }
-  return (option: ComboboxOption | undefined) => option?.label ?? ''
-})
-
-// Handle selection
-function handleSelect(option: ComboboxOption): void {
-  model.value = option.value
-  searchTerm.value = ''
-}
-
-// Get display text for an option (in dropdown)
-const getOptionDisplayText = computed(() => {
-  if (props.displayFn) {
-    return props.displayFn
-  }
-  return (option: ComboboxOption) => option.label
-})
-
-// Build props object for ComboboxRoot
-const comboboxRootProps = computed(() => {
-  const rootProps: Record<string, unknown> = {
-    disabled: disabled.value || false,
-    required: required.value || false,
-    ignoreFilter: true // We're doing custom filtering
-  }
-  if (name.value) {
-    rootProps['name'] = name.value
-  }
-  return rootProps
+const {
+  comboboxRootProps,
+  filteredOptions,
+  getDisplayValue,
+  getOptionDisplayText,
+  handleInputChange,
+  handleSelect,
+  searchTerm,
+  selectedOption
+} = useCombobox(model, options, {
+  disabled,
+  displayFn,
+  displayValue,
+  name,
+  required,
+  searchKeys
 })
 </script>
 
@@ -162,13 +110,13 @@ const comboboxRootProps = computed(() => {
       <ComboboxAnchor
         :class="[
           'base-combobox-anchor',
-          { 'base-combobox-anchor-error': !!error }
+          { 'base-combobox-anchor-error': Boolean(error) }
         ]"
       >
         <ComboboxInput
           :id="comboboxId"
           :aria-describedby="error ? `${comboboxId}-error` : undefined"
-          :aria-invalid="!!error"
+          :aria-invalid="Boolean(error)"
           class="base-combobox-input"
           :display-value="getDisplayValue"
           :placeholder="placeholder ?? 'Search...'"
@@ -255,7 +203,14 @@ const comboboxRootProps = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<!--
+  Global styles for BaseCombobox and BaseComboboxMulti.
+  These classes are shared between both combobox variants; keeping them global
+  avoids duplicating the same rules under different scoped data-attribute
+  selectors. Class names are namespaced with `base-combobox-` to prevent
+  collisions.
+-->
+<style>
 .base-combobox {
   display: flex;
   flex-direction: column;
@@ -323,8 +278,7 @@ const comboboxRootProps = computed(() => {
 .base-combobox-trigger {
   display: flex;
   flex-shrink: 0;
-  justify-content: center;
-  align-items: center;
+  place-items: center;
   width: 32px;
   height: 100%;
   padding-right: var(--spacing-2);
@@ -338,6 +292,11 @@ const comboboxRootProps = computed(() => {
   color: var(--color-text-primary);
 }
 
+.base-combobox-trigger:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
 .base-combobox-trigger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -348,13 +307,7 @@ const comboboxRootProps = computed(() => {
   color: var(--color-error);
   font-size: var(--font-size-sm);
 }
-</style>
 
-<!-- 
-  Global styles for Combobox content rendered via Portal/Teleport.
-  These cannot be scoped because the content is rendered outside the component tree.
--->
-<style>
 .base-combobox-content {
   z-index: var(--z-dropdown);
   overflow: hidden;
@@ -365,7 +318,7 @@ const comboboxRootProps = computed(() => {
 }
 
 .base-combobox-viewport {
-  max-height: 200px;
+  max-height: var(--combobox-max-height, 200px);
   padding: var(--spacing-1);
   overflow-y: auto;
 }
@@ -382,8 +335,7 @@ const comboboxRootProps = computed(() => {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
-  padding-left: var(--spacing-8);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-8);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
@@ -409,8 +361,7 @@ const comboboxRootProps = computed(() => {
   position: absolute;
   left: var(--spacing-2);
   display: flex;
-  justify-content: center;
-  align-items: center;
+  place-items: center;
 }
 
 .base-combobox-item-text {

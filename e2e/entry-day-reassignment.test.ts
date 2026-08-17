@@ -23,7 +23,6 @@ import {
   getTomorrowDate,
   getYesterdayDate,
   isMobileViewport,
-  navigateToDate,
   navigateToDay,
   saveEntryEdit,
   startEditingEntry,
@@ -171,10 +170,14 @@ test.describe('Assigned Day Reassignment Flow', () => {
     await createEntry(page, TEST_ENTRY_CONTENT.REFERENCE)
 
     // First: Move to yesterday
-    let entryCard = page.getByTestId('entry-card').first()
+    let entryCard = page
+      .getByTestId('entry-card')
+      .filter({ hasText: TEST_ENTRY_CONTENT.REFERENCE })
     await startEditingEntry(entryCard, isMobileViewport(page))
     let editor = getEntryEditor(page)
-    await editor.locator('input[type="date"]').fill(yesterdayDate)
+    let dateInput = editor.locator('input[type="date"]')
+    await dateInput.fill(yesterdayDate)
+    await expect(dateInput).toHaveValue(yesterdayDate)
     await saveEntryEdit(page)
 
     // Navigate to yesterday
@@ -188,10 +191,14 @@ test.describe('Assigned Day Reassignment Flow', () => {
     ).toBeVisible()
 
     // Second: Move to tomorrow
-    entryCard = page.getByTestId('entry-card').first()
+    entryCard = page
+      .getByTestId('entry-card')
+      .filter({ hasText: TEST_ENTRY_CONTENT.REFERENCE })
     await startEditingEntry(entryCard, isMobileViewport(page))
     editor = getEntryEditor(page)
-    await editor.locator('input[type="date"]').fill(tomorrowDate)
+    dateInput = editor.locator('input[type="date"]')
+    await dateInput.fill(tomorrowDate)
+    await expect(dateInput).toHaveValue(tomorrowDate)
     await saveEntryEdit(page)
 
     // Verify entry disappears from yesterday
@@ -201,8 +208,9 @@ test.describe('Assigned Day Reassignment Flow', () => {
         .filter({ hasText: TEST_ENTRY_CONTENT.REFERENCE })
     ).toHaveCount(0)
 
-    // Navigate to tomorrow
-    await navigateToDate(page, tomorrowDate)
+    // Navigate to tomorrow (two next-day steps from yesterday)
+    await navigateToDay(page, 'next') // yesterday → today
+    await navigateToDay(page, 'next') // today → tomorrow
 
     // Verify entry is on tomorrow
     await expect(

@@ -6,6 +6,7 @@ import router from './router'
 // Import global styles
 import './styles/tokens.css'
 import './styles/base.css'
+import './styles/toast.css'
 
 const app = createApp(App)
 

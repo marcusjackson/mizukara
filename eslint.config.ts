@@ -1,14 +1,15 @@
 import eslint from '@eslint/js'
+import vitest from '@vitest/eslint-plugin'
+import { defineConfig } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
-import vitest from 'eslint-plugin-vitest'
 import pluginVue from 'eslint-plugin-vue'
+import vueA11y from 'eslint-plugin-vuejs-accessibility'
 import tseslint from 'typescript-eslint'
 
-// eslint-disable-next-line @typescript-eslint/no-deprecated
-export default tseslint.config(
+export default defineConfig([
   // Global ignores
   {
     ignores: [
@@ -34,13 +35,52 @@ export default tseslint.config(
   // Vue rules
   ...pluginVue.configs['flat/recommended'],
 
+  // Vue accessibility rules
+  ...vueA11y.configs['flat/recommended'],
+
+  // Vue accessibility rule overrides
+  {
+    rules: {
+      // The default required: { every: ['nesting', 'id'] } requires BOTH wrapping
+      // AND a `for` attribute. Our components use explicit :for="id" associations
+      // (which satisfies the `id` check) without wrapping the control in the label.
+      // Changing to `some` allows either pattern, matching standard accessible HTML.
+      'vuejs-accessibility/label-has-for': [
+        'error',
+        { required: { some: ['nesting', 'id'] } }
+      ]
+    }
+  },
+
+  // Accessibility overrides for components where the rule has false positives
+  {
+    files: [
+      // <form @keydown> is legitimate: form IS a semantic HTML interactive
+      // element that handles keyboard shortcuts (Ctrl+S, Escape). The rule's
+      // isInteractiveElement() doesn't include form because its ARIA role
+      // (`form`) is a landmark, not a widget — a known rule limitation.
+      'src/modules/entry-day-view/components/EntryDayViewCreateForm.vue',
+      'src/modules/entry-day-view/components/EntryDayViewEntryEditor.vue',
+      // Drop zone: @drag* events are supplementary UX. The primary accessible
+      // interaction path is the "Browse" button inside the drop zone.
+      'src/base/components/BaseFileInput.vue'
+    ],
+    rules: {
+      'vuejs-accessibility/no-static-element-interactions': 'off'
+    }
+  },
+
   // TypeScript parser options for all TS-like files
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.vue'],
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,
-        project: ['./tsconfig.json'],
+        project: [
+          './tsconfig.json',
+          './tsconfig.test.json',
+          './tsconfig.e2e.json'
+        ],
         tsconfigRootDir: import.meta.dirname,
         extraFileExtensions: ['.vue']
       }
@@ -60,7 +100,7 @@ export default tseslint.config(
             // Vue imports
             ['^vue$', '^vue-router$'],
             // Third-party packages
-            ['^@?\\w'],
+            [String.raw`^@?\w`],
             // Base imports (@/base/)
             ['^@/base/'],
             // API layer imports (@/api/)
@@ -68,11 +108,11 @@ export default tseslint.config(
             // Shared imports (@/shared/)
             ['^@/shared/'],
             // Module/relative imports
-            ['^@/', '^\\.\\./'],
+            ['^@/', String.raw`^\.\.\/`],
             // Relative imports from same directory
-            ['^\\./'],
+            [String.raw`^\.\/`],
             // Type imports
-            ['^.*\\u0000$']
+            [String.raw`^.*\u0000$`]
           ]
         }
       ],
@@ -116,6 +156,12 @@ export default tseslint.config(
       'vitest/require-top-level-describe': 'error',
       'vitest/no-focused-tests': 'error',
       'vitest/no-disabled-tests': 'warn',
+      // This codebase's convention for discriminated results (zod safeParse,
+      // reorder success/failure, etc.) always asserts the discriminant with
+      // an unconditional expect() before narrowing in an `if` to assert the
+      // narrowed branch's fields. The rule can't tell that pattern apart
+      // from a genuinely risky conditional expect that could silently skip.
+      'vitest/no-conditional-expect': 'off',
       // Relax some TypeScript rules for tests
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
@@ -126,9 +172,9 @@ export default tseslint.config(
   // File size and complexity rules (new code only)
   // Order matters: more specific patterns must come before general patterns
   //
-  // Note: skipBlankLines and skipComments are set to false to count actual file lines.
-  // This makes limits simpler to understand and verify. Limits are set higher to account
-  // for blank lines and comments (roughly +50 from the previous code-only limits).
+  // Note: skipBlankLines and skipComments are both set to true so that blank
+  // lines and comment lines are excluded from the count. Limits apply to
+  // code lines only, which keeps them predictable and tool-independent.
 
   // Test files - most permissive (650 lines)
   // max-lines-per-function is disabled for test files because:
@@ -219,15 +265,11 @@ export default tseslint.config(
     }
   },
 
-  // UI components (200 lines) - excluding Root, Section, Page, and Base
+  // UI components (225 lines) - excluding Root, Section, Page
+  // Note: base components are handled by the dedicated rule below
   {
     files: ['**/*.vue'],
-    ignores: [
-      '**/*Root*.vue',
-      '**/*Section*.vue',
-      '**/*Page.vue',
-      'src/base/**' // Base components are generic primitives with higher limits
-    ],
+    ignores: ['**/*Root*.vue', '**/*Section*.vue', '**/*Page.vue'],
     rules: {
       'max-lines': [
         'error',
@@ -236,14 +278,16 @@ export default tseslint.config(
     }
   },
 
-  // Base components (450 lines) - generic primitives that work in any project
-  // Higher limit because they are complete, self-contained components
+  // Base components (350 lines) - generic primitives that work in any project
+  // Higher than UI components because they are self-contained with
+  // accessibility handling, keyboard navigation, complex interactions, and
+  // shared global CSS that cannot easily be split across files.
   {
     files: ['src/base/components/**/*.vue'],
     rules: {
       'max-lines': [
         'error',
-        { max: 450, skipBlankLines: true, skipComments: true }
+        { max: 350, skipBlankLines: true, skipComments: true }
       ]
     }
   },
@@ -338,12 +382,12 @@ export default tseslint.config(
   {
     languageOptions: {
       globals: {
-        NodeJS: true
+        NodeJS: true,
+        __APP_VERSION__: 'readonly'
       }
     }
   },
 
   // Prettier (must be last to override other formatting rules)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   eslintConfigPrettier
-)
+])

@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-import pkg from './package.json'
+import pkg from './package.json' with { type: 'json' }
 
 /* eslint-disable max-lines-per-function */
 export default defineConfig(({ command }) => ({
@@ -26,8 +26,32 @@ export default defineConfig(({ command }) => ({
         theme_color: '#5a8a94',
         background_color: '#fafafa',
         display: 'standalone',
-        start_url: '.',
+        start_url: '/',
         icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
           {
             src: 'pwa-192x192.svg',
             sizes: '192x192',
@@ -38,7 +62,7 @@ export default defineConfig(({ command }) => ({
             src: 'pwa-512x512.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
           }
         ]
       },
@@ -85,7 +109,7 @@ export default defineConfig(({ command }) => ({
 
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(import.meta.dirname, 'src')
     }
   },
 
@@ -96,7 +120,7 @@ export default defineConfig(({ command }) => ({
 
   build: {
     target: 'es2022',
-    sourcemap: true
+    sourcemap: process.env['NODE_ENV'] !== 'production'
   },
 
   server: {
@@ -113,7 +137,13 @@ export default defineConfig(({ command }) => ({
 
   preview: {
     port: 4173,
-    strictPort: true
+    strictPort: true,
+    // Required headers for SharedArrayBuffer (same as dev server)
+    // sql.js WASM requires these headers to function correctly
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
   }
 }))
 /* eslint-enable max-lines-per-function */

@@ -8,7 +8,7 @@
  * Route: /settings
  */
 
-import { BaseToast } from '@/base/components'
+import { SharedToast } from '@/shared/components'
 
 import AppSettingsRoot from '@/modules/app-settings/components/AppSettingsRoot.vue'
 </script>
@@ -16,5 +16,5 @@ import AppSettingsRoot from '@/modules/app-settings/components/AppSettingsRoot.v
 <template>
   <AppSettingsRoot />
 
-  <BaseToast />
+  <SharedToast />
 </template>

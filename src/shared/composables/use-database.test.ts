@@ -11,6 +11,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Mock IndexedDB since it's not available in jsdom
 const mockIDBStore = new Map<string, Uint8Array>()
 
+interface IDBRequestLike {
+  result?: Uint8Array | undefined
+  onerror: (() => void) | null
+  onsuccess: (() => void) | null
+}
+
+function mockIDBGet(key: string): IDBRequestLike {
+  const req: IDBRequestLike = {
+    result: mockIDBStore.get(key),
+    onerror: null,
+    onsuccess: null
+  }
+  setTimeout(() => req.onsuccess?.(), 0)
+  return req
+}
+
+function mockIDBPut(data: Uint8Array, key: string): IDBRequestLike {
+  mockIDBStore.set(key, data)
+  const req: IDBRequestLike = { onerror: null, onsuccess: null }
+  setTimeout(() => req.onsuccess?.(), 0)
+  return req
+}
+
 const mockIndexedDB = {
   open: vi.fn(() => {
     const request = {
@@ -19,24 +42,8 @@ const mockIndexedDB = {
         createObjectStore: vi.fn(),
         transaction: () => ({
           objectStore: () => ({
-            get: (key: string) => {
-              const req = {
-                result: mockIDBStore.get(key),
-                onerror: null as (() => void) | null,
-                onsuccess: null as (() => void) | null
-              }
-              setTimeout(() => req.onsuccess?.(), 0)
-              return req
-            },
-            put: (data: Uint8Array, key: string) => {
-              mockIDBStore.set(key, data)
-              const req = {
-                onerror: null as (() => void) | null,
-                onsuccess: null as (() => void) | null
-              }
-              setTimeout(() => req.onsuccess?.(), 0)
-              return req
-            }
+            get: mockIDBGet,
+            put: mockIDBPut
           })
         })
       },

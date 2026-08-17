@@ -4,7 +4,7 @@
 
 import { TEST_DATES } from '@test/constants/dates'
 import { createTestDatabaseForEntries, seedEntry } from '@test/helpers/database'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { findByDay, findById } from './entry-queries'
 
@@ -45,6 +45,11 @@ describe('entry-queries', () => {
   })
 
   describe('findByDay', () => {
+    it('should throw TypeError for invalid date', () => {
+      expect(() => findByDay(db, 'invalid-date')).toThrow(TypeError)
+      expect(() => findByDay(db, '2026-13-01')).toThrow(TypeError)
+    })
+
     it('returns entries for correct day only', () => {
       const result = findByDay(db, TEST_DATES.DEFAULT)
 

@@ -21,7 +21,6 @@ describe('BaseSpinner', () => {
 
     const spinner = screen.getByRole('status')
     expect(spinner).toHaveAttribute('aria-label', 'Loading...')
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
   describe('sizes', () => {
@@ -56,7 +55,6 @@ describe('BaseSpinner', () => {
 
       const spinner = screen.getByRole('status')
       expect(spinner).toHaveAttribute('aria-label', 'Saving data...')
-      expect(screen.getByText('Saving data...')).toBeInTheDocument()
     })
   })
 })

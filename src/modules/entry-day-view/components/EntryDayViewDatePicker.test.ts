@@ -133,7 +133,9 @@ describe('EntryDayViewDatePicker', () => {
     await user.click(confirmButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/invalid date/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/valid date in YYYY-MM-DD format/i)
+      ).toBeInTheDocument()
     })
   })
 
@@ -166,14 +168,18 @@ describe('EntryDayViewDatePicker', () => {
     await user.click(confirmButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/invalid date/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/valid date in YYYY-MM-DD format/i)
+      ).toBeInTheDocument()
     })
 
     // Type a valid date to clear error
     await user.clear(input)
     await user.type(input, '2026-03-01')
 
-    expect(screen.queryByText(/invalid date/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/valid date in YYYY-MM-DD format/i)
+    ).not.toBeInTheDocument()
   })
 
   it('confirms with Enter key', async () => {

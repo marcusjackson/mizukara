@@ -159,8 +159,6 @@ src/
 e2e/                            # End-to-end tests (Playwright)
 test/                           # Unit test setup and helpers
 docs/                           # Project documentation
-.github/instructions/           # Coding standards and patterns
-.kiro/steering/                 # Project steering (philosophy, tech decisions)
 ```
 
 ---
@@ -169,8 +167,8 @@ docs/                           # Project documentation
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
+- Node.js 24+
+- pnpm 11+
 
 ### Installation
 
@@ -239,21 +237,6 @@ make ci-full            # Full validation (lint + unit + E2E)
 
 - **[Concept & Design Rationale](docs/concept-design-rationale.md)** — Philosophy, constraints, and design thinking
 
-Detailed coding standards and development patterns are in [.github/instructions/](.github/instructions/):
-
-- `project.instructions.md` — File size limits, import order, general patterns
-- `components.instructions.md` — Component hierarchy and extraction patterns
-- `composables.instructions.md` — Repository patterns and handler extraction
-- `typescript.instructions.md` — Type safety and patterns
-- `testing.instructions.md` — Testing requirements and patterns
-- `commit.instructions.md` — Commit message standards
-
-Project steering and architecture decisions are in [.kiro/steering/](.kiro/steering/):
-
-- `product.md` — Product vision and philosophy
-- `tech.md` — Technology stack and standards
-- `structure.md` — Project organization and naming conventions
-
 ---
 
 ## 🔐 Privacy & Data
@@ -270,17 +253,6 @@ Your journal is yours.
 ## License
 
 LGPL-2.1
-
----
-
-## Contributing
-
-While this is a personal tool, contributions are welcome. Please:
-
-1. Read the instruction files in `.github/instructions/`
-2. Follow the coding standards and commit message guidelines
-3. Write tests for new features
-4. Ensure all checks pass (`make ci-full`)
 
 ---
 

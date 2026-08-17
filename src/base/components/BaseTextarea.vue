@@ -6,7 +6,9 @@
  * Works with vee-validate through v-model.
  */
 
-import { computed, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
+
+import { useAutoExpandTextarea } from '../composables/use-auto-expand-textarea'
 
 const props = defineProps<{
   /** Textarea label text */
@@ -21,27 +23,37 @@ const props = defineProps<{
   name?: string
   /** Make textarea required */
   required?: boolean
-  /** Number of visible text lines */
+  /** Number of visible text lines (minimum when autoExpand is enabled) */
   rows?: number
+  /** Auto-expand textarea height to fit content as the user types */
+  autoExpand?: boolean
+  /** Maximum number of rows when autoExpand is enabled (default: unlimited) */
+  maxRows?: number
 }>()
 
 const model = defineModel<string | undefined>()
 
 const textareaId = useId()
+const textareaEl = ref<HTMLTextAreaElement | null>(null)
 
 const textareaClasses = computed(() => [
   'base-textarea-field',
   {
     'base-textarea-field-error': !!props.error,
-    'base-textarea-field-disabled': props.disabled
+    'base-textarea-field-disabled': props.disabled,
+    'base-textarea-field-auto-expand': props.autoExpand
   }
 ])
+
+useAutoExpandTextarea(textareaEl, model, {
+  enabled: computed(() => props.autoExpand),
+  ...(props.maxRows === undefined ? {} : { maxRows: props.maxRows })
+})
 
 // Expose the textarea element for programmatic focus
 defineExpose({
   focus: () => {
-    const textarea = document.getElementById(textareaId)
-    textarea?.focus()
+    textareaEl.value?.focus()
   }
 })
 </script>
@@ -64,6 +76,7 @@ defineExpose({
 
     <textarea
       :id="textareaId"
+      ref="textareaEl"
       v-model="model"
       :aria-describedby="error ? `${textareaId}-error` : undefined"
       :aria-invalid="!!error"
@@ -117,6 +130,11 @@ defineExpose({
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
+}
+
+.base-textarea-field-auto-expand {
+  resize: none;
+  overflow: hidden;
 }
 
 .base-textarea-field::placeholder {

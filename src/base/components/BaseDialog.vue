@@ -6,8 +6,6 @@
  * Provides overlay, centered content, title, description, and close button.
  */
 
-import { ref, watch } from 'vue'
-
 import {
   DialogClose,
   DialogContent,
@@ -26,31 +24,12 @@ defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
-
-// Internal state for dialog open/close - syncs with open model
-// This is the pattern used in the reference implementation
-const internalOpen = ref<boolean>(open.value)
-
-// Watch for external model changes and sync internal state
-watch(
-  () => open.value,
-  (newValue: boolean) => {
-    internalOpen.value = newValue
-  },
-  { immediate: true }
-)
-
-// Handle changes from DialogRoot and update the model
-const handleDialogUpdate = (newValue: boolean) => {
-  internalOpen.value = newValue
-  open.value = newValue
-}
 </script>
 
 <template>
   <DialogRoot
-    :open="internalOpen"
-    @update:open="handleDialogUpdate"
+    :open="open"
+    @update:open="(val) => (open = val)"
   >
     <slot name="trigger" />
 
@@ -65,8 +44,11 @@ const handleDialogUpdate = (newValue: boolean) => {
           {{ title }}
         </DialogTitle>
 
-        <DialogDescription class="base-dialog-description">
-          {{ description || '' }}
+        <DialogDescription
+          v-if="description"
+          class="base-dialog-description"
+        >
+          {{ description }}
         </DialogDescription>
 
         <slot />
@@ -95,10 +77,6 @@ const handleDialogUpdate = (newValue: boolean) => {
     </DialogPortal>
   </DialogRoot>
 </template>
-
-<style scoped>
-/* Scoped styles only apply to elements within this component's direct DOM */
-</style>
 
 <!-- 
   Global styles for Dialog components rendered via Portal/Teleport.

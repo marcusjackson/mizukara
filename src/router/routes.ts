@@ -11,23 +11,33 @@
  */
 export const ROUTES = {
   HOME: '/',
-  RECORD_LIST: '/records',
-  RECORD_DETAIL: '/records/:id',
+  ENTRY_DAY: '/entries/:date?',
   SETTINGS: '/settings',
-  COMING_SOON: '/coming-soon'
+  TAGS: '/tags'
 } as const
 
 /**
- * Helper to build a route with parameters
- * @example buildRoute(ROUTES.RECORD_DETAIL, { id: '123' }) // '/records/123'
+ * Builds the URL path for the entry day view for a given date.
+ *
+ * @param date - ISO 8601 date string (YYYY-MM-DD)
+ * @returns URL path string for the entry day view route
+ * @example buildEntryDayRoute('2026-02-10') // '/entries/2026-02-10'
  */
-export function buildRoute(
-  path: string,
-  params: Record<string, string | number>
-): string {
-  let result = path
-  for (const [key, value] of Object.entries(params)) {
-    result = result.replace(`:${key}`, String(value))
-  }
-  return result
+export function buildEntryDayRoute(date: string): string {
+  return `/entries/${date}`
+}
+
+/**
+ * Build the document title for a given page title.
+ *
+ * Extracted as a pure function so it can be unit-tested independently of the
+ * router lifecycle hook.
+ *
+ * @param pageTitle - The page-specific title from route meta, or undefined
+ * @returns Full document title string
+ * @example buildPageTitle('Settings') // 'Settings | Mizukara'
+ * @example buildPageTitle(undefined) // 'Mizukara'
+ */
+export function buildPageTitle(pageTitle: string | undefined): string {
+  return pageTitle ? `${pageTitle} | Mizukara` : 'Mizukara'
 }

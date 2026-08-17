@@ -28,7 +28,9 @@ describe('entryCreateFormSchema', () => {
     if (!result.success) {
       expect(result.error.issues).toBeDefined()
       expect(result.error.issues.length).toBeGreaterThan(0)
-      expect(result.error.issues[0]!.message).toBe('Content is required')
+      expect(result.error.issues[0]!.message).toBe(
+        'Please enter some content for your entry'
+      )
     }
   })
 

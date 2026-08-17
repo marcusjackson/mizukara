@@ -15,7 +15,11 @@
 import { expect, test } from '@playwright/test'
 
 import { TEST_ENTRY_CONTENT } from './helpers/test-data'
-import { createEntry, waitForPageReady } from './helpers/test-utils'
+import {
+  createEntry,
+  waitForEntries,
+  waitForPageReady
+} from './helpers/test-utils'
 
 test.describe('Entry Reordering Flow', () => {
   test.beforeEach(async ({ context, page }) => {
@@ -34,8 +38,11 @@ test.describe('Entry Reordering Flow', () => {
     await createEntry(page, TEST_ENTRY_CONTENT.FIRST)
     await createEntry(page, TEST_ENTRY_CONTENT.SECOND)
 
-    // Wait for entries to appear
-    await expect(page.getByTestId('entry-card')).toHaveCount(2)
+    // Wait for both entries to be visible and list to be stable
+    await waitForEntries(page, [
+      TEST_ENTRY_CONTENT.FIRST,
+      TEST_ENTRY_CONTENT.SECOND
+    ])
 
     // Verify reorder button appears
     const reorderButton = page.getByRole('button', { name: /reorder entries/i })
@@ -209,8 +216,12 @@ test.describe('Entry Reordering Flow', () => {
     await waitForPageReady(page)
 
     // Wait for entries to be loaded from database after reload
+    await waitForEntries(page, [
+      TEST_ENTRY_CONTENT.SECOND,
+      TEST_ENTRY_CONTENT.FIRST,
+      TEST_ENTRY_CONTENT.THIRD
+    ])
     entries = page.getByTestId('entry-content')
-    await expect(entries).toHaveCount(3, { timeout: 3000 })
 
     // Verify order persists
     await expect(entries.nth(0)).toContainText(TEST_ENTRY_CONTENT.SECOND)

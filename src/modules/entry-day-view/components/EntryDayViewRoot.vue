@@ -1,36 +1,19 @@
 <script setup lang="ts">
 /**
- * EntryDayViewRoot
- *
- * Root orchestration component for day view.
- *
- * Features:
- * - Fetches entries for currently selected day
- * - Coordinates navigation state with sections
- * - Registers global keyboard shortcuts
- * - Handles loading and error states
- * - Provides refetch callback for mutations
- *
- * @example
- * ```vue
- * <EntryDayViewRoot :initial-date="'2026-02-10'" />
- * ```
+ * EntryDayViewRoot — root orchestrator for the day view.
+ * Coordinates navigation, shortcuts, loading/error states, and data refetching.
  */
 
 import { onMounted, ref, watch } from 'vue'
 
-import { findByDay } from '@/api/entries/entry-queries'
-
-import { useDatabase } from '@/shared/composables/use-database'
-import { useKeyboardShortcuts } from '@/shared/composables/use-keyboard-shortcuts'
-
+import { useTags } from '@/modules/tags/composables/use-tags'
 import { useDayNavigation } from '../composables/use-day-navigation'
+import { useEntryDayViewQueries } from '../composables/use-entry-day-view-queries'
+import { useEntryDayViewShortcuts } from '../composables/use-entry-day-view-shortcuts'
 
 import EntryDayViewDatePicker from './EntryDayViewDatePicker.vue'
 import EntryDayViewSectionList from './EntryDayViewSectionList.vue'
 import EntryDayViewSectionNavigation from './EntryDayViewSectionNavigation.vue'
-
-import type { Entry } from '@/shared/types/entry-types'
 
 interface Props {
   /** Initial date from route param (ISO string YYYY-MM-DD) or null for today */
@@ -39,18 +22,17 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Database access
-const { database: db } = useDatabase()
+// Tags
+const { fetchTags, tagOptions } = useTags()
 
 // Day navigation
 const { currentDate, goToNextDay, goToPrevDay } = useDayNavigation({
   initialDate: props.initialDate ?? null
 })
 
-// Entry list state
-const entries = ref<Entry[]>([])
-const isLoading = ref(true)
-const error = ref<Error | null>(null)
+// Entry data
+const { entries, entryTagsMap, error, fetchEntries, isLoading } =
+  useEntryDayViewQueries(currentDate)
 
 // Date picker state
 const datePickerOpen = ref(false)
@@ -60,56 +42,23 @@ const sectionListRef = ref<InstanceType<typeof EntryDayViewSectionList> | null>(
   null
 )
 
-/**
- * Fetch entries for the current date
- */
-const fetchEntries = () => {
-  const database = db.value
-  if (!database) {
-    error.value = new Error('Database not initialized')
-    isLoading.value = false
-    return
-  }
-
-  try {
-    isLoading.value = true
-    error.value = null
-    entries.value = findByDay(database, currentDate.value)
-  } catch (err) {
-    error.value = err instanceof Error ? err : new Error(String(err))
-    entries.value = []
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const refetchEntries = (): Promise<void> => {
   fetchEntries()
+  void fetchTags()
   return Promise.resolve()
 }
 
-/**
- * Focus the create form textarea
- *
- * Uses template ref to access child component method.
- * Preferred over DOM querying for maintainability and type safety.
- */
+/** Focus the create form textarea */
 const focusCreateForm = () => {
   sectionListRef.value?.focusCreateForm()
 }
 
-/**
- * Handle save action (context-aware)
- * Delegates to section list component which knows about form context
- */
+/** Handle save action — delegates to active editor or create form */
 const handleSave = () => {
   sectionListRef.value?.handleGlobalSave()
 }
 
-/**
- * Handle escape action (context-aware)
- * Closes date picker if open, otherwise delegates to section list
- */
+/** Handle escape — closes date picker if open, otherwise delegates to section list */
 const handleEscape = () => {
   if (datePickerOpen.value) {
     datePickerOpen.value = false
@@ -142,51 +91,17 @@ watch(currentDate, () => {
 // Initial fetch on mount
 onMounted(() => {
   fetchEntries()
+  void fetchTags()
 })
 
-// Register keyboard shortcuts
-useKeyboardShortcuts([
-  {
-    key: 'cmd+n',
-    handler: focusCreateForm,
-    preventDefault: true
-  },
-  {
-    key: 'j',
-    handler: goToNextDay,
-    preventDefault: true
-  },
-  {
-    key: 'k',
-    handler: goToPrevDay,
-    preventDefault: true
-  },
-  {
-    key: 'arrowdown',
-    handler: goToNextDay,
-    preventDefault: true
-  },
-  {
-    key: 'arrowup',
-    handler: goToPrevDay,
-    preventDefault: true
-  },
-  {
-    key: 'g',
-    handler: handleOpenDatePicker,
-    preventDefault: true
-  },
-  {
-    key: 'cmd+s',
-    handler: handleSave,
-    preventDefault: true
-  },
-  {
-    key: 'escape',
-    handler: handleEscape,
-    preventDefault: false
-  }
-])
+useEntryDayViewShortcuts({
+  focusCreateForm,
+  goToNextDay,
+  goToPrevDay,
+  handleOpenDatePicker,
+  handleSave,
+  handleEscape
+})
 </script>
 
 <template>
@@ -234,7 +149,9 @@ useKeyboardShortcuts([
 
       <EntryDayViewSectionList
         ref="sectionListRef"
+        :all-tags="tagOptions"
         :current-date="currentDate"
+        :entry-tags-map="entryTagsMap"
         :items="entries"
         :on-refetch="refetchEntries"
       />
@@ -251,7 +168,7 @@ useKeyboardShortcuts([
 
 <style scoped>
 .entry-day-view-root {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-background);
 }
 

@@ -17,13 +17,13 @@
  * - Update baselines only after reviewing diffs (intentional changes only)
  *
  * See .github/instructions/vrt-testing.instructions.md for complete guidelines
- * See .kiro/specs/journal-core-mvp/vrt-plan.md for detailed strategy
+ * See .kiro/specs/entry-day-view/vrt-plan.md for detailed strategy
  */
 
 import { expect, test } from '@playwright/test'
 
-import { VIEWPORTS } from './helpers/test-constants'
-import { createEntry } from './helpers/test-utils'
+import { TIMEOUTS, VIEWPORTS } from './helpers/test-constants'
+import { createEntry, disableAnimations } from './helpers/test-utils'
 
 import type { Page } from '@playwright/test'
 
@@ -31,22 +31,6 @@ import type { Page } from '@playwright/test'
  * Fixed test date for consistency (avoids date-dependent failures)
  */
 const TEST_DATE = '2026-02-14'
-
-/**
- * Disable CSS animations and transitions to prevent flaky screenshots
- */
-async function disableAnimations(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        animation-duration: 0s !important;
-        animation-delay: 0s !important;
-        transition-duration: 0s !important;
-        transition-delay: 0s !important;
-      }
-    `
-  })
-}
 
 /**
  * Wait for page to be stable and ready for screenshot
@@ -58,7 +42,7 @@ async function preparePageForVRT(page: Page): Promise<void> {
   await page.goto(`/entries/${TEST_DATE}`, { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   await expect(page.getByTestId('entry-day-view-navigator')).toBeVisible({
-    timeout: 15000
+    timeout: TIMEOUTS.long
   })
   await expect(page.getByTestId('create-form')).toBeVisible()
   await page.mouse.move(0, 0) // Hide cursor
@@ -135,7 +119,7 @@ test.describe('Visual Regression: Components', () => {
     })
   })
 
-  test.describe('EntryDayViewEntryCard', () => {
+  test.describe('SharedEntryCard', () => {
     test('normal state desktop', async ({ page }) => {
       await page.setViewportSize(VIEWPORTS.desktop)
       await preparePageForVRT(page)
@@ -463,7 +447,9 @@ test.describe('Visual Regression: Components', () => {
       await dialog.getByRole('button', { name: /go/i }).click()
 
       // Wait for error message
-      await expect(dialog.getByText(/invalid date/i)).toBeVisible()
+      await expect(
+        dialog.getByText(/valid date in YYYY-MM-DD format/i)
+      ).toBeVisible()
 
       await expect(dialog).toHaveScreenshot(
         'date-picker-validation-error.png',
@@ -576,8 +562,7 @@ test.describe('Visual Regression: Layouts', () => {
     })
   })
 
-  test('day view with no entries - responsive', async ({ page }) => {
-    // Test at mobile breakpoint
+  test('day view with no entries - mobile', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.mobile)
     await preparePageForVRT(page)
 
@@ -586,12 +571,11 @@ test.describe('Visual Regression: Layouts', () => {
       threshold: 0.02,
       maxDiffPixels: 500
     })
+  })
 
-    // Test at desktop breakpoint
+  test('day view with no entries - desktop', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.desktop)
-    await page.goto(`/entries/${TEST_DATE}`, { waitUntil: 'networkidle' })
-    await page.evaluate(() => document.fonts.ready)
-    await page.mouse.move(0, 0)
+    await preparePageForVRT(page)
 
     await expect(page).toHaveScreenshot('day-view-empty-desktop.png', {
       fullPage: true,
@@ -610,7 +594,7 @@ async function prepareSettingsForVRT(page: Page): Promise<void> {
   await page.goto('/settings', { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({
-    timeout: 15000
+    timeout: TIMEOUTS.long
   })
   await page.mouse.move(0, 0)
 }

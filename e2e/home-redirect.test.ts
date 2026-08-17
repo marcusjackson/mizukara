@@ -9,6 +9,7 @@
 
 import { expect, test } from '@playwright/test'
 
+import { TIMEOUTS } from './helpers/test-constants'
 import { waitForPageReady } from './helpers/test-utils'
 
 test.describe('Home Page Redirect', () => {
@@ -16,14 +17,14 @@ test.describe('Home Page Redirect', () => {
     await page.goto('/', { waitUntil: 'networkidle' })
 
     // Wait for redirect to complete
-    await expect(page).toHaveURL(/\/entries/, { timeout: 5000 })
+    await expect(page).toHaveURL(/\/entries/, { timeout: TIMEOUTS.short })
   })
 
   test('entry day view loads correctly after redirect', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
 
     // Wait for redirect and page load
-    await expect(page).toHaveURL(/\/entries/, { timeout: 5000 })
+    await expect(page).toHaveURL(/\/entries/, { timeout: TIMEOUTS.short })
     await waitForPageReady(page)
 
     // Verify create form is visible (day view loaded)
@@ -32,7 +33,7 @@ test.describe('Home Page Redirect', () => {
 
   test('current date displays today after redirect', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
-    await expect(page).toHaveURL(/\/entries/, { timeout: 5000 })
+    await expect(page).toHaveURL(/\/entries/, { timeout: TIMEOUTS.short })
     await waitForPageReady(page)
 
     // Verify date display is visible with a date
@@ -45,7 +46,7 @@ test.describe('Home Page Redirect', () => {
     await page.goto('/')
 
     // Should redirect before any meaningful content renders
-    await expect(page).toHaveURL(/\/entries/, { timeout: 5000 })
+    await expect(page).toHaveURL(/\/entries/, { timeout: TIMEOUTS.short })
 
     // After redirect, day view should be visible
     await waitForPageReady(page)
@@ -61,7 +62,7 @@ test.describe('Home Page Redirect', () => {
     await page.goto('/', { waitUntil: 'networkidle' })
 
     // Verify we end up at entries without intermediate state
-    await expect(page).toHaveURL(/\/entries/, { timeout: 5000 })
+    await expect(page).toHaveURL(/\/entries/, { timeout: TIMEOUTS.short })
     await waitForPageReady(page)
   })
 })

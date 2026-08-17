@@ -6,3 +6,6 @@
 
 // Re-export entry helpers
 export * from './entries'
+
+// Re-export tag helpers
+export * from './tags'

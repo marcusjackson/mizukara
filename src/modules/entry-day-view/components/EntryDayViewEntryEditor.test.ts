@@ -3,7 +3,7 @@
  */
 
 import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/vue'
+import { render, screen, waitFor } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 
 import EntryDayViewEntryEditor from './EntryDayViewEntryEditor.vue'
@@ -52,7 +52,9 @@ describe('EntryDayViewEntryEditor', () => {
     await user.click(saveButton)
 
     // Should show validation error
-    expect(screen.getByText('Content is required')).toBeInTheDocument()
+    expect(
+      screen.getByText('Please enter some content for your entry')
+    ).toBeInTheDocument()
   })
 
   it('Save button emits save-requested event with correct data', async () => {
@@ -62,8 +64,10 @@ describe('EntryDayViewEntryEditor', () => {
     const saveButton = screen.getByRole('button', { name: /save/i })
     await user.click(saveButton)
 
-    // Verify save-requested was emitted with correct data
-    expect(emitted()['save-requested']).toBeDefined()
+    // handleSubmit is async — wait for the emission
+    await waitFor(() => {
+      expect(emitted()['save-requested']).toBeDefined()
+    })
     expect(emitted()['save-requested']![0]).toEqual([
       {
         content: 'Original content',
@@ -84,14 +88,53 @@ describe('EntryDayViewEntryEditor', () => {
     const saveButton = screen.getByRole('button', { name: /save/i })
     await user.click(saveButton)
 
-    // Verify save-requested was emitted with updated assignedDay
-    expect(emitted()['save-requested']).toBeDefined()
+    // handleSubmit is async — wait for the emission
+    await waitFor(() => {
+      expect(emitted()['save-requested']).toBeDefined()
+    })
     expect(emitted()['save-requested']![0]).toEqual([
       {
         content: 'Original content',
         assignedDay: '2026-02-15'
       }
     ])
+  })
+
+  it('Ctrl+S shortcut emits save-requested with validated data', async () => {
+    const user = userEvent.setup()
+    const { emitted } = renderComponent()
+
+    const textarea = screen.getByLabelText('Content')
+    await user.click(textarea)
+    await user.keyboard('{Control>}s{/Control}')
+
+    await waitFor(() => {
+      expect(emitted()['save-requested']).toBeDefined()
+    })
+    expect(emitted()['save-requested']![0]).toEqual([
+      {
+        content: 'Original content',
+        assignedDay: '2026-02-11'
+      }
+    ])
+  })
+
+  it('Ctrl+S shortcut does not emit when content is empty', async () => {
+    const user = userEvent.setup()
+    const { emitted } = renderComponent()
+
+    const textarea = screen.getByLabelText('Content')
+    await user.clear(textarea)
+    await user.click(textarea)
+    await user.keyboard('{Control>}s{/Control}')
+
+    // Validation should block emission — error should appear instead
+    await waitFor(() => {
+      expect(
+        screen.getByText('Please enter some content for your entry')
+      ).toBeInTheDocument()
+    })
+    expect(emitted()['save-requested']).toBeUndefined()
   })
 
   it('Cancel button emits edit-cancelled event', async () => {

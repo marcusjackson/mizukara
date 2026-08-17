@@ -106,7 +106,6 @@ function handleOpenChange(value: boolean): void {
     <div class="shared-confirm-dialog-actions">
       <BaseButton
         ref="cancelButtonRef"
-        :aria-label="`${cancelLabel} - ${variant === 'danger' ? 'Recommended for destructive actions' : 'Cancel action'}`"
         :disabled="loading ?? false"
         variant="secondary"
         @click="handleCancel"
@@ -114,7 +113,6 @@ function handleOpenChange(value: boolean): void {
         {{ cancelLabel }}
       </BaseButton>
       <BaseButton
-        :aria-label="`${confirmLabel}${variant === 'danger' ? ' - This action is destructive and cannot be undone' : ''}`"
         :disabled="loading ?? false"
         :loading="loading ?? false"
         :variant="confirmButtonVariant"

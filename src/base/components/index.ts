@@ -17,7 +17,6 @@ export { default as BaseSelect } from './BaseSelect.vue'
 export { default as BaseSpinner } from './BaseSpinner.vue'
 export { default as BaseSwitch } from './BaseSwitch.vue'
 export { default as BaseTextarea } from './BaseTextarea.vue'
-export { default as BaseToast } from './BaseToast.vue'
 
 // Re-export types
 export type { ComboboxOption } from './BaseCombobox.vue'

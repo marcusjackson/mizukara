@@ -9,7 +9,12 @@
 
 import { expect, test } from '@playwright/test'
 
-import { getTodayDate, waitForPageReady } from './helpers/test-utils'
+import { VIEWPORTS } from './helpers/test-constants'
+import {
+  getTodayDate,
+  getYesterdayDate,
+  waitForPageReady
+} from './helpers/test-utils'
 
 test.describe('Date Picker Navigation', () => {
   test.beforeEach(async ({ context, page }) => {
@@ -44,7 +49,7 @@ test.describe('Date Picker Navigation', () => {
   })
 
   test('navigates to selected date', async ({ page }) => {
-    const targetDate = '2026-03-01'
+    const targetDate = getYesterdayDate()
 
     const dateButton = page.getByRole('button', { name: /jump to date/i })
     await dateButton.click()
@@ -123,12 +128,14 @@ test.describe('Date Picker Navigation', () => {
     const input = dialog.getByLabel(/select date/i)
     // Clear and type invalid value
     await input.fill('')
-    await input.pressSequentially('invalid-date', { delay: 50 })
+    await input.pressSequentially('invalid-date')
 
     await dialog.getByRole('button', { name: /go to date/i }).click()
 
     // Validation error visible
-    await expect(dialog.getByText(/invalid date/i)).toBeVisible()
+    await expect(
+      dialog.getByText(/valid date in YYYY-MM-DD format/i)
+    ).toBeVisible()
 
     // Dialog stays open
     await expect(dialog).toBeVisible()
@@ -147,7 +154,7 @@ test.describe('Date Picker Navigation', () => {
   })
 
   test('date picker works on mobile viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 })
+    await page.setViewportSize(VIEWPORTS.mobile)
     await page.goto('/entries', { waitUntil: 'networkidle' })
     await waitForPageReady(page)
 
@@ -184,6 +191,8 @@ test.describe('Date Picker Navigation', () => {
 
     // Page should show the day view for that date
     await waitForPageReady(page)
-    await expect(page.getByTestId('entry-day-view-navigator')).toBeVisible()
+    await expect(
+      page.getByRole('navigation', { name: 'Day navigation' })
+    ).toBeVisible()
   })
 })

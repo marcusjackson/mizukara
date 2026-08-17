@@ -17,7 +17,11 @@
 import { expect, test } from '@playwright/test'
 
 import { TEST_ENTRY_CONTENT } from './helpers/test-data'
-import { createEntry, waitForPageReady } from './helpers/test-utils'
+import {
+  createEntry,
+  waitForEntries,
+  waitForPageReady
+} from './helpers/test-utils'
 
 test.describe('Entry Creation Flow', () => {
   test.beforeEach(async ({ context, page }) => {
@@ -73,9 +77,13 @@ test.describe('Entry Creation Flow', () => {
       await createEntry(page, content)
     }
 
-    // Verify all entries are displayed
+    // Verify all entries are displayed and list is stable
+    await waitForEntries(page, [
+      TEST_ENTRY_CONTENT.FIRST,
+      TEST_ENTRY_CONTENT.SECOND,
+      TEST_ENTRY_CONTENT.THIRD
+    ])
     const entryCards = page.getByTestId('entry-card')
-    await expect(entryCards).toHaveCount(3)
 
     // Verify entries display in creation order (oldest first by order_position)
     await expect(entryCards.nth(0).getByTestId('entry-content')).toContainText(
@@ -110,21 +118,11 @@ test.describe('Entry Creation Flow', () => {
   })
 
   test('displays empty state when no entries exist', async ({ page }) => {
-    // Check for empty state - it may or may not be visible depending on database state
     const emptyState = page.getByTestId('empty-state')
-    const entryCards = page.getByTestId('entry-card')
 
-    // Either empty state should be visible OR entries should be present
-    const hasEmpty = (await emptyState.count()) > 0
-    const hasEntries = (await entryCards.count()) > 0
-
-    // At least one should be true
-    expect(hasEmpty || hasEntries).toBe(true)
-
-    // If empty state is shown, verify message
-    if (hasEmpty) {
-      await expect(emptyState).toContainText(/no entries/i)
-    }
+    // Fresh browser context means no entries exist — empty state must be visible
+    await expect(emptyState).toBeVisible()
+    await expect(emptyState).toContainText(/no entries/i)
 
     // Create form should always be visible
     await expect(page.getByTestId('create-form')).toBeVisible()

@@ -5,7 +5,13 @@
  * Handles finding entries by day and by ID with proper filtering.
  */
 
-import { rowToEntry } from './entry-helpers'
+import { isValidISODate } from '@/shared/utils/date-utils'
+
+import {
+  buildColumnMap,
+  queryResultToEntries,
+  rowToEntry
+} from './entry-helpers'
 
 import type { Entry } from '@/shared/types/entry-types'
 import type { Database } from 'sql.js'
@@ -25,6 +31,12 @@ import type { Database } from 'sql.js'
  * // Returns all active entries assigned to Feb 11, 2026
  */
 export function findByDay(db: Database, assignedDay: string): Entry[] {
+  if (!isValidISODate(assignedDay)) {
+    throw new TypeError(
+      `findByDay: invalid assignedDay format "${assignedDay}"`
+    )
+  }
+
   const result = db.exec(
     `
     SELECT id, content, created_at, updated_at, assigned_day, order_position, is_deleted
@@ -37,7 +49,7 @@ export function findByDay(db: Database, assignedDay: string): Entry[] {
 
   if (!result[0]) return []
 
-  return result[0].values.map(rowToEntry)
+  return queryResultToEntries(result[0])
 }
 
 /**
@@ -69,5 +81,6 @@ export function findById(db: Database, id: string): Entry | null {
 
   if (!result[0]?.values[0]) return null
 
-  return rowToEntry(result[0].values[0])
+  const cols = buildColumnMap(result[0].columns)
+  return rowToEntry(result[0].values[0], cols)
 }

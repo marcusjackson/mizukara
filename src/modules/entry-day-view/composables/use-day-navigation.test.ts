@@ -1,7 +1,7 @@
 import { nextTick } from 'vue'
 
 import { TEST_DATES } from '@test/constants/dates'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useDayNavigation } from './use-day-navigation'
 

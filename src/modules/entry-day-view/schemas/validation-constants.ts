@@ -5,6 +5,8 @@
  * Ensures consistency in validation behavior across different entry forms.
  */
 
+import { ENTRY_VALIDATION_ERRORS } from '@/shared/validation/validation-errors'
+
 /**
  * Content validation constraints
  *
@@ -17,7 +19,7 @@ export const CONTENT_VALIDATION = {
   /** Maximum content length (10,000 characters) */
   MAX_LENGTH: 10000,
   messages: {
-    required: 'Content is required',
+    required: ENTRY_VALIDATION_ERRORS.CONTENT_EMPTY,
     maxLength: 'Must be no more than 10000 characters'
   }
 } as const

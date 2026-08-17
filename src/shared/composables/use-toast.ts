@@ -64,6 +64,19 @@ export interface UseToast {
   warning: (message: string, title?: string) => string
 }
 
+/**
+ * Manages global toast notification state.
+ *
+ * Uses a singleton pattern — toast state is shared across all callers.
+ * Toasts are displayed via the `SharedToastContainer` component mounted
+ * at the app root.
+ *
+ * @returns Reactive toast list and functions to add/remove toasts
+ * @example
+ * const { success, error } = useToast()
+ * success('Entry saved')
+ * error('Failed to save', 'Save error')
+ */
 export function useToast(): UseToast {
   function addToast(input: ToastInput): string {
     const id = `toast-${String(++toastIdCounter)}`

@@ -8,6 +8,8 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 
 import { render } from '@testing-library/vue'
 
+import { ROUTES } from '@/router/routes'
+
 import type { RenderResult } from '@testing-library/vue'
 import type { Component } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
@@ -23,32 +25,25 @@ interface RenderWithProvidersOptions {
   }
 }
 
-// Minimal routes for test router
+// Routes derived from actual path constants — stubs components to avoid importing full pages
 const testRoutes: RouteRecordRaw[] = [
-  { path: '/', component: { template: '<div />' } },
-  { path: '/kanji', component: { template: '<div />' } },
-  { path: '/kanji/new', component: { template: '<div />' } },
-  { path: '/kanji/:id', component: { template: '<div />' } },
-  { path: '/kanji/:id/edit', component: { template: '<div />' } },
-  { path: '/components', component: { template: '<div />' } },
-  { path: '/components/:id', component: { template: '<div />' } },
-  { path: '/components/:id/edit', component: { template: '<div />' } },
-  { path: '/vocabulary', component: { template: '<div />' } },
-  { path: '/vocabulary/:id', component: { template: '<div />' } },
-  { path: '/settings', component: { template: '<div />' } },
-  // Coming soon for new UI testing
-  { path: '/coming-soon', component: { template: '<div />' } }
+  { path: ROUTES.HOME, redirect: ROUTES.ENTRY_DAY },
+  { path: ROUTES.ENTRY_DAY, component: { template: '<div />' } },
+  { path: ROUTES.SETTINGS, component: { template: '<div />' } },
+  { path: '/:pathMatch(.*)*', component: { template: '<div />' } }
 ]
 
 /**
  * Render a component with common providers (router, etc.)
  *
  * Use this when testing components that need app-level providers.
+ * Returns a promise — await this call to ensure the router has navigated
+ * to the initial route before assertions run.
  */
-export function renderWithProviders(
+export async function renderWithProviders(
   component: Component,
   options: RenderWithProvidersOptions = {}
-): RenderResult {
+): Promise<RenderResult> {
   const { global: globalOpts, initialRoute = '/', ...restOptions } = options
 
   const router = createRouter({
@@ -56,7 +51,7 @@ export function renderWithProviders(
     routes: testRoutes
   })
 
-  void router.push(initialRoute)
+  await router.push(initialRoute)
 
   return render(component, {
     ...restOptions,

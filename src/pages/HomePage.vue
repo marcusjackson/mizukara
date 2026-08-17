@@ -20,6 +20,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- No UI rendering - pure redirect -->
+  <!-- No UI: pure redirect to /entries on mount -->
   <div></div>
 </template>

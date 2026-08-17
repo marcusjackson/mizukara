@@ -34,7 +34,7 @@ const inputId = useId()
 const inputClasses = computed(() => [
   'base-input-field',
   {
-    'base-input-field-error': !!props.error,
+    'base-input-field-error': Boolean(props.error),
     'base-input-field-disabled': props.disabled
   }
 ])
@@ -60,7 +60,7 @@ const inputClasses = computed(() => [
       :id="inputId"
       v-model="model"
       :aria-describedby="error ? `${inputId}-error` : undefined"
-      :aria-invalid="!!error"
+      :aria-invalid="Boolean(error)"
       :class="inputClasses"
       :disabled="disabled"
       :maxlength="maxlength"

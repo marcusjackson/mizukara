@@ -73,7 +73,6 @@ const dateMedium = computed(() => formatDateMedium(props.currentDate))
     aria-label="Day navigation"
     class="entry-day-view-navigator"
     data-testid="entry-day-view-navigator"
-    role="navigation"
   >
     <button
       aria-label="Previous day"
@@ -119,14 +118,6 @@ const dateMedium = computed(() => formatDateMedium(props.currentDate))
   padding: var(--spacing-4) var(--spacing-5);
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
-}
-
-@media (width <= 767px) {
-  .entry-day-view-navigator {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
 }
 
 .nav-button {

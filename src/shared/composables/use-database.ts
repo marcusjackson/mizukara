@@ -20,8 +20,8 @@ import { markRaw, readonly, ref, shallowRef } from 'vue'
 import { saveToIndexedDB, schedulePersist } from '@/db/indexeddb'
 import { initializeDatabase, replaceDatabaseWithImported } from '@/db/init'
 
-import type { Database } from 'sql.js'
-import type { Ref, ShallowRef } from 'vue'
+import type { BindParams, Database } from 'sql.js'
+import type { DeepReadonly, Ref, ShallowRef } from 'vue'
 
 // =============================================================================
 // Singleton State
@@ -40,99 +40,106 @@ let initPromise: Promise<void> | null = null
 
 export interface UseDatabase {
   /** The sql.js database instance. Null until initialized. */
-  database: ShallowRef<Database | null>
+  database: DeepReadonly<ShallowRef<Database | null>>
   /** Whether the database has been initialized */
-  isInitialized: Ref<boolean>
+  isInitialized: DeepReadonly<Ref<boolean>>
   /** Whether initialization is in progress */
-  isInitializing: Ref<boolean>
+  isInitializing: DeepReadonly<Ref<boolean>>
   /** Error that occurred during initialization, if any */
-  initError: Ref<Error | null>
+  initError: DeepReadonly<Ref<Error | null>>
   /** Initialize the database. Safe to call multiple times. */
   initialize: () => Promise<void>
   /** Persist current database state to IndexedDB */
   persist: () => Promise<void>
   /** Execute a SQL query and return results */
-  exec: (sql: string, params?: unknown[]) => ReturnType<Database['exec']>
+  exec: (sql: string, params?: BindParams) => ReturnType<Database['exec']>
   /** Execute a SQL statement (no results) */
-  run: (sql: string, params?: unknown[]) => void
+  run: (sql: string, params?: BindParams) => void
   /** Replace the current database with imported data */
   replaceDatabase: (data: Uint8Array) => Promise<void>
+}
+
+// =============================================================================
+// Internal helpers
+// =============================================================================
+
+async function initialize(): Promise<void> {
+  if (isInitialized.value) {
+    return
+  }
+
+  if (initPromise) {
+    return initPromise
+  }
+
+  isInitializing.value = true
+  initError.value = null
+
+  initPromise = (async () => {
+    try {
+      database.value = markRaw(await initializeDatabase())
+      isInitialized.value = true
+    } catch (err) {
+      initError.value = err instanceof Error ? err : new Error(String(err))
+      throw initError.value
+    } finally {
+      isInitializing.value = false
+    }
+  })()
+
+  return initPromise
+}
+
+async function persist(): Promise<void> {
+  if (!database.value) {
+    throw new Error('Database not initialized')
+  }
+  await saveToIndexedDB(database.value.export())
+}
+
+function exec(sql: string, params?: BindParams): ReturnType<Database['exec']> {
+  if (!database.value) {
+    throw new Error('Database not initialized')
+  }
+  return database.value.exec(sql, params ?? null)
+}
+
+function run(sql: string, params?: BindParams): void {
+  if (!database.value) {
+    throw new Error('Database not initialized')
+  }
+  database.value.run(sql, params ?? null)
+  // Auto-persist to IndexedDB after write operations (debounced)
+  // This groups rapid writes into a single save operation
+  schedulePersist()
+}
+
+async function replaceDatabase(data: Uint8Array): Promise<void> {
+  if (database.value) {
+    database.value.close()
+  }
+  database.value = markRaw(await replaceDatabaseWithImported(data))
+  isInitialized.value = true
 }
 
 // =============================================================================
 // Composable
 // =============================================================================
 
-// TODO: Consider splitting this large function into smaller focused functions
-// eslint-disable-next-line max-lines-per-function
+/**
+ * Provides access to the singleton sql.js database instance.
+ *
+ * Safe to call multiple times — returns shared reactive state.
+ * Core lifecycle (initialization, persistence, migrations) is handled
+ * automatically; callers only need to invoke {@link UseDatabase.initialize}
+ * once at app startup.
+ *
+ * @returns Database access functions and reactive state refs
+ * @example
+ * const { database, isInitialized, initialize, run, exec } = useDatabase()
+ * await initialize()
+ */
 export function useDatabase(): UseDatabase {
-  async function initialize(): Promise<void> {
-    // If already initialized, return immediately
-    if (isInitialized.value) {
-      return
-    }
-
-    // If initialization is in progress, wait for it
-    if (initPromise) {
-      return initPromise
-    }
-
-    // Start initialization
-    isInitializing.value = true
-    initError.value = null
-
-    initPromise = (async () => {
-      try {
-        database.value = markRaw(await initializeDatabase())
-        isInitialized.value = true
-      } catch (err) {
-        initError.value = err instanceof Error ? err : new Error(String(err))
-        throw initError.value
-      } finally {
-        isInitializing.value = false
-      }
-    })()
-
-    return initPromise
-  }
-
-  async function persist(): Promise<void> {
-    if (!database.value) {
-      throw new Error('Database not initialized')
-    }
-    await saveToIndexedDB(database.value.export())
-  }
-
-  function exec(sql: string, params?: unknown[]): ReturnType<Database['exec']> {
-    if (!database.value) {
-      throw new Error('Database not initialized')
-    }
-    return database.value.exec(sql, params)
-  }
-
-  function run(sql: string, params?: unknown[]): void {
-    if (!database.value) {
-      throw new Error('Database not initialized')
-    }
-    database.value.run(sql, params)
-    // Auto-persist to IndexedDB after write operations (debounced)
-    // This groups rapid writes into a single save operation
-    schedulePersist()
-  }
-
-  async function replaceDatabase(data: Uint8Array): Promise<void> {
-    // Close old database if it exists
-    if (database.value) {
-      database.value.close()
-    }
-
-    // Initialize with imported data
-    database.value = markRaw(await replaceDatabaseWithImported(data))
-
-    // Ensure initialized state is set
-    isInitialized.value = true
-  }
-
   return {
     database: readonly(database),
     isInitialized: readonly(isInitialized),

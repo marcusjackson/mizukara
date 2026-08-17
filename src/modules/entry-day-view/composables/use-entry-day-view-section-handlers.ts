@@ -12,9 +12,36 @@ import { useEntryReorder } from './use-entry-reorder'
 
 import type { UseToast } from '@/shared/composables/use-toast'
 import type { Entry } from '@/shared/types/entry-types'
+import type { Ref } from 'vue'
 
 export interface UseEntrySectionHandlersOptions {
   onRefetch: () => Promise<void>
+}
+
+/**
+ * Return type for useEntrySectionHandlers composable
+ */
+export interface UseEntrySectionHandlersReturn {
+  /** Check if entry can be moved down */
+  canMoveDown: (entryId: string, entries: Entry[]) => boolean
+  /** Check if entry can be moved up */
+  canMoveUp: (entryId: string, entries: Entry[]) => boolean
+  /** Handle new entry creation */
+  handleEntryCreated: (data: {
+    content: string
+    assignedDay: string
+  }) => Promise<void>
+  /** Handle moving an entry down */
+  handleMoveDown: (entryId: string, entries: Entry[]) => void
+  /** Handle moving an entry up */
+  handleMoveUp: (entryId: string, entries: Entry[]) => void
+  /** Handle save request for existing entry */
+  handleSaveRequested: (
+    entryId: string,
+    data: { content: string; assignedDay: string }
+  ) => Promise<void>
+  /** Whether a reorder operation is in progress */
+  isReordering: Ref<boolean>
 }
 
 /**
@@ -43,9 +70,17 @@ async function withToast<T>(
   }
 }
 
+/**
+ * Section handlers composable for EntryDayViewSectionList.
+ *
+ * Wraps entry mutations and reorder operations with toast notifications.
+ *
+ * @param options - Configuration including refetch callback
+ * @returns Event handlers for entry creation, save, and reordering
+ */
 export function useEntrySectionHandlers(
   options: UseEntrySectionHandlersOptions
-) {
+): UseEntrySectionHandlersReturn {
   const toast = useToast()
   const { createNewEntry, updateExistingEntry } = useEntryDayViewMutations({
     onRefetch: options.onRefetch

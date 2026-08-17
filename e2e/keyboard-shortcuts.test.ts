@@ -13,14 +13,18 @@
 
 import { expect, test } from '@playwright/test'
 
+import { TIMEOUTS, VIEWPORTS } from './helpers/test-constants'
 import { TEST_ENTRY_CONTENT } from './helpers/test-data'
 import {
+  blurFocusedElement,
   createEntry,
+  getEntryEditor,
   getTodayDate,
   getTomorrowDate,
   getYesterdayDate,
   isMobileViewport,
   startEditingEntry,
+  waitForEntries,
   waitForPageReady
 } from './helpers/test-utils'
 
@@ -67,6 +71,9 @@ test.describe('Keyboard Shortcuts', () => {
 
     // Verify textarea cleared
     await expect(textarea).toHaveValue('')
+
+    // Verify only ONE entry was created (no duplicates)
+    await waitForEntries(page, [TEST_ENTRY_CONTENT.SIMPLE])
   })
 
   test('J key navigates to next day', async ({ page }) => {
@@ -77,15 +84,15 @@ test.describe('Keyboard Shortcuts', () => {
     await page.goto(`/entries/${today}`, { waitUntil: 'networkidle' })
     await waitForPageReady(page)
 
-    // Click outside textarea to ensure no input has focus
-    await page.locator('body').click({ position: { x: 10, y: 10 } })
+    // Blur any focused element to ensure navigation shortcuts fire
+    await blurFocusedElement(page)
 
     // Press J key to navigate to next day
     await page.keyboard.press('j')
 
     // Verify navigation to next day (URL updates with date)
     await expect(page).toHaveURL(new RegExp(`/entries/${tomorrow}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
   })
 
@@ -97,15 +104,15 @@ test.describe('Keyboard Shortcuts', () => {
     await page.goto(`/entries/${today}`, { waitUntil: 'networkidle' })
     await waitForPageReady(page)
 
-    // Click outside textarea to ensure no input has focus
-    await page.locator('body').click({ position: { x: 10, y: 10 } })
+    // Blur any focused element to ensure navigation shortcuts fire
+    await blurFocusedElement(page)
 
     // Press K key to navigate to previous day
     await page.keyboard.press('k')
 
     // Verify navigation to previous day (URL updates with date)
     await expect(page).toHaveURL(new RegExp(`/entries/${yesterday}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
   })
 
@@ -118,25 +125,25 @@ test.describe('Keyboard Shortcuts', () => {
     await page.goto(`/entries/${today}`, { waitUntil: 'networkidle' })
     await waitForPageReady(page)
 
-    // Click outside textarea to ensure no input has focus
-    await page.locator('body').click({ position: { x: 10, y: 10 } })
+    // Blur any focused element to ensure navigation shortcuts fire
+    await blurFocusedElement(page)
 
     // Press ArrowDown (next day)
     await page.keyboard.press('ArrowDown')
     await expect(page).toHaveURL(new RegExp(`/entries/${tomorrow}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
 
     // Press ArrowUp (previous day - back to today)
     await page.keyboard.press('ArrowUp')
     await expect(page).toHaveURL(new RegExp(`/entries/${today}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
 
     // Press ArrowUp again (yesterday)
     await page.keyboard.press('ArrowUp')
     await expect(page).toHaveURL(new RegExp(`/entries/${yesterday}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
   })
 
@@ -147,28 +154,34 @@ test.describe('Keyboard Shortcuts', () => {
     // Enter edit mode
     await startEditingEntry(entryCard, isMobileViewport(page))
 
-    // Wait for editor to be visible
-    const editor = page.getByTestId('entry-editor')
+    // Verify editor is visible
+    const editor = getEntryEditor(page)
     await expect(editor).toBeVisible()
 
-    // Modify content in editor
-    const editorTextarea = editor.getByLabel('Content')
-    await editorTextarea.clear()
-    await editorTextarea.fill(TEST_ENTRY_CONTENT.UPDATED)
+    // Modify content
+    const textarea = editor.locator('textarea').first()
+    await textarea.fill(TEST_ENTRY_CONTENT.UPDATED)
 
-    // Press Cmd/Ctrl+S to save
+    // Save using Ctrl+S
     await page.keyboard.press('Control+s')
 
-    // Verify editor closes
-    await expect(editor).not.toBeVisible()
+    // Wait for editor to close
+    await expect(editor).not.toBeVisible({ timeout: TIMEOUTS.short })
 
-    // Re-query entry card after save (content has changed)
-    const updatedEntryCard = page
+    // Verify only ONE updated entry exists
+    const updatedEntries = page
       .getByTestId('entry-card')
       .filter({ hasText: TEST_ENTRY_CONTENT.UPDATED })
-    await expect(updatedEntryCard.getByTestId('entry-content')).toContainText(
-      TEST_ENTRY_CONTENT.UPDATED
-    )
+    await expect(updatedEntries).toHaveCount(1)
+
+    // Verify original entry does not exist anymore
+    const originalEntries = page
+      .getByTestId('entry-card')
+      .filter({ hasText: TEST_ENTRY_CONTENT.ORIGINAL })
+    await expect(originalEntries).toHaveCount(0)
+
+    // Verify total entry count is still 1 (not duplicated)
+    await expect(page.getByTestId('entry-card')).toHaveCount(1)
   })
 
   test('Escape exits edit mode without saving', async ({ page }) => {
@@ -261,21 +274,21 @@ test.describe('Keyboard Shortcuts', () => {
     // Create an entry
     await createEntry(page, TEST_ENTRY_CONTENT.SIMPLE)
 
-    // Click outside textarea (createEntry leaves it focused)
-    await page.locator('body').click({ position: { x: 10, y: 10 } })
+    // Blur any focused element (createEntry leaves textarea focused)
+    await blurFocusedElement(page)
 
     // Press J to navigate to next day
     await page.keyboard.press('j')
 
     // Verify navigation worked (URL updates with date)
     await expect(page).toHaveURL(new RegExp(`/entries/${tomorrow}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
 
     // Navigate back to verify K works too
     await page.keyboard.press('k')
     await expect(page).toHaveURL(new RegExp(`/entries/${today}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
   })
 
@@ -284,7 +297,7 @@ test.describe('Keyboard Shortcuts', () => {
     page
   }) => {
     // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 })
+    await page.setViewportSize(VIEWPORTS.mobile)
 
     // Navigate to entry day view with specific date
     const today = getTodayDate()
@@ -300,24 +313,24 @@ test.describe('Keyboard Shortcuts', () => {
     await page.keyboard.press('Control+n')
     await expect(textarea).toBeFocused()
 
-    // Click outside textarea before testing navigation
-    await page.locator('body').click({ position: { x: 10, y: 10 } })
+    // Blur any focused element before testing navigation
+    await blurFocusedElement(page)
 
     // Test J/K navigation
     await page.keyboard.press('j')
     await expect(page).toHaveURL(new RegExp(`/entries/${tomorrow}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
 
     await page.keyboard.press('k')
     await expect(page).toHaveURL(new RegExp(`/entries/${today}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
   })
 
   test('G key opens date picker dialog', async ({ page }) => {
-    // Click outside to ensure no input focused
-    await page.locator('body').click({ position: { x: 10, y: 10 } })
+    // Blur any focused element before pressing G
+    await blurFocusedElement(page)
 
     // Press G key
     await page.keyboard.press('g')

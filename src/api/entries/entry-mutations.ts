@@ -5,9 +5,13 @@
  * Handles creating, updating, and deleting entries.
  */
 
+import { EntityNotFoundError } from '@/api/types'
+
 import { generateUUID } from '@/shared/utils/uuid-utils'
 
-import { rowToEntry } from './entry-helpers'
+import { schedulePersist } from '@/db/indexeddb'
+
+import { buildColumnMap, rowToEntry } from './entry-helpers'
 import { validateEntryInput } from './entry-validation'
 
 import type {
@@ -15,14 +19,15 @@ import type {
   Entry,
   UpdateEntryInput
 } from '@/shared/types/entry-types'
-import type { Database } from 'sql.js'
-
-// Re-export for backwards compatibility
-export { EntryValidationError } from './entry-validation'
+import type { Database, SqlValue } from 'sql.js'
 
 /**
  * Fetch entry by ID from database
- * @throws Error if entry not found
+ *
+ * @param db - SQLite database instance
+ * @param id - Entry UUID to fetch
+ * @returns Entry with all fields populated
+ * @throws {EntityNotFoundError} If no entry exists with the given ID
  */
 function fetchEntryById(db: Database, id: string): Entry {
   const result = db.exec(
@@ -35,10 +40,11 @@ function fetchEntryById(db: Database, id: string): Entry {
   )
 
   if (!result[0]?.values[0]) {
-    throw new Error(`Entry not found: ${id}`)
+    throw new EntityNotFoundError('Entry', id)
   }
 
-  return rowToEntry(result[0].values[0])
+  const cols = buildColumnMap(result[0].columns)
+  return rowToEntry(result[0].values[0], cols)
 }
 
 /**
@@ -81,7 +87,8 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
     [assignedDay]
   )
 
-  const maxPos = maxResult[0]?.values[0]?.[0] as number | null
+  const rawMax = maxResult[0]?.values[0]?.[0]
+  const maxPos = typeof rawMax === 'number' ? rawMax : null
   const orderPosition = maxPos == null ? 0 : maxPos + 1
 
   // Insert the entry
@@ -95,6 +102,7 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
     [id, content, now, now, assignedDay, orderPosition]
   )
 
+  schedulePersist()
   return fetchEntryById(db, id)
 }
 
@@ -109,7 +117,7 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
  * @param input - Partial update data (content, assignedDay, and/or orderPosition)
  * @returns Updated entry with new values
  * @throws {EntryValidationError} If content is empty or assignedDay format is invalid
- * @throws {Error} If entry with given ID does not exist
+ * @throws {EntityNotFoundError} If entry with given ID does not exist
  *
  * @example
  * // Update only content
@@ -130,6 +138,8 @@ export function updateEntry(
   id: string,
   input: UpdateEntryInput
 ): Entry {
+  if (Object.keys(input).length === 0) return fetchEntryById(db, id)
+
   // Validate input
   const validationInput: { content?: string; assignedDay?: string } = {}
   if (input.content !== undefined) validationInput.content = input.content
@@ -141,7 +151,7 @@ export function updateEntry(
 
   // Build dynamic update query
   const updates: string[] = []
-  const valueList: unknown[] = []
+  const valueList: SqlValue[] = []
 
   if (input.content !== undefined) {
     updates.push('content = ?')
@@ -171,6 +181,7 @@ export function updateEntry(
 
   db.run(sql, values)
 
+  schedulePersist()
   return fetchEntryById(db, id)
 }
 
@@ -184,7 +195,7 @@ export function updateEntry(
  * @param id - Entry UUID to update
  * @param newOrderPosition - New order position value (0-based index)
  * @returns Updated entry with new order position
- * @throws {Error} If entry with given ID does not exist
+ * @throws {EntityNotFoundError} If entry with given ID does not exist
  *
  * @example
  * // Move entry to position 3 within its day
@@ -206,6 +217,7 @@ export function updateOrderPosition(
     [newOrderPosition, now, id]
   )
 
+  schedulePersist()
   return fetchEntryById(db, id)
 }
 
@@ -219,7 +231,7 @@ export function updateOrderPosition(
  * @param db - SQLite database instance
  * @param id - Entry UUID to delete
  * @returns Updated entry with isDeleted set to true
- * @throws {Error} If entry with given ID does not exist
+ * @throws {EntityNotFoundError} If entry with given ID does not exist
  *
  * @example
  * const deleted = softDeleteEntry(db, entryId)
@@ -237,5 +249,6 @@ export function softDeleteEntry(db: Database, id: string): Entry {
     [now, id]
   )
 
+  schedulePersist()
   return fetchEntryById(db, id)
 }

@@ -154,24 +154,24 @@ describe('SharedConfirmDialog', () => {
   })
 
   describe('accessibility', () => {
-    it('adds descriptive aria-label to cancel button', () => {
+    it('cancel button has no redundant aria-label (dialog description provides context)', () => {
       const wrapper = mountDialog()
       const cancelButton = wrapper
         .findAll('button')
         .find((b) => b.text() === 'Cancel')
 
-      const ariaLabel = cancelButton!.attributes('aria-label')
-      expect(ariaLabel).toContain('Cancel')
+      // No aria-label - button text is sufficient; dialog aria-describedby handles context
+      expect(cancelButton!.attributes('aria-label')).toBeUndefined()
     })
 
-    it('adds descriptive aria-label to confirm button for danger variant', () => {
+    it('confirm button has no redundant aria-label for danger variant', () => {
       const wrapper = mountDialog({ variant: 'danger' })
       const confirmButton = wrapper
         .findAll('button')
         .find((b) => b.text() === 'Confirm')
 
-      const ariaLabel = confirmButton!.attributes('aria-label')
-      expect(ariaLabel).toContain('destructive')
+      // No aria-label - button text is sufficient; dialog aria-describedby handles context
+      expect(confirmButton!.attributes('aria-label')).toBeUndefined()
     })
 
     it('focus management: cancel button should have ref for danger variant', () => {

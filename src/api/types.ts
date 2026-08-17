@@ -18,7 +18,7 @@ export interface Repository<
   UpdateInput = Partial<CreateInput>
 > {
   /** Get entity by ID, returns null if not found */
-  getById(id: number): T | null
+  getById(id: string): T | null
 
   /** Get all entities */
   getAll(): T[]
@@ -27,17 +27,17 @@ export interface Repository<
   create(input: CreateInput): T
 
   /** Update entity by ID */
-  update(id: number, input: UpdateInput): T
+  update(id: string, input: UpdateInput): T
 
   /** Delete entity by ID */
-  remove(id: number): void
+  remove(id: string): void
 }
 
 /**
  * Extension for entities with display ordering
  */
 export interface Orderable {
-  reorder(ids: number[]): void
+  reorder(ids: string[]): void
 }
 
 /**
@@ -49,7 +49,7 @@ export interface ChildRepository<
   UpdateInput
 > extends Repository<T, CreateInput, UpdateInput> {
   /** Get all by parent ID */
-  getByParentId(parentId: number): T[]
+  getByParentId(parentId: string): T[]
 }
 
 /**
@@ -57,7 +57,7 @@ export interface ChildRepository<
  */
 export interface FieldUpdatable<T> {
   /** Generic field update method */
-  updateField<K extends UpdatableField<T>>(id: number, field: K, value: T[K]): T
+  updateField<K extends UpdatableField<T>>(id: string, field: K, value: T[K]): T
 }
 
 /**
@@ -93,8 +93,8 @@ export class RepositoryError extends Error {
  * Error when entity is not found
  */
 export class EntityNotFoundError extends RepositoryError {
-  constructor(entity: string, id: number) {
-    super(`${entity} with id ${String(id)} not found`, 'get', entity)
+  constructor(entity: string, id: string) {
+    super(`${entity} with id ${id} not found`, 'get', entity)
     this.name = 'EntityNotFoundError'
   }
 }
@@ -113,13 +113,8 @@ export class CreateError extends RepositoryError {
  * Error when updating entity fails
  */
 export class UpdateError extends RepositoryError {
-  constructor(entity: string, id: number, cause?: unknown) {
-    super(
-      `Failed to update ${entity} with id ${String(id)}`,
-      'update',
-      entity,
-      cause
-    )
+  constructor(entity: string, id: string, cause?: unknown) {
+    super(`Failed to update ${entity} with id ${id}`, 'update', entity, cause)
     this.name = 'UpdateError'
   }
 }
@@ -128,13 +123,8 @@ export class UpdateError extends RepositoryError {
  * Error when deleting entity fails
  */
 export class DeleteError extends RepositoryError {
-  constructor(entity: string, id: number, cause?: unknown) {
-    super(
-      `Failed to delete ${entity} with id ${String(id)}`,
-      'delete',
-      entity,
-      cause
-    )
+  constructor(entity: string, id: string, cause?: unknown) {
+    super(`Failed to delete ${entity} with id ${id}`, 'delete', entity, cause)
     this.name = 'DeleteError'
   }
 }

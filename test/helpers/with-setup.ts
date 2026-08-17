@@ -16,7 +16,7 @@ import type { App } from 'vue'
  * @returns Tuple of [result, app] - result is the composable return, app can be unmounted
  */
 export function withSetup<T>(composable: () => T): [T, App] {
-  let result: T
+  let result!: T
 
   const app = createApp(
     defineComponent({
@@ -29,6 +29,5 @@ export function withSetup<T>(composable: () => T): [T, App] {
 
   app.mount(document.createElement('div'))
 
-  // @ts-expect-error - result is assigned in setup()
   return [result, app]
 }

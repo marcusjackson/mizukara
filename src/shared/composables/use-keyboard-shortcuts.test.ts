@@ -292,6 +292,55 @@ describe('useKeyboardShortcuts', () => {
     expect(handler).toHaveBeenCalled()
   })
 
+  it('triggers escape handler even when a regular input is focused', () => {
+    // Regression test: 'escape' contains 's', so without the correct ordering
+    // in shouldTriggerShortcut, the save-shortcut branch fires first for 'escape',
+    // checking if a textarea is active — which returns false for plain inputs,
+    // making Escape silently unreachable outside textareas.
+    const handler = vi.fn()
+    const TestComp = defineComponent({
+      setup() {
+        useKeyboardShortcuts([{ key: 'escape', handler }])
+      },
+      template: '<div></div>'
+    })
+
+    render(TestComp)
+
+    // Simulate a plain <input> being focused (not a textarea)
+    Object.defineProperty(document, 'activeElement', {
+      value: document.createElement('input'),
+      writable: true
+    })
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape' })
+    document.dispatchEvent(event)
+
+    expect(handler).toHaveBeenCalled()
+  })
+
+  it('triggers escape handler even when a textarea is focused', () => {
+    const handler = vi.fn()
+    const TestComp = defineComponent({
+      setup() {
+        useKeyboardShortcuts([{ key: 'escape', handler }])
+      },
+      template: '<div></div>'
+    })
+
+    render(TestComp)
+
+    Object.defineProperty(document, 'activeElement', {
+      value: document.createElement('textarea'),
+      writable: true
+    })
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape' })
+    document.dispatchEvent(event)
+
+    expect(handler).toHaveBeenCalled()
+  })
+
   describe('key aliases', () => {
     it('maps J key to ArrowDown', () => {
       const handler = vi.fn()

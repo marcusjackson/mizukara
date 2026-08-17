@@ -15,6 +15,16 @@ export const VIEWPORTS = {
 } as const
 
 /**
+ * Standard timeout values for E2E tests
+ */
+export const TIMEOUTS = {
+  short: 3_000,
+  medium: 10_000,
+  long: 15_000,
+  wasm: 20_000
+} as const
+
+/**
  * Touch target size thresholds
  * Apple HIG recommends 44px for primary actions, 40px acceptable for secondary
  */

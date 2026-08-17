@@ -17,7 +17,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { BaseToast } from '@/base/components'
+import { SharedToast } from '@/shared/components'
 
 import EntryDayViewRoot from '@/modules/entry-day-view/components/EntryDayViewRoot.vue'
 
@@ -36,5 +36,5 @@ const initialDate = computed<string | null>(() => {
 <template>
   <EntryDayViewRoot :initial-date="initialDate" />
 
-  <BaseToast />
+  <SharedToast />
 </template>

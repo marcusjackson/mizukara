@@ -1,14 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { ROUTES } from './routes'
+import { buildPageTitle, ROUTES } from './routes'
 
 import type { RouteRecordRaw } from 'vue-router'
 
+declare module 'vue-router' {
+  interface RouteMeta {
+    title?: string
+  }
+}
+
 /**
- * New UI routes - empty until we start building new pages
- * Default path (/) redirects to refactored kanji list
+ * Main application routes
  */
-const newRoutes: RouteRecordRaw[] = [
+const appRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
@@ -16,7 +21,7 @@ const newRoutes: RouteRecordRaw[] = [
     meta: { title: 'Home' }
   },
   {
-    path: '/entries/:date?',
+    path: ROUTES.ENTRY_DAY,
     name: 'entry-day-view',
     component: () => import('@/pages/EntryDayPage.vue'),
     meta: { title: 'Day View' }
@@ -26,6 +31,12 @@ const newRoutes: RouteRecordRaw[] = [
     name: 'settings',
     component: () => import('@/pages/SettingsPage.vue'),
     meta: { title: 'Settings' }
+  },
+  {
+    path: ROUTES.TAGS,
+    name: 'tags',
+    component: () => import('@/pages/TagsPage.vue'),
+    meta: { title: 'Tags' }
   }
 ]
 
@@ -41,7 +52,7 @@ const fallbackRoutes: RouteRecordRaw[] = [
   }
 ]
 
-const routes = [...newRoutes, ...fallbackRoutes]
+const routes = [...appRoutes, ...fallbackRoutes]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,11 +65,12 @@ const router = createRouter({
   }
 })
 
-// Update document title on navigation
+/**
+ * Updates the document title after each completed navigation.
+ * Falls back to the app name when no route-specific title is set.
+ */
 router.afterEach((to) => {
-  const baseTitle = 'Kiroku'
-  const pageTitle = to.meta['title'] as string | undefined
-  document.title = pageTitle ? `${pageTitle} | ${baseTitle}` : baseTitle
+  document.title = buildPageTitle(to.meta.title)
 })
 
 export default router

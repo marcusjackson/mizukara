@@ -10,6 +10,8 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { render, waitFor } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { ROUTES } from '@/router/routes'
+
 import HomePage from './HomePage.vue'
 
 // Mock date utils to return consistent test date
@@ -27,12 +29,12 @@ describe('HomePage', () => {
       history: createMemoryHistory(),
       routes: [
         {
-          path: '/',
+          path: ROUTES.HOME,
           name: 'home',
           component: HomePage
         },
         {
-          path: '/entries/:date?',
+          path: ROUTES.ENTRY_DAY,
           name: 'entry-day-view',
           component: { template: '<div>Entry Day View</div>' }
         }
@@ -48,7 +50,7 @@ describe('HomePage', () => {
   })
 
   it('redirects to /entries on mount', async () => {
-    await router.push('/')
+    await router.push(ROUTES.HOME)
     await router.isReady()
 
     render(HomePage, {
@@ -63,7 +65,7 @@ describe('HomePage', () => {
   it('uses router.replace (not push) to avoid history entry', async () => {
     const replaceSpy = vi.spyOn(router, 'replace')
 
-    await router.push('/')
+    await router.push(ROUTES.HOME)
     await router.isReady()
 
     render(HomePage, {
@@ -76,7 +78,7 @@ describe('HomePage', () => {
   })
 
   it('redirect path is /entries without date parameter', async () => {
-    await router.push('/')
+    await router.push(ROUTES.HOME)
     await router.isReady()
 
     render(HomePage, {

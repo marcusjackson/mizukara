@@ -110,4 +110,32 @@ describe('BaseTextarea', () => {
 
     expect(screen.getByRole('textbox')).toHaveAttribute('rows', '6')
   })
+
+  it('applies auto-expand class when autoExpand is true', () => {
+    render(BaseTextarea, {
+      props: { autoExpand: true, label: 'Description' }
+    })
+
+    expect(screen.getByRole('textbox')).toHaveClass(
+      'base-textarea-field-auto-expand'
+    )
+  })
+
+  it('does not apply auto-expand class when autoExpand is false', () => {
+    render(BaseTextarea, {
+      props: { autoExpand: false, label: 'Description' }
+    })
+
+    expect(screen.getByRole('textbox')).not.toHaveClass(
+      'base-textarea-field-auto-expand'
+    )
+  })
+
+  it('accepts maxRows prop without error', () => {
+    render(BaseTextarea, {
+      props: { autoExpand: true, label: 'Description', maxRows: 8 }
+    })
+
+    expect(screen.getByRole('textbox')).toBeInTheDocument()
+  })
 })

@@ -4,7 +4,11 @@
 
 import { TEST_DATES } from '@test/constants/dates'
 import { createTestDatabaseForEntries, seedEntry } from '@test/helpers/database'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { EntityNotFoundError } from '@/api/types'
+
+import { schedulePersist } from '@/db/indexeddb'
 
 import {
   createEntry,
@@ -16,6 +20,10 @@ import { EntryValidationError } from './entry-validation'
 
 import type { Entry } from '@/shared/types/entry-types'
 import type { Database } from 'sql.js'
+
+vi.mock('@/db/indexeddb', () => ({
+  schedulePersist: vi.fn()
+}))
 
 describe('entry-mutations', () => {
   let db: Database
@@ -88,6 +96,12 @@ describe('entry-mutations', () => {
 
       expect(day2Entry.orderPosition).toBe(0)
     })
+
+    it('calls schedulePersist', () => {
+      createEntry(db, { content: 'Test', assignedDay: TEST_DATES.DEFAULT })
+
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
+    })
   })
 
   describe('updateEntry', () => {
@@ -102,18 +116,30 @@ describe('entry-mutations', () => {
 
     it('preserves created_at, updates updated_at', () => {
       const originalCreatedAt = existingEntry.createdAt
-      const beforeUpdate = Date.now()
+      const laterTimestamp = originalCreatedAt + 1000
+
+      // Ensure update timestamp is distinct from creation timestamp
+      const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(laterTimestamp)
 
       const updated = updateEntry(db, existingEntry.id, {
         content: 'Updated content'
       })
 
-      const afterUpdate = Date.now()
+      dateSpy.mockRestore()
 
       expect(updated.createdAt).toBe(originalCreatedAt)
-      expect(updated.updatedAt).toBeGreaterThanOrEqual(beforeUpdate)
-      expect(updated.updatedAt).toBeLessThanOrEqual(afterUpdate)
+      expect(updated.updatedAt).toBe(laterTimestamp)
       expect(updated.updatedAt).not.toBe(originalCreatedAt)
+    })
+
+    it('returns original entry without update if input is empty', () => {
+      vi.clearAllMocks() // Clear schedulePersist mock
+
+      const result = updateEntry(db, existingEntry.id, {})
+
+      expect(result).toEqual(existingEntry)
+      // Should NOT call persist
+      expect(vi.mocked(schedulePersist)).not.toHaveBeenCalled()
     })
 
     it('accepts partial input', () => {
@@ -148,6 +174,12 @@ describe('entry-mutations', () => {
 
       expect(updated.orderPosition).toBe(5)
     })
+
+    it('calls schedulePersist', () => {
+      updateEntry(db, existingEntry.id, { content: 'Updated' })
+
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
+    })
   })
 
   describe('updateOrderPosition', () => {
@@ -172,6 +204,12 @@ describe('entry-mutations', () => {
       expect(updated.createdAt).toBe(original.createdAt)
       expect(updated.orderPosition).toBe(10)
       expect(updated.updatedAt).toBeGreaterThanOrEqual(beforeUpdate)
+    })
+
+    it('calls schedulePersist', () => {
+      updateOrderPosition(db, existingEntry.id, 10)
+
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
     })
   })
 
@@ -202,6 +240,12 @@ describe('entry-mutations', () => {
       expect(deleted.assignedDay).toBe(existingEntry.assignedDay)
       expect(deleted.createdAt).toBe(existingEntry.createdAt)
       expect(deleted.orderPosition).toBe(existingEntry.orderPosition)
+    })
+
+    it('calls schedulePersist', () => {
+      softDeleteEntry(db, existingEntry.id)
+
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
     })
   })
 
@@ -292,6 +336,28 @@ describe('entry-mutations', () => {
 
         expect(updated.content).toBe('New content')
       })
+    })
+  })
+
+  describe('not found errors', () => {
+    const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000'
+
+    it('updateEntry throws EntityNotFoundError for unknown id', () => {
+      expect(() => {
+        updateEntry(db, NONEXISTENT_ID, { content: 'New content' })
+      }).toThrow(EntityNotFoundError)
+    })
+
+    it('updateOrderPosition throws EntityNotFoundError for unknown id', () => {
+      expect(() => {
+        updateOrderPosition(db, NONEXISTENT_ID, 0)
+      }).toThrow(EntityNotFoundError)
+    })
+
+    it('softDeleteEntry throws EntityNotFoundError for unknown id', () => {
+      expect(() => {
+        softDeleteEntry(db, NONEXISTENT_ID)
+      }).toThrow(EntityNotFoundError)
     })
   })
 })

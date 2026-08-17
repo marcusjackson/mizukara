@@ -63,16 +63,16 @@ useKeyboardShortcuts([
       description="Available keyboard shortcuts for this page."
       title="Keyboard Shortcuts"
     >
-      <dl class="shortcuts-list">
+      <dl class="shared-keyboard-shortcuts-list">
         <div
           v-for="shortcut in shortcuts"
           :key="shortcut.keys"
-          class="shortcut-item"
+          class="shared-keyboard-shortcuts-item"
         >
-          <dt class="shortcut-keys">
+          <dt class="shared-keyboard-shortcuts-keys">
             <kbd>{{ shortcut.keys }}</kbd>
           </dt>
-          <dd class="shortcut-description">
+          <dd class="shared-keyboard-shortcuts-description">
             {{ shortcut.description }}
           </dd>
         </div>
@@ -97,8 +97,8 @@ useKeyboardShortcuts([
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 36px;
-  height: 36px;
+  width: var(--spacing-9);
+  height: var(--spacing-9);
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
@@ -126,7 +126,7 @@ useKeyboardShortcuts([
   The dialog content is teleported outside the component tree.
 -->
 <style>
-.shortcuts-list {
+.shared-keyboard-shortcuts-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
@@ -134,7 +134,7 @@ useKeyboardShortcuts([
   padding: 0;
 }
 
-.shortcut-item {
+.shared-keyboard-shortcuts-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -143,15 +143,15 @@ useKeyboardShortcuts([
   border-bottom: 1px solid var(--color-border);
 }
 
-.shortcut-item:last-child {
+.shared-keyboard-shortcuts-item:last-child {
   border-bottom: none;
 }
 
-.shortcut-keys {
+.shared-keyboard-shortcuts-keys {
   flex-shrink: 0;
 }
 
-.shortcut-keys kbd {
+.shared-keyboard-shortcuts-keys kbd {
   padding: var(--spacing-1) var(--spacing-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -161,7 +161,7 @@ useKeyboardShortcuts([
   font-size: var(--font-size-sm);
 }
 
-.shortcut-description {
+.shared-keyboard-shortcuts-description {
   margin: 0;
   color: var(--color-text-secondary);
   font-family: var(--font-family-sans);

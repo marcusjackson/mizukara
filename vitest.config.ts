@@ -2,14 +2,15 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
+import pkg from './package.json' with { type: 'json' }
+
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
-  // @ts-expect-error - Plugin type mismatch between vite versions
   plugins: [vue()],
 
   define: {
-    __APP_VERSION__: JSON.stringify('0.3.0')
+    __APP_VERSION__: JSON.stringify(pkg.version)
   },
 
   resolve: {
@@ -45,10 +46,10 @@ export default defineConfig({
         'src/**/*.stories.ts'
       ],
       thresholds: {
-        statements: 70,
-        branches: 70,
-        functions: 70,
-        lines: 70
+        statements: 85,
+        branches: 75,
+        functions: 85,
+        lines: 85
       }
     },
 

@@ -7,6 +7,8 @@
 
 import { expect } from '@playwright/test'
 
+import { TIMEOUTS } from './test-constants'
+
 import type { Locator, Page } from '@playwright/test'
 
 /**
@@ -14,7 +16,9 @@ import type { Locator, Page } from '@playwright/test'
  * @param page - Playwright page object
  */
 export async function waitForPageReady(page: Page): Promise<void> {
-  await expect(page.getByTestId('create-form')).toBeVisible({ timeout: 10000 })
+  await expect(page.getByTestId('create-form')).toBeVisible({
+    timeout: TIMEOUTS.medium
+  })
   await expect(page.getByTestId('error-container')).not.toBeVisible()
 }
 
@@ -49,6 +53,7 @@ export async function navigateToDay(
   const button = page.getByRole('button', { name: new RegExp(direction, 'i') })
   await button.click()
   await expect(page).not.toHaveURL(currentUrl)
+  await expect(page.getByTestId('current-date')).toBeVisible()
 }
 
 /**
@@ -91,7 +96,7 @@ export function getEntryEditor(page: Page): Locator {
  * @returns Locator for the editor textarea
  */
 export function getEditorTextarea(page: Page): Locator {
-  return getEntryEditor(page).getByPlaceholder(/enter your thoughts/i)
+  return getEntryEditor(page).getByRole('textbox', { name: /content/i })
 }
 
 /**
@@ -163,4 +168,65 @@ export async function navigateToDate(
 ): Promise<void> {
   await page.goto(`/entries/${targetDate}`, { waitUntil: 'networkidle' })
   await waitForPageReady(page)
+}
+
+/**
+ * Blur the currently focused element
+ *
+ * Prefer this helper over pressing Escape or other workarounds when you simply
+ * need to remove focus from the active element.
+ *
+ * @param page - Playwright page object
+ */
+export async function blurFocusedElement(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    ;(document.activeElement as HTMLElement | null)?.blur()
+  })
+}
+
+/**
+ * Disable CSS animations and transitions to prevent flaky screenshots
+ *
+ * Useful for any E2E test that needs deterministic visual state—not just VRT.
+ * Uses addInitScript so the injected style survives page.goto() navigation.
+ *
+ * @param page - Playwright page object
+ */
+export async function disableAnimations(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const style = document.createElement('style')
+    style.textContent =
+      '*, *::before, *::after { animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; transition-delay: 0s !important; }'
+    document.head.appendChild(style)
+  })
+}
+
+/**
+ * Wait for a specific set of entries to appear AND verify the total count.
+ *
+ * Use this instead of a bare `toHaveCount(N)` whenever you need to assert
+ * on the number of visible entry cards. The helper first waits for each
+ * entry's text to be visible (stabilising the Vue reactivity cycle and any
+ * IndexedDB debounce flush), then asserts the exact count. This prevents
+ * intermittent failures caused by the entry list re-rendering after a
+ * save/create operation or a page reload.
+ *
+ * @param page    - Playwright page object
+ * @param texts   - Ordered or unordered list of entry content strings that
+ *                  must be visible. The final count assertion equals texts.length.
+ * @param timeout - Per-entry visibility timeout (defaults to TIMEOUTS.long)
+ */
+export async function waitForEntries(
+  page: Page,
+  texts: string[],
+  timeout = TIMEOUTS.long
+): Promise<void> {
+  for (const text of texts) {
+    await expect(
+      page.getByTestId('entry-card').filter({ hasText: text })
+    ).toBeVisible({ timeout })
+  }
+  await expect(page.getByTestId('entry-card')).toHaveCount(texts.length, {
+    timeout
+  })
 }

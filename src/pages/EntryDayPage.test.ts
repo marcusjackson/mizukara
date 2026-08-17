@@ -17,9 +17,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useDatabase } from '@/shared/composables/use-database'
 
+import { buildEntryDayRoute, ROUTES } from '@/router/routes'
+
 import EntryDayPage from './EntryDayPage.vue'
 
 import type { Database } from 'sql.js'
+
+// Hoist mock function instances so they can be re-configured in beforeEach
+// after clearMocks runs (vitest config has clearMocks: true).
+const {
+  mockFetchTags,
+  mockFindByEntryId,
+  mockFindByEntryIds,
+  mockFindEntriesByTags
+} = vi.hoisted(() => ({
+  mockFetchTags: vi.fn(),
+  mockFindByEntryId: vi.fn(),
+  mockFindByEntryIds: vi.fn(),
+  mockFindEntriesByTags: vi.fn()
+}))
 
 // Mock database composable
 vi.mock('@/shared/composables/use-database', () => ({
@@ -29,6 +45,26 @@ vi.mock('@/shared/composables/use-database', () => ({
 // Mock keyboard shortcuts composable
 vi.mock('@/shared/composables/use-keyboard-shortcuts', () => ({
   useKeyboardShortcuts: vi.fn()
+}))
+
+// Mock entry-tag queries — EntryDayPage renders EntryDayViewRoot which calls
+// findByEntryIds; the entries test database doesn't have an entry_tags table.
+vi.mock('@/api/entry-tags/entry-tag-queries', () => ({
+  findByEntryIds: mockFindByEntryIds,
+  findByEntryId: mockFindByEntryId,
+  findEntriesByTags: mockFindEntriesByTags
+}))
+
+// Mock useTags composable — the entries test database doesn't have a tags table.
+vi.mock('@/modules/tags/composables/use-tags', () => ({
+  useTags: () => ({
+    tags: [],
+    tagOptions: [],
+    filteredEntries: [],
+    isLoading: { value: false },
+    fetchTags: mockFetchTags,
+    fetchEntriesByTags: vi.fn().mockResolvedValue(undefined)
+  })
 }))
 
 // Mock date utils to return consistent test date
@@ -46,6 +82,12 @@ describe('EntryDayPage', () => {
   beforeEach(async () => {
     db = await createTestDatabaseForEntries()
     vi.clearAllMocks()
+
+    // Re-setup mock implementations after clearAllMocks.
+    mockFindByEntryId.mockReturnValue([])
+    mockFindByEntryIds.mockReturnValue(new Map())
+    mockFindEntriesByTags.mockReturnValue([])
+    mockFetchTags.mockResolvedValue(undefined)
 
     // Mock useDatabase to return the test database
     vi.mocked(useDatabase).mockReturnValue({
@@ -66,7 +108,7 @@ describe('EntryDayPage', () => {
       history: createMemoryHistory(),
       routes: [
         {
-          path: '/entries/:date?',
+          path: ROUTES.ENTRY_DAY,
           name: 'entry-day-view',
           component: EntryDayPage
         }
@@ -108,7 +150,7 @@ describe('EntryDayPage', () => {
       assignedDay: testDate
     })
 
-    await renderPage(`/entries/${testDate}`)
+    await renderPage(buildEntryDayRoute(testDate))
 
     // Verify correct date is displayed in navigation
     await waitFor(() => {
@@ -143,7 +185,7 @@ describe('EntryDayPage', () => {
       assignedDay: testDate
     })
 
-    await renderPage(`/entries/${testDate}`)
+    await renderPage(buildEntryDayRoute(testDate))
 
     await waitFor(() => {
       expect(screen.getByText('Christmas entry')).toBeInTheDocument()
@@ -157,7 +199,7 @@ describe('EntryDayPage', () => {
       assignedDay: testDate
     })
 
-    const { container } = await renderPage(`/entries/${testDate}`)
+    const { container } = await renderPage(buildEntryDayRoute(testDate))
 
     // Page should have minimal DOM structure - just the root component
     await waitFor(() => {
@@ -177,7 +219,7 @@ describe('EntryDayPage', () => {
       assignedDay: '2026-02-11'
     })
 
-    await router.push('/entries/2026-02-10')
+    await router.push(buildEntryDayRoute('2026-02-10'))
     await router.isReady()
 
     render(EntryDayPage, {
@@ -191,7 +233,7 @@ describe('EntryDayPage', () => {
     })
 
     // Change route
-    await router.push('/entries/2026-02-11')
+    await router.push(buildEntryDayRoute('2026-02-11'))
 
     await waitFor(() => {
       expect(screen.getByText('Entry Feb 11')).toBeInTheDocument()

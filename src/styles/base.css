@@ -30,6 +30,7 @@ body {
 }
 
 body {
+  color-scheme: light;
   background-color: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-family-sans);
@@ -146,12 +147,16 @@ ol {
   overflow: hidden;
   border-width: 0;
   white-space: nowrap;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
 }
 
-/* Item content - preserve whitespace for natural writing */
-.item-content {
-  font-family: var(--font-family-serif);
-  line-height: var(--line-height-relaxed);
-  white-space: pre-wrap;
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

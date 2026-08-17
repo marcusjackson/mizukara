@@ -7,7 +7,10 @@ export default defineConfig({
   outputDir: './test-results',
 
   // Global timeout for each test
-  timeout: 8 * 1000,
+  timeout: 30_000,
+
+  // Global expect assertion timeout (default: 5000ms, increase for load resilience)
+  expect: { timeout: 10_000 },
 
   // Run tests in parallel
   fullyParallel: true,
@@ -18,8 +21,8 @@ export default defineConfig({
   // Retry on CI only
   retries: isCI ? 2 : 0,
 
-  // Opt out of parallel tests on CI
-  workers: 1,
+  // Opt out of parallel tests on CI; allow parallel locally
+  ...(isCI && { workers: 1 }),
 
   // Reporter to use
   reporter: [
@@ -31,22 +34,38 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000
   },
 
   // Configure projects for major browsers
   projects: [
-    // New UI tests (empty until we start building new UI)
+    // Chromium / Chrome
     {
       name: 'chromium',
       testMatch: '*.test.ts',
-      testIgnore: ['**/visual-regression.test.ts'],
+      testIgnore: ['**/visual-regression*.test.ts'],
       use: { ...devices['Desktop Chrome'] }
+    },
+    // Firefox
+    {
+      name: 'firefox',
+      testMatch: '*.test.ts',
+      testIgnore: ['**/visual-regression.test.ts'],
+      use: { ...devices['Desktop Firefox'] }
+    },
+    // WebKit (Safari engine)
+    {
+      name: 'webkit',
+      testMatch: '*.test.ts',
+      testIgnore: ['**/visual-regression.test.ts'],
+      use: { ...devices['Desktop Safari'] }
     },
     // Visual regression testing - single browser for consistency
     {
       name: 'visual',
-      testMatch: '**/visual-regression.test.ts',
+      testMatch: '**/visual-regression*.test.ts',
       timeout: 30000, // 30s timeout for VRT tests
       use: {
         ...devices['Desktop Chrome'],

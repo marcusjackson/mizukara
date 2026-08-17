@@ -1,21 +1,3 @@
-/**
- * Composable for entry editor form logic
- *
- * Handles form state, validation, and unsaved changes tracking
- * for the entry editor component. Integrates with vee-validate
- * and zod for type-safe form validation.
- *
- * @param entry - The entry being edited, used to initialize form values
- * @param onCancel - Optional callback function called when editing is cancelled via Escape key
- * @returns Object containing form fields, validation state, and event handlers
- *
- * @example
- * ```typescript
- * const { contentValue, contentError, handleKeyDown } = useEntryEditor(entry, () => {
- *   console.log('Editing cancelled')
- * })
- * ```
- */
 import { watch } from 'vue'
 
 import { toTypedSchema } from '@vee-validate/zod'
@@ -27,13 +9,61 @@ import {
 } from '../schemas/entry-editor-schema'
 
 import type { Entry } from '@/shared/types/entry-types'
+import type { FormMeta } from 'vee-validate'
+import type { ComputedRef, Ref } from 'vue'
 
-export function useEntryEditor(entry: Entry, onCancel?: () => void) {
+/**
+ * Return type for useEntryEditor composable
+ */
+export interface UseEntryEditorReturn {
+  /** Content field error message */
+  contentError: Ref<string | undefined>
+  /** Content field value */
+  contentValue: Ref<string>
+  /** Assigned day field error message */
+  assignedDayError: Ref<string | undefined>
+  /** Assigned day field value */
+  assignedDayValue: Ref<string>
+  /** Form metadata for dirty/valid state */
+  meta: ComputedRef<FormMeta<EntryEditorFormData>>
+  /** Handle browser beforeunload event to warn about unsaved changes */
+  handleBeforeUnload: (event: BeforeUnloadEvent) => void
+  /** Handle global document keyboard events (Escape to cancel, Cmd+S to save) */
+  handleKeyDown: (event: KeyboardEvent) => void
+  /** Update the assigned day value programmatically */
+  updateAssignedDay: (value: string) => void
+}
+
+/**
+ * Composable for entry editor form logic
+ *
+ * Handles form state, validation, and unsaved changes tracking
+ * for the entry editor component. Integrates with vee-validate
+ * and zod for type-safe form validation.
+ *
+ * @param entry - The entry being edited, used to initialize form values
+ * @param onCancel - Optional callback function called when editing is cancelled via Escape key
+ * @param onSave - Optional callback function called when Cmd+S / Ctrl+S is pressed
+ * @returns Object containing form fields, validation state, and event handlers
+ *
+ * @example
+ * ```typescript
+ * const { contentValue, contentError, handleKeyDown } = useEntryEditor(entry, () => {
+ *   console.log('Editing cancelled')
+ * })
+ * ```
+ */
+export function useEntryEditor(
+  entry: Entry,
+  onCancel?: () => void,
+  onSave?: () => void
+): UseEntryEditorReturn {
   // Form setup
   const schema = toTypedSchema(entryEditorSchema)
 
-  const { meta, setFieldValue } = useForm<EntryEditorFormData>({
-    validationSchema: schema
+  const { handleSubmit, meta, setFieldValue } = useForm<EntryEditorFormData>({
+    validationSchema: schema,
+    initialValues: { content: entry.content, assignedDay: entry.assignedDay }
   })
 
   // Field setup
@@ -42,41 +72,25 @@ export function useEntryEditor(entry: Entry, onCancel?: () => void) {
   const { errorMessage: assignedDayError, value: assignedDayValue } =
     useField<string>('assignedDay')
 
-  // Set initial values
-  setFieldValue('content', entry.content)
-  setFieldValue('assignedDay', entry.assignedDay)
-
   // Watch for prop changes to update form
   watch(
     () => entry,
     (newEntry) => {
       setFieldValue('content', newEntry.content)
       setFieldValue('assignedDay', newEntry.assignedDay)
-    },
-    { immediate: true }
+    }
   )
 
-  // Handle beforeunload
-  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-    if (meta.value.dirty) {
-      event.preventDefault()
-    }
-  }
+  const validatedSave = handleSubmit(() => {
+    onSave?.()
+  })
 
-  // Handle Escape key
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      onCancel?.()
-    }
-  }
+  const { handleBeforeUnload, handleKeyDown } = createEditorEventHandlers(
+    meta,
+    validatedSave,
+    onCancel
+  )
 
-  /**
-   * Update assigned day value via setFieldValue
-   *
-   * Uses vee-validate's setFieldValue API directly to ensure
-   * programmatic updates (e.g., from Playwright fill()) are
-   * properly detected by the form state.
-   */
   const updateAssignedDay = (value: string) => {
     setFieldValue('assignedDay', value)
   }
@@ -91,4 +105,29 @@ export function useEntryEditor(entry: Entry, onCancel?: () => void) {
     handleKeyDown,
     updateAssignedDay
   }
+}
+
+function createEditorEventHandlers(
+  meta: ComputedRef<FormMeta<EntryEditorFormData>>,
+  validatedSave: (e?: Event) => Promise<void>,
+  onCancel?: () => void
+): Pick<UseEntryEditorReturn, 'handleBeforeUnload' | 'handleKeyDown'> {
+  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+    if (meta.value.dirty) {
+      event.preventDefault()
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      onCancel?.()
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault()
+      event.stopPropagation()
+      void validatedSave()
+    }
+  }
+
+  return { handleBeforeUnload, handleKeyDown }
 }

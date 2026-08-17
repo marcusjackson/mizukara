@@ -41,6 +41,18 @@ vi.mock('@/shared/composables/use-toast', () => ({
   })
 }))
 
+// Every test in this file exercises the "invalid/empty file" path, never a
+// real SQLite payload. Mock sql.js so `validateSqliteData`'s real WASM load
+// (which has no server to fetch the .wasm file from under jsdom) never runs.
+vi.mock('sql.js', () => ({
+  default: () =>
+    Promise.resolve({
+      Database: function ThrowingDatabase() {
+        throw new Error('invalid SQLite data')
+      }
+    })
+}))
+
 describe('useDatabaseExport', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -324,8 +336,29 @@ describe('importDatabase', () => {
 
     await importDatabase(file)
 
-    // Will fail at validation since file content is empty
+    // Will fail at validation since file content is invalid SQLite
     expect(mockError).toHaveBeenCalled()
+  })
+
+  it('rejects files with invalid extensions during import', async () => {
+    const file = new File([''], 'test.txt', { type: 'text/plain' })
+    const { importDatabase } = useDatabaseExport()
+
+    const result = await importDatabase(file)
+
+    expect(result).toBe(false)
+    expect(mockError).toHaveBeenCalled()
+    expect(mockReplaceDatabase).not.toHaveBeenCalled()
+  })
+
+  it('does not replace database when file fails MIME validation during import', async () => {
+    const file = new File([''], 'test.tmp', { type: 'text/plain' })
+    const { importDatabase } = useDatabaseExport()
+
+    const result = await importDatabase(file)
+
+    expect(result).toBe(false)
+    expect(mockReplaceDatabase).not.toHaveBeenCalled()
   })
 })
 

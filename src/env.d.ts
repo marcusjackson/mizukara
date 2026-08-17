@@ -15,21 +15,32 @@ declare module '*.vue' {
 // Modules without type declarations
 declare module 'eslint-config-prettier'
 declare module 'eslint-plugin-sort-destructure-keys'
+
+// Re-declare sql.js with explicitly typed API surface.
+// @types/sql.js uses `export =` (CJS-style), which causes SonarQube's
+// TypeScript analysis engine to treat imported types as 'error' types.
+// This explicit declaration uses ES module syntax so type resolution works
+// correctly, while @types/sql.js is kept installed for reference.
 declare module 'sql.js' {
-  export interface Database {
-    run(sql: string, params?: unknown[]): Database
-    exec(sql: string, params?: unknown[]): QueryExecResult[]
-    close(): void
-    export(): Uint8Array
-  }
+  export type SqlValue = number | string | Uint8Array | null
+  export type ParamsObject = Record<string, SqlValue>
+  export type BindParams = SqlValue[] | ParamsObject | null
 
   export interface QueryExecResult {
     columns: string[]
-    values: unknown[][]
+    values: SqlValue[][]
   }
 
   export interface SqlJsStatic {
-    Database: new (data?: ArrayLike<number>) => Database
+    Database: new (data?: ArrayLike<number> | null) => Database
+  }
+
+  export class Database {
+    constructor(data?: ArrayLike<number> | null)
+    run(sql: string, params?: BindParams): Database
+    exec(sql: string, params?: BindParams): QueryExecResult[]
+    close(): void
+    export(): Uint8Array
   }
 
   export default function initSqlJs(config?: {

@@ -23,13 +23,16 @@
 
 import { computed, ref } from 'vue'
 
+import SharedEntryCard from '@/shared/components/SharedEntryCard.vue'
+
 import { useEntrySectionHandlers } from '../composables/use-entry-day-view-section-handlers'
 
 import EntryDayViewCreateForm from './EntryDayViewCreateForm.vue'
-import EntryDayViewEntryCard from './EntryDayViewEntryCard.vue'
 import EntryDayViewEntryEditor from './EntryDayViewEntryEditor.vue'
+import EntryDayViewSectionReorder from './EntryDayViewSectionReorder.vue'
 
 import type { Entry } from '@/shared/types/entry-types'
+import type { Tag, TagInputOption } from '@/shared/types/tag-types'
 
 interface Props {
   /** Items to display */
@@ -38,6 +41,10 @@ interface Props {
   currentDate: string
   /** Callback to refetch entries after mutations */
   onRefetch: () => Promise<void>
+  /** All available tag options; passed to editor for inline tag assignment */
+  allTags?: TagInputOption[]
+  /** Map of entry ID → tags; used to render chips on each card */
+  entryTagsMap?: Map<string, Tag[]>
 }
 
 const props = defineProps<Props>()
@@ -46,9 +53,7 @@ const props = defineProps<Props>()
 const createFormRef = ref<InstanceType<typeof EntryDayViewCreateForm> | null>(
   null
 )
-const currentEditorRef = ref<InstanceType<
-  typeof EntryDayViewEntryEditor
-> | null>(null)
+const currentEditorRef = ref<InstanceType<typeof EntryDayViewEntryEditor>[]>([])
 
 // Mode state
 type ListMode = 'view' | 'reorder'
@@ -59,8 +64,6 @@ const editingItemId = ref<string | null>(null)
 
 // Handlers composable
 const {
-  canMoveDown,
-  canMoveUp,
   handleEntryCreated,
   handleMoveDown,
   handleMoveUp,
@@ -71,9 +74,12 @@ const {
 })
 
 // Computed
-const hasMultipleEntries = computed(() => props.items.length >= 2)
 const isReorderMode = computed(() => currentMode.value === 'reorder')
-const isAnyEntryEditing = computed(() => editingItemId.value !== null)
+
+const handleReorderToggle = () => {
+  currentMode.value = currentMode.value === 'view' ? 'reorder' : 'view'
+  editingItemId.value = null
+}
 
 const handleSaveRequested = async (
   entryId: string,
@@ -109,7 +115,7 @@ const handleGlobalSave = () => {
   if (editingItemId.value === null) {
     createFormRef.value?.submit()
   } else {
-    currentEditorRef.value?.save()
+    currentEditorRef.value[0]?.save()
   }
 }
 
@@ -128,7 +134,7 @@ const handleGlobalEscape = () => {
   if (editingItemId.value === null) {
     createFormRef.value?.clear()
   } else {
-    currentEditorRef.value?.cancel()
+    currentEditorRef.value[0]?.cancel()
   }
 }
 
@@ -147,25 +153,17 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
       @entry-created="handleEntryCreated"
     />
 
-    <!-- Reorder mode toggle (only show when multiple entries exist) -->
-    <div
-      v-if="hasMultipleEntries"
-      class="reorder-controls"
-    >
-      <button
-        :aria-label="isReorderMode ? 'Done reordering' : 'Reorder entries'"
-        class="reorder-toggle-button"
-        type="button"
-        @click="
-          () => {
-            currentMode = currentMode === 'view' ? 'reorder' : 'view'
-            editingItemId = null
-          }
-        "
-      >
-        {{ isReorderMode ? 'Done' : 'Reorder' }}
-      </button>
-    </div>
+    <!-- Reorder controls and reorder mode list -->
+    <EntryDayViewSectionReorder
+      v-if="items.length >= 2"
+      v-bind="entryTagsMap ? { entryTagsMap } : {}"
+      :is-reorder-mode="isReorderMode"
+      :is-reordering="isReordering"
+      :items="items"
+      @move-down="(id) => handleMoveDown(id, items)"
+      @move-up="(id) => handleMoveUp(id, items)"
+      @toggle-reorder="handleReorderToggle"
+    />
 
     <!-- Empty state when no entries -->
     <div
@@ -176,63 +174,35 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
       No entries yet. Start writing to capture this day's memories.
     </div>
 
-    <!-- Entry list -->
+    <!-- Entry list (view/edit mode) -->
     <div
-      v-else
+      v-else-if="!isReorderMode"
       class="entry-list"
       data-testid="entry-list"
     >
       <template
-        v-for="(item, index) in items"
+        v-for="item in items"
         :key="item.id"
       >
-        <!-- Edit mode: show editor (only in view mode, not reorder mode) -->
+        <!-- Edit mode: show editor -->
         <EntryDayViewEntryEditor
-          v-if="!isReorderMode && editingItemId === item.id"
+          v-if="editingItemId === item.id"
           ref="currentEditorRef"
+          :all-tags="allTags ?? []"
           :entry="item"
           @edit-cancelled="editingItemId = null"
           @save-requested="(data) => handleSaveRequested(item.id, data)"
         />
 
-        <!-- View/Reorder mode: show card with appropriate controls -->
-        <div
+        <!-- View mode: show card -->
+        <SharedEntryCard
           v-else
-          class="entry-item"
-        >
-          <!-- Reorder buttons (only in reorder mode) -->
-          <div
-            v-if="isReorderMode"
-            class="reorder-buttons"
-          >
-            <button
-              :aria-label="`Move up entry ${index + 1}`"
-              class="reorder-button reorder-button-up"
-              :disabled="!canMoveUp(item.id, items) || isReordering"
-              type="button"
-              @click="handleMoveUp(item.id, items)"
-            >
-              ↑
-            </button>
-            <button
-              :aria-label="`Move down entry ${index + 1}`"
-              class="reorder-button reorder-button-down"
-              :disabled="!canMoveDown(item.id, items) || isReordering"
-              type="button"
-              @click="handleMoveDown(item.id, items)"
-            >
-              ↓
-            </button>
-          </div>
-
-          <!-- Entry card -->
-          <EntryDayViewEntryCard
-            :entry="item"
-            :is-edit-disabled="isAnyEntryEditing"
-            :show-edit-button="!isReorderMode"
-            @edit-requested="editingItemId = $event"
-          />
-        </div>
+          :entry="item"
+          :is-edit-disabled="editingItemId !== null"
+          show-edit-button
+          :tags="entryTagsMap?.get(item.id) ?? []"
+          @edit-requested="editingItemId = $event"
+        />
       </template>
     </div>
   </section>
@@ -253,34 +223,6 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
   }
 }
 
-.reorder-controls {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.reorder-toggle-button {
-  padding: var(--spacing-2) var(--spacing-4);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-  background-color: transparent;
-  color: var(--color-primary);
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.reorder-toggle-button:hover {
-  background-color: var(--color-primary);
-  color: var(--color-surface);
-}
-
-.reorder-toggle-button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
 .empty-state {
   padding: var(--spacing-8) var(--spacing-4);
   color: var(--color-text-muted);
@@ -293,50 +235,5 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-}
-
-.entry-item {
-  display: flex;
-  align-items: stretch;
-  gap: var(--spacing-3);
-}
-
-.reorder-buttons {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  gap: var(--spacing-1);
-}
-
-.reorder-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.reorder-button:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  background-color: var(--color-surface-hover);
-  color: var(--color-primary);
-}
-
-.reorder-button:disabled {
-  color: var(--color-text-disabled);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.reorder-button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
 }
 </style>

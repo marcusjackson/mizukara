@@ -48,7 +48,7 @@ test.describe('App Settings', () => {
       await expect(backLink).toBeVisible()
 
       await backLink.click()
-      await expect(page).toHaveURL('/')
+      await expect(page).toHaveURL(/\/entries/)
     })
   })
 
@@ -168,17 +168,14 @@ test.describe('App Settings', () => {
     test('keyboard navigation through settings', async ({ page }) => {
       await page.goto('/settings', { waitUntil: 'networkidle' })
 
-      // Tab through interactive elements
-      await page.keyboard.press('Tab')
-      await page.keyboard.press('Tab')
-
-      // At some point we should reach the theme switch
       const themeSwitch = page.getByRole('switch', { name: /dark mode/i })
       const exportButton = page.getByRole('button', { name: /export/i })
 
-      // Both should be reachable via keyboard
-      await expect(themeSwitch).toBeVisible()
-      await expect(exportButton).toBeVisible()
+      // Verify interactive elements are keyboard-focusable
+      await themeSwitch.focus()
+      await expect(themeSwitch).toBeFocused()
+      await exportButton.focus()
+      await expect(exportButton).toBeFocused()
     })
   })
 

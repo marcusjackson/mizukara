@@ -13,7 +13,7 @@ import { BaseSwitch } from '@/base/components'
 
 import { useTheme } from '@/shared/composables/use-theme'
 
-const { theme, toggleTheme } = useTheme()
+const { setTheme, theme } = useTheme()
 
 const isDarkMode = computed(() => theme.value === 'dark')
 
@@ -21,11 +21,10 @@ const isDarkMode = computed(() => theme.value === 'dark')
  * App version injected at build time by Vite's define plugin (vite.config.ts).
  * Declared as a TypeScript global in src/env.d.ts.
  */
-// eslint-disable-next-line no-undef
 const appVersion = __APP_VERSION__
 
-function handleThemeToggle(): void {
-  toggleTheme()
+function handleThemeToggle(isDark: boolean): void {
+  setTheme(isDark ? 'dark' : 'light')
 }
 </script>
 
