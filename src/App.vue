@@ -5,6 +5,7 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 
+import SharedUpdatePrompt from '@/shared/components/SharedUpdatePrompt.vue'
 import { useDatabase } from '@/shared/composables/use-database'
 import { useTheme } from '@/shared/composables/use-theme'
 
@@ -40,6 +41,7 @@ onMounted(async () => {
   >
     <p>Loading...</p>
   </output>
+  <SharedUpdatePrompt />
 </template>
 
 <style>
