@@ -15,9 +15,6 @@
  * - Prefer component-level over page-level (fails only when that component changes)
  * - Ensure deterministic screenshots (no animations, dynamic content masked)
  * - Update baselines only after reviewing diffs (intentional changes only)
- *
- * See .github/instructions/vrt-testing.instructions.md for complete guidelines
- * See .kiro/specs/entry-day-view/vrt-plan.md for detailed strategy
  */
 
 import { expect, test } from '@playwright/test'

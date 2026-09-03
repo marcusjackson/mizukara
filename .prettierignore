@@ -19,6 +19,9 @@ test-results/
 # Reference/ignore folder
 ignore/
 
+# Personal scratch folder (gitignored globally, not project-tracked)
+_local/
+
 # IDE
 .idea/
 .vscode/

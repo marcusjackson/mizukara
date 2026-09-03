@@ -91,6 +91,14 @@ export function useEntryEditor(
     onCancel
   )
 
+  /**
+   * The date input is bound explicitly (`:value` + `@input`/`@change`) rather than with `v-model`.
+   * `v-model` on `<input type="date">` does not reliably sync into vee-validate's form state when
+   * the value is set programmatically rather than typed — Playwright's `fill()` dispatches `input`
+   * and `change`, and the form still submitted the previous value. Calling `setFieldValue` directly
+   * is what makes the update deterministic. Reverting to `v-model` here reintroduces a silent
+   * stale-value bug that only the e2e suite catches.
+   */
   const updateAssignedDay = (value: string) => {
     setFieldValue('assignedDay', value)
   }

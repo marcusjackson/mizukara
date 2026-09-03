@@ -40,6 +40,9 @@ function mountRoot(router?: Router) {
         },
         AppSettingsSectionDatabase: {
           template: '<div data-testid="database-section">Database</div>'
+        },
+        AppSettingsSectionDeviceSync: {
+          template: '<div data-testid="device-sync-section">Sync</div>'
         }
       }
     }
@@ -72,6 +75,14 @@ describe('AppSettingsRoot', () => {
     const wrapper = mountRoot()
 
     expect(wrapper.find('[data-testid="database-section"]').exists()).toBe(true)
+  })
+
+  it('renders device sync section', () => {
+    const wrapper = mountRoot()
+
+    expect(wrapper.find('[data-testid="device-sync-section"]').exists()).toBe(
+      true
+    )
   })
 
   it('has accessible page structure', () => {
