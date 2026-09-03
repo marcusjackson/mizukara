@@ -39,6 +39,10 @@ This tool exists because:
 
 It's built to be useful decades from now, without servers, accounts, or external dependencies.
 
+The app is also meant to stay usable at every point in its own development, rather than working
+toward a single "finished" release — a smaller version that only supports writing and viewing is
+already valuable on its own, and later features are meant to arrive without ever breaking that.
+
 ---
 
 ## What It Can Do
@@ -47,18 +51,16 @@ It's built to be useful decades from now, without servers, accounts, or external
 
 **Journaling:**
 
-- Create journal items quickly (text entry with optional title)
+- Create journal items quickly
 - Assign items to specific days (capture now, assign when/where it belongs)
 - View items by day in a dense list
 - Edit items anytime
-- Optionally reorder items within a day
-- Search across all items
+- Optionally reorder items within a day, deliberately and never by accident
+- Read without changing anything — editing is always an explicit step
 
 **Organization:**
 
-- Manually title items for clarity
 - Tag items for loose grouping
-- Full-text search across content and titles
 - Export/import entire database as SQLite file
 
 **Offline & Data:**
@@ -67,14 +69,17 @@ It's built to be useful decades from now, without servers, accounts, or external
 - SQLite database persists in browser IndexedDB
 - Works indefinitely without internet or servers
 - Export/import database for backup or portability
+- Sync directly between your own devices over the local network, with no cloud
 
 ### Future
 
-- Optional auto-generated titles and tags via local LLM
-- Suggested summaries and themes
+- Optional auto-generated titles and tags via local LLM, plus suggested summaries and themes —
+  always optional, always editable, never hidden or forced on the user
+- An LLM able to act as a Socratic partner: asking follow-up questions and surfacing patterns
+  across recent items, without replacing the user's own voice or writing entries on their behalf
 - Quick retrospective views (weekly, monthly)
-- Offline device sync via WebRTC (no cloud)
-- Optional memory/context tracking (people, projects, concerns)
+- Optional memory/context tracking (people, projects, concerns) — explicit, inspectable, and
+  editable, never a hidden profile the app builds on its own
 
 ---
 
@@ -85,7 +90,6 @@ It's built to be useful decades from now, without servers, accounts, or external
 **Item** — The core unit. A thought, a reminder, an event, a feeling — anything you want to record. Unified concept: length and depth are emergent properties, not declared types. Each item has:
 
 - Content (what you captured)
-- Optional title (for clarity)
 - Optional tags (loose grouping)
 - Creation timestamp (when you wrote it)
 - Assigned day (when it's about)
@@ -113,7 +117,7 @@ This project is **not a service or a multi-user platform**. It's built for you t
 
 - No "users" — just you
 - No authentication or accounts
-- No servers or syncing
+- No servers — syncing, when you use it, goes straight between your own devices
 - No performance optimization for scale
 - No metrics or analytics
 
@@ -208,7 +212,7 @@ pnpm preview          # Preview production build
 pnpm test             # Run unit tests
 pnpm test:e2e         # Run E2E tests
 pnpm lint             # Lint code (ESLint + Prettier + Stylelint)
-pnpm format           # Format code with Prettier
+make format           # Format code with Prettier
 pnpm type-check       # TypeScript type checking
 ```
 
@@ -233,15 +237,11 @@ make ci-full            # Full validation (lint + unit + E2E)
 
 ---
 
-## 📖 Documentation
-
-- **[Concept & Design Rationale](docs/concept-design-rationale.md)** — Philosophy, constraints, and design thinking
-
----
-
 ## 🔐 Privacy & Data
 
-- **All data stays local** — Nothing is sent to external servers
+- **All data stays local** — Nothing is sent to external servers. Device sync connects your
+  devices directly; a public STUN server is used only to discover a local network address, and
+  never carries your data
 - **Full ownership** — Export your database anytime as a standard SQLite file
 - **Offline-first** — Works without internet connection
 - **Standard format** — SQLite is a widely-supported, future-proof format

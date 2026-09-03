@@ -225,8 +225,9 @@ export function updateOrderPosition(
  * Soft delete an entry
  *
  * Sets the is_deleted flag to true instead of removing the row from the database.
- * This is required for future sync functionality - hard deletes cannot be propagated
- * to other devices.
+ * This is required by device sync - hard deletes cannot be propagated to other
+ * devices. Note this does not cascade: an entry's tag associations in
+ * `entry_tags` are left active.
  *
  * @param db - SQLite database instance
  * @param id - Entry UUID to delete

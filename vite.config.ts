@@ -1,3 +1,4 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
@@ -15,6 +16,15 @@ export default defineConfig(({ command }) => ({
 
   plugins: [
     vue(),
+    // Self-signed HTTPS for `pnpm dev:mobile` only (opt-in via VITE_HTTPS) —
+    // `navigator.mediaDevices` (device-sync's QR camera scanner) doesn't
+    // exist at all on a non-secure origin, and `--host` serves dev over a
+    // LAN IP, which only counts as secure over HTTPS (unlike `localhost`,
+    // which browsers always treat as secure). Left off for plain `pnpm dev`
+    // and the Playwright webServer, which both expect the plain-HTTP
+    // `http://localhost:5173` origin. Accept the browser's self-signed cert
+    // warning once per device.
+    ...(command === 'serve' && process.env['VITE_HTTPS'] ? [basicSsl()] : []),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],

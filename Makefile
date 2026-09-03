@@ -39,7 +39,13 @@ STYLELINT_FILES = $(filter %.css %.scss %.vue,$(FILES))
 # early with the actual cause instead. .nvmrc pins the version for `nvm use`.
 check-node:
 	@v=$$(node -v 2>/dev/null | sed 's/^v//'); \
-	if [ -z "$$v" ]; then echo "error: node is not on PATH."; exit 1; fi; \
+	if [ -z "$$v" ]; then \
+	  echo "error: node is not on PATH."; \
+	  echo "       A non-interactive shell (an agent, a CI step, a fresh terminal) does not"; \
+	  echo "       source nvm from your profile. Run:"; \
+	  echo '         export NVM_DIR="$$HOME/.nvm" && . "$$NVM_DIR/nvm.sh" && nvm use'; \
+	  exit 1; \
+	fi; \
 	maj=$${v%%.*}; \
 	if [ "$$maj" -ge 24 ]; then exit 0; fi; \
 	echo "error: Node $$v is too old — this project needs ^24.0.0."; \
@@ -144,7 +150,7 @@ test-e2e-vrt: check-node
 # =============================================================================
 
 # Full CI-style lint check (matches pnpm lint behavior)
-# Runs: Prettier check + ESLint check + Stylelint check + Type check
+# Runs: Prettier check + ESLint check + Stylelint check + Type check + doc link check
 lint:
 	@echo "Running type check..."
 	@$(MAKE) type-check
@@ -154,6 +160,8 @@ lint:
 	@$(MAKE) eslint-check FILES="$(FILES)"
 	@echo "Checking Stylelint..."
 	@$(MAKE) stylelint-check FILES="$(FILES)"
+	@echo "Checking documentation links..."
+	@python3 check-doc-links.py
 	@echo "All lint checks complete!"
 
 # Apply all fixes (format + eslint + stylelint)

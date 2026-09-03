@@ -12,6 +12,7 @@ import { ROUTES } from '@/router/routes'
 
 import AppSettingsSectionAppearance from './AppSettingsSectionAppearance.vue'
 import AppSettingsSectionDatabase from './AppSettingsSectionDatabase.vue'
+import AppSettingsSectionDeviceSync from './AppSettingsSectionDeviceSync.vue'
 </script>
 
 <template>
@@ -30,6 +31,7 @@ import AppSettingsSectionDatabase from './AppSettingsSectionDatabase.vue'
     <div class="app-settings-sections">
       <AppSettingsSectionAppearance />
       <AppSettingsSectionDatabase />
+      <AppSettingsSectionDeviceSync />
     </div>
   </main>
 </template>
