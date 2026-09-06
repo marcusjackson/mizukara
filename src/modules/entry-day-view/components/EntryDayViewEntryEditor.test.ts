@@ -173,6 +173,52 @@ describe('EntryDayViewEntryEditor', () => {
     expect(emitted()['edit-cancelled']).toBeTruthy()
   })
 
+  it('Escape key with unsaved changes shows a confirm dialog before cancelling', async () => {
+    const user = userEvent.setup()
+    const { emitted } = renderComponent()
+
+    const textarea = screen.getByLabelText('Content')
+    await user.type(textarea, ' more')
+    await user.keyboard('{Escape}')
+
+    expect(
+      await screen.findByRole('dialog', { name: /discard changes/i })
+    ).toBeInTheDocument()
+    expect(emitted()['edit-cancelled']).toBeUndefined()
+  })
+
+  it('Cancel button with unsaved changes shows a confirm dialog before cancelling', async () => {
+    const user = userEvent.setup()
+    const { emitted } = renderComponent()
+
+    const textarea = screen.getByLabelText('Content')
+    await user.type(textarea, ' more')
+
+    const cancelButton = screen.getByRole('button', { name: /^cancel$/i })
+    await user.click(cancelButton)
+
+    expect(
+      await screen.findByRole('dialog', { name: /discard changes/i })
+    ).toBeInTheDocument()
+    expect(emitted()['edit-cancelled']).toBeUndefined()
+  })
+
+  it('confirming the discard dialog emits edit-cancelled', async () => {
+    const user = userEvent.setup()
+    const { emitted } = renderComponent()
+
+    const textarea = screen.getByLabelText('Content')
+    await user.type(textarea, ' more')
+    await user.keyboard('{Escape}')
+
+    const discardButton = await screen.findByRole('button', {
+      name: /^discard$/i
+    })
+    await user.click(discardButton)
+
+    expect(emitted()['edit-cancelled']).toBeTruthy()
+  })
+
   it('visual styling uses CSS variables', () => {
     renderComponent()
 

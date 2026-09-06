@@ -33,9 +33,9 @@ function createTestRouter() {
   })
 }
 
-function renderNavigation(currentDate: string) {
+function renderNavigation(currentDate: string, isToday = true) {
   return render(EntryDayViewSectionNavigation, {
-    props: { currentDate },
+    props: { currentDate, isToday },
     global: {
       plugins: [createTestRouter()]
     }
@@ -123,5 +123,24 @@ describe('EntryDayViewSectionNavigation', () => {
 
     const settingsLink = screen.getByRole('link', { name: /settings/i })
     expect(settingsLink).toHaveAttribute('href', '/settings')
+  })
+
+  it('hides the jump-to-today button when already on today', () => {
+    renderNavigation('2026-02-10', true)
+
+    expect(
+      screen.queryByRole('button', { name: /jump to today/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows and emits go-to-today when not on today', async () => {
+    const user = userEvent.setup()
+
+    const { emitted } = renderNavigation('2026-02-10', false)
+
+    const todayButton = screen.getByRole('button', { name: /jump to today/i })
+    await user.click(todayButton)
+
+    expect(emitted('go-to-today')).toHaveLength(1)
   })
 })

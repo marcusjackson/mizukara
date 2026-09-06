@@ -12,6 +12,8 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import BaseButton from '@/base/components/BaseButton.vue'
 import BaseTextarea from '@/base/components/BaseTextarea.vue'
 
+import { SharedConfirmDialog } from '@/shared/components'
+
 import { useEntryEditor } from '../composables/use-entry-editor'
 
 import EntryDayViewEntryEditorDate from './EntryDayViewEntryEditorDate.vue'
@@ -25,7 +27,16 @@ const emit = defineEmits<{
   'save-requested': [data: { content: string; assignedDay: string }]
   'edit-cancelled': []
 }>()
+const showCancelConfirm = ref(false)
 const onCancel = () => {
+  if (meta.value.dirty) {
+    showCancelConfirm.value = true
+  } else {
+    emit('edit-cancelled')
+  }
+}
+const confirmDiscard = () => {
+  showCancelConfirm.value = false
   emit('edit-cancelled')
 }
 const onSave = () => {
@@ -41,26 +52,43 @@ const {
   contentValue,
   handleBeforeUnload,
   handleKeyDown,
+  meta,
   updateAssignedDay
 } = useEntryEditor(props.entry, onCancel, onSave)
 const textareaRef = ref<{ focus: () => void }>()
 
+/**
+ * Registered on the capture phase so it runs before Root's global Escape
+ * shortcut (a separate bubble-phase document listener) and before any
+ * ancestor can react to the same keypress. Escape stops propagation here
+ * unless the discard-confirm dialog is already open, in which case the
+ * event is left alone so the dialog's own Escape-to-close handling (a
+ * window-level listener) still receives it.
+ */
+const documentKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    if (showCancelConfirm.value) {
+      return
+    }
+    event.stopPropagation()
+  }
+  handleKeyDown(event)
+}
+
 onMounted(() => {
   window.addEventListener('beforeunload', handleBeforeUnload)
-  document.addEventListener('keydown', handleKeyDown)
+  document.addEventListener('keydown', documentKeyDown, true)
   textareaRef.value?.focus()
 })
 
 onUnmounted(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
-  document.removeEventListener('keydown', handleKeyDown)
+  document.removeEventListener('keydown', documentKeyDown, true)
 })
 
 defineExpose({
   save: onSave,
-  cancel: () => {
-    emit('edit-cancelled')
-  }
+  cancel: onCancel
 })
 </script>
 
@@ -116,6 +144,15 @@ defineExpose({
       </div>
     </div>
   </form>
+
+  <SharedConfirmDialog
+    v-model:open="showCancelConfirm"
+    confirm-label="Discard"
+    description="Your unsaved edits will be lost. This cannot be undone."
+    title="Discard changes?"
+    variant="danger"
+    @confirm="confirmDiscard"
+  />
 </template>
 
 <style scoped>

@@ -214,7 +214,7 @@ function cancelDelete(): void {
 }
 
 .tag-row__count {
-  padding: var(--spacing-0-5) var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-full);
   background-color: var(--color-bg-muted);
   color: var(--color-text-muted);

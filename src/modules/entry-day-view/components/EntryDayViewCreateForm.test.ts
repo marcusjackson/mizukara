@@ -125,7 +125,20 @@ describe('EntryDayViewCreateForm', () => {
     })
   })
 
-  it('Escape key clears content', async () => {
+  it('Escape key clears content instantly when textarea is empty', async () => {
+    const user = userEvent.setup()
+    renderComponent()
+
+    const textarea = screen.getByLabelText(/content/i)
+    await user.click(textarea)
+    await user.keyboard('{Escape}')
+
+    expect(
+      screen.queryByRole('dialog', { name: /clear entry/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('Escape key with content shows a confirm dialog before clearing', async () => {
     const user = userEvent.setup()
     renderComponent()
 
@@ -134,6 +147,41 @@ describe('EntryDayViewCreateForm', () => {
 
     await user.keyboard('{Escape}')
 
+    expect(
+      await screen.findByRole('dialog', { name: /clear entry/i })
+    ).toBeInTheDocument()
+    expect(textarea).toHaveValue('Content to clear')
+  })
+
+  it('confirming the clear dialog discards the content', async () => {
+    const user = userEvent.setup()
+    renderComponent()
+
+    const textarea = screen.getByLabelText(/content/i)
+    await user.type(textarea, 'Content to clear')
+    await user.keyboard('{Escape}')
+
+    const confirmButton = await screen.findByRole('button', {
+      name: /^clear$/i
+    })
+    await user.click(confirmButton)
+
     expect(textarea).toHaveValue('')
+  })
+
+  it('cancelling the clear dialog keeps the content', async () => {
+    const user = userEvent.setup()
+    renderComponent()
+
+    const textarea = screen.getByLabelText(/content/i)
+    await user.type(textarea, 'Content to clear')
+    await user.keyboard('{Escape}')
+
+    const cancelButton = await screen.findByRole('button', {
+      name: /^cancel$/i
+    })
+    await user.click(cancelButton)
+
+    expect(textarea).toHaveValue('Content to clear')
   })
 })

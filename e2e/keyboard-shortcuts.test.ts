@@ -203,6 +203,13 @@ test.describe('Keyboard Shortcuts', () => {
     // Press Escape to cancel
     await page.keyboard.press('Escape')
 
+    // Confirm discarding the unsaved changes
+    const discardDialog = page.getByRole('dialog', {
+      name: /discard changes/i
+    })
+    await expect(discardDialog).toBeVisible()
+    await discardDialog.getByRole('button', { name: /discard/i }).click()
+
     // Verify editor closes
     await expect(editor).not.toBeVisible()
 
@@ -223,6 +230,11 @@ test.describe('Keyboard Shortcuts', () => {
 
     // Press Escape
     await page.keyboard.press('Escape')
+
+    // Confirm clearing the content
+    const clearDialog = page.getByRole('dialog', { name: /clear entry/i })
+    await expect(clearDialog).toBeVisible()
+    await clearDialog.getByRole('button', { name: /^clear$/i }).click()
 
     // Verify textarea is cleared
     await expect(textarea).toHaveValue('')
