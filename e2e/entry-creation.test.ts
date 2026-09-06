@@ -175,6 +175,11 @@ test.describe('Entry Creation Flow', () => {
     // Press Escape
     await textarea.press('Escape')
 
+    // Confirm clearing the content
+    const clearDialog = page.getByRole('dialog', { name: /clear entry/i })
+    await expect(clearDialog).toBeVisible()
+    await clearDialog.getByRole('button', { name: /^clear$/i }).click()
+
     // Verify textarea is cleared
     await expect(textarea).toHaveValue('')
   })

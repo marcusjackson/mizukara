@@ -145,6 +145,13 @@ test.describe('Entry Editing Flow', () => {
     // Press Escape key to cancel
     await page.keyboard.press('Escape')
 
+    // Confirm discarding the unsaved changes
+    const discardDialog = page.getByRole('dialog', {
+      name: /discard changes/i
+    })
+    await expect(discardDialog).toBeVisible()
+    await discardDialog.getByRole('button', { name: /discard/i }).click()
+
     // Wait for editor to close and card to reappear
     await expect(editor).not.toBeVisible()
     await expect(entryCard).toBeVisible()

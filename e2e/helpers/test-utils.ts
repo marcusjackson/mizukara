@@ -118,6 +118,17 @@ export async function cancelEntryEdit(page: Page): Promise<void> {
     name: 'Cancel'
   })
   await cancelButton.click()
+
+  // Unsaved changes prompt a discard-confirm dialog; confirm it if shown
+  const discardDialog = page.getByRole('dialog', { name: /discard changes/i })
+  const dialogAppeared = await discardDialog
+    .waitFor({ state: 'visible', timeout: TIMEOUTS.short })
+    .then(() => true)
+    .catch(() => false)
+  if (dialogAppeared) {
+    await discardDialog.getByRole('button', { name: /discard/i }).click()
+  }
+
   await expect(getEntryEditor(page)).not.toBeVisible()
 }
 

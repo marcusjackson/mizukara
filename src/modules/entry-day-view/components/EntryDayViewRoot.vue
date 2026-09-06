@@ -26,9 +26,10 @@ const props = defineProps<Props>()
 const { fetchTags, tagOptions } = useTags()
 
 // Day navigation
-const { currentDate, goToNextDay, goToPrevDay } = useDayNavigation({
-  initialDate: props.initialDate ?? null
-})
+const { currentDate, goToNextDay, goToPrevDay, goToToday, isToday } =
+  useDayNavigation({
+    initialDate: props.initialDate ?? null
+  })
 
 // Entry data
 const { entries, entryTagsMap, error, fetchEntries, isLoading } =
@@ -142,6 +143,8 @@ useEntryDayViewShortcuts({
     >
       <EntryDayViewSectionNavigation
         :current-date="currentDate"
+        :is-today="isToday"
+        @go-to-today="goToToday"
         @next-day="goToNextDay"
         @open-date-picker="handleOpenDatePicker"
         @prev-day="goToPrevDay"

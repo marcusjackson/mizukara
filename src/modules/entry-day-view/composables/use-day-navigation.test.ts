@@ -136,6 +136,25 @@ describe('useDayNavigation', () => {
     expect(mockRouter.push).not.toHaveBeenCalled()
   })
 
+  it('isToday is true when currentDate is today', () => {
+    const { isToday } = useDayNavigation({ initialDate: TEST_DATES.DEFAULT })
+    expect(isToday.value).toBe(true)
+  })
+
+  it('isToday is false when currentDate is not today', () => {
+    const { isToday } = useDayNavigation({ initialDate: TEST_DATES.PREV_DAY })
+    expect(isToday.value).toBe(false)
+  })
+
+  it('goToToday navigates to today and updates isToday', () => {
+    const { currentDate, goToToday, isToday } = useDayNavigation({
+      initialDate: TEST_DATES.PREV_DAY
+    })
+    goToToday()
+    expect(currentDate.value).toBe(TEST_DATES.DEFAULT)
+    expect(isToday.value).toBe(true)
+  })
+
   it('handles browser back/forward navigation', () => {
     const { currentDate } = useDayNavigation()
 

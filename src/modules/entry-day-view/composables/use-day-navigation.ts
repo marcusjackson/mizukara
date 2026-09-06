@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
@@ -8,7 +8,7 @@ import {
   subtractDays
 } from '@/shared/utils/date-utils'
 
-import type { Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 /**
  * Options for useDayNavigation composable
@@ -24,10 +24,14 @@ export interface UseDayNavigationOptions {
 export interface UseDayNavigationReturn {
   /** Current selected date (ISO string YYYY-MM-DD) */
   currentDate: Ref<string>
+  /** Whether currentDate is today's date */
+  isToday: ComputedRef<boolean>
   /** Navigate to the previous day */
   goToPrevDay: () => void
   /** Navigate to the next day */
   goToNextDay: () => void
+  /** Navigate to today's date */
+  goToToday: () => void
   /** Navigate to a specific date, returns true if successful */
   goToDate: (date: string) => boolean
 }
@@ -85,6 +89,7 @@ export function useDayNavigation(
   const router = useRouter()
 
   const currentDate = ref<string>(getInitialDate(route, initialDate))
+  const isToday = computed(() => currentDate.value === getToday())
 
   // Track whether we're currently updating the route to prevent loops
   let isUpdatingRoute = false
@@ -101,6 +106,13 @@ export function useDayNavigation(
    */
   function goToNextDay(): void {
     currentDate.value = addDays(currentDate.value, 1)
+  }
+
+  /**
+   * Navigate to today's date
+   */
+  function goToToday(): void {
+    currentDate.value = getToday()
   }
 
   /**
@@ -130,8 +142,10 @@ export function useDayNavigation(
 
   return {
     currentDate,
+    isToday,
     goToPrevDay,
     goToNextDay,
+    goToToday,
     goToDate
   }
 }

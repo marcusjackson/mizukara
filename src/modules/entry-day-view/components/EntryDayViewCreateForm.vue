@@ -31,6 +31,8 @@ import { useField, useForm } from 'vee-validate'
 import BaseButton from '@/base/components/BaseButton.vue'
 import BaseTextarea from '@/base/components/BaseTextarea.vue'
 
+import { SharedConfirmDialog } from '@/shared/components'
+
 import { entryCreateFormSchema } from '../schemas/entry-create-form-schema'
 
 interface Props {
@@ -58,6 +60,8 @@ const textareaRef = ref<InstanceType<typeof BaseTextarea> | null>(null)
 
 const isContentEmpty = computed(() => !content.value.trim())
 
+const showClearConfirm = ref(false)
+
 const onSubmit = handleSubmit((values) => {
   emit('entry-created', {
     content: values.content,
@@ -69,13 +73,31 @@ const onSubmit = handleSubmit((values) => {
   textareaRef.value?.focus()
 })
 
+/**
+ * Clear the typed content, confirming first if there's anything to lose
+ */
+const requestClear = () => {
+  if (isContentEmpty.value) {
+    resetForm()
+  } else {
+    showClearConfirm.value = true
+  }
+}
+
+const confirmClear = () => {
+  showClearConfirm.value = false
+  resetForm()
+  textareaRef.value?.focus()
+}
+
 const handleKeydown = (event: KeyboardEvent) => {
   if ((event.ctrlKey || event.metaKey) && event.key === 's') {
     event.preventDefault()
     event.stopPropagation() // Prevent Root's global handler from also triggering
     void onSubmit()
   } else if (event.key === 'Escape') {
-    resetForm()
+    event.stopPropagation()
+    requestClear()
   }
 }
 
@@ -100,7 +122,7 @@ const submit = () => {
  * Exposed for parent components (e.g., global Escape handler)
  */
 const clear = () => {
-  resetForm()
+  requestClear()
 }
 
 defineExpose({
@@ -141,6 +163,15 @@ defineExpose({
       </span>
     </div>
   </form>
+
+  <SharedConfirmDialog
+    v-model:open="showClearConfirm"
+    confirm-label="Clear"
+    description="Your typed content will be discarded. This cannot be undone."
+    title="Clear entry?"
+    variant="danger"
+    @confirm="confirmClear"
+  />
 </template>
 
 <style scoped>

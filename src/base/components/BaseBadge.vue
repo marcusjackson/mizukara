@@ -39,7 +39,7 @@ withDefaults(
 
 /* Size variants */
 .base-badge-size-sm {
-  padding: var(--spacing-0-5) var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
   font-size: var(--font-size-xs);
 }
 
@@ -60,7 +60,7 @@ withDefaults(
 }
 
 .base-badge-secondary {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-gray-300);
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
 }

@@ -4,6 +4,17 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-09-06
+
+### Added
+
+- A "Today" button in the day navigation toolbar that jumps back to today's date. It only appears when the current date isn't already today, so its presence also signals whether you're viewing today's page.
+
+### Fixed
+
+- ESC (and, for an existing entry, the Cancel button) no longer discards unsaved content instantly. Both paths now confirm first when there's something to lose.
+- Tag badges render with proper padding and a visible border again.
+
 ## [0.3.0] - 2026-09-04
 
 ### Added

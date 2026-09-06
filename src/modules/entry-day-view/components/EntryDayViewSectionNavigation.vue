@@ -32,6 +32,8 @@ import EntryDayViewNavigator from './EntryDayViewNavigator.vue'
 interface Props {
   /** Current date being viewed (ISO string YYYY-MM-DD) */
   currentDate: string
+  /** Whether currentDate is today's date */
+  isToday: boolean
 }
 
 defineProps<Props>()
@@ -43,6 +45,8 @@ defineEmits<{
   'next-day': []
   /** Emitted when user requests date picker */
   'open-date-picker': []
+  /** Emitted when user requests to jump to today */
+  'go-to-today': []
 }>()
 </script>
 
@@ -59,6 +63,60 @@ defineEmits<{
     />
 
     <div class="entry-day-view-section-actions">
+      <button
+        v-if="!isToday"
+        aria-label="Jump to today"
+        class="today-button"
+        type="button"
+        @click="$emit('go-to-today')"
+      >
+        <svg
+          aria-hidden="true"
+          class="today-icon"
+          fill="none"
+          height="20"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="18"
+            rx="2"
+            width="18"
+            x="3"
+            y="4"
+          />
+          <line
+            x1="16"
+            x2="16"
+            y1="2"
+            y2="6"
+          />
+          <line
+            x1="8"
+            x2="8"
+            y1="2"
+            y2="6"
+          />
+          <line
+            x1="3"
+            x2="21"
+            y1="10"
+            y2="10"
+          />
+          <circle
+            cx="12"
+            cy="15"
+            fill="currentColor"
+            r="1.5"
+            stroke="none"
+          />
+        </svg>
+      </button>
       <SharedKeyboardShortcutsHelp />
       <RouterLink
         aria-label="Settings"
@@ -101,31 +159,38 @@ defineEmits<{
   padding: 0 var(--spacing-4) var(--spacing-2);
 }
 
-.settings-link {
+.settings-link,
+.today-button {
   display: inline-flex;
   justify-content: center;
   align-items: center;
   min-width: 44px;
   min-height: 44px;
+  border: none;
   border-radius: var(--radius-md);
+  background: none;
   color: var(--color-text-secondary);
   text-decoration: none;
+  cursor: pointer;
   transition:
     color var(--transition-fast),
     background-color var(--transition-fast);
 }
 
-.settings-link:hover {
+.settings-link:hover,
+.today-button:hover {
   background-color: var(--color-surface-hover);
   color: var(--color-text-primary);
 }
 
-.settings-link:focus-visible {
+.settings-link:focus-visible,
+.today-button:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 
-.settings-icon {
+.settings-icon,
+.today-icon {
   display: block;
 }
 </style>

@@ -237,6 +237,13 @@ test.describe('Assigned Day Reassignment Flow', () => {
     const cancelButton = editor.getByRole('button', { name: 'Cancel' })
     await cancelButton.click()
 
+    // Confirm discarding the unsaved changes
+    const discardDialog = page.getByRole('dialog', {
+      name: /discard changes/i
+    })
+    await expect(discardDialog).toBeVisible()
+    await discardDialog.getByRole('button', { name: /discard/i }).click()
+
     // Verify editor closed
     await expect(editor).not.toBeVisible()
 
