@@ -4,6 +4,21 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-09-09
+
+### Added
+
+- Search: full-text and tag search over entries, with a list view showing truncated, linked result snippets.
+- Calendar view: a month grid showing per-day match counts for the current search.
+- Search and Tags are now reachable from the entry day view via navigation buttons, with history-aware back navigation that preserves the date you came from.
+
+### Fixed
+
+- Search no longer runs an unbounded query while the calendar view is active.
+- An invalid `?month=` URL param no longer silently returns an empty calendar.
+- Back navigation from Search/Tags no longer risks leaving the app when reached via an external link.
+- The Search, Tags, and Settings pages no longer visibly shift width as their content changes.
+
 ## [0.4.0] - 2026-09-06
 
 ### Added

@@ -2,14 +2,19 @@ import { describe, expect, it } from 'vitest'
 
 import {
   addDays,
+  addMonths,
   formatDateISO,
   formatDateLong,
   formatDateMedium,
   formatDateShort,
+  formatMonthYear,
   formatTimestampShort,
+  getMonthGrid,
   getToday,
   isValidISODate,
+  isValidMonthString,
   parseISODate,
+  parseMonthString,
   subtractDays
 } from './date-utils'
 
@@ -188,6 +193,104 @@ describe('date-utils', () => {
       expect(date.getFullYear()).toBe(2025)
       expect(date.getMonth()).toBe(11) // December is 11
       expect(date.getDate()).toBe(31)
+    })
+  })
+
+  describe('addMonths', () => {
+    it('adds months within the same year', () => {
+      expect(addMonths('2026-01', 1)).toBe('2026-02')
+    })
+
+    it('rolls over into the next year', () => {
+      expect(addMonths('2025-12', 1)).toBe('2026-01')
+    })
+
+    it('subtracts months with a negative delta', () => {
+      expect(addMonths('2026-01', -1)).toBe('2025-12')
+    })
+  })
+
+  describe('formatMonthYear', () => {
+    it('formats a YYYY-MM string as a long month/year label', () => {
+      expect(formatMonthYear('2026-02')).toBe('February 2026')
+    })
+  })
+
+  describe('getMonthGrid', () => {
+    it('pads leading blanks so the first day lands on its weekday', () => {
+      // February 2026 starts on a Sunday, so no leading blanks
+      const grid = getMonthGrid(2026, 2)
+      expect(grid[0]?.[0]).toBe('2026-02-01')
+    })
+
+    it('pads with null before the first day when it is not a Sunday', () => {
+      // January 2026 starts on a Thursday (4 leading blanks)
+      const grid = getMonthGrid(2026, 1)
+      expect(grid[0]).toEqual([
+        null,
+        null,
+        null,
+        null,
+        '2026-01-01',
+        '2026-01-02',
+        '2026-01-03'
+      ])
+    })
+
+    it('includes every day of the month exactly once', () => {
+      const grid = getMonthGrid(2026, 2) // 28 days
+      const days = grid.flat().filter((d): d is string => d !== null)
+      expect(days).toHaveLength(28)
+      expect(days[0]).toBe('2026-02-01')
+      expect(days[27]).toBe('2026-02-28')
+    })
+
+    it('pads trailing blanks so every week has 7 cells', () => {
+      const grid = getMonthGrid(2026, 2)
+      for (const week of grid) {
+        expect(week).toHaveLength(7)
+      }
+    })
+
+    it('handles a month with 31 days spanning six weeks', () => {
+      const grid = getMonthGrid(2026, 8) // August 2026: 31 days, starts Saturday
+      const days = grid.flat().filter((d): d is string => d !== null)
+      expect(days).toHaveLength(31)
+      expect(grid).toHaveLength(6)
+    })
+  })
+
+  describe('isValidMonthString', () => {
+    it('accepts a well-formed, zero-padded YYYY-MM string', () => {
+      expect(isValidMonthString('2026-02')).toBe(true)
+      expect(isValidMonthString('2026-12')).toBe(true)
+    })
+
+    it('rejects a non-zero-padded month', () => {
+      expect(isValidMonthString('2026-2')).toBe(false)
+    })
+
+    it('rejects a month number out of range', () => {
+      expect(isValidMonthString('2026-00')).toBe(false)
+      expect(isValidMonthString('2026-13')).toBe(false)
+    })
+
+    it('rejects malformed input', () => {
+      expect(isValidMonthString('2026')).toBe(false)
+      expect(isValidMonthString('2026-02-01')).toBe(false)
+      expect(isValidMonthString('2026-ab')).toBe(false)
+      expect(isValidMonthString('')).toBe(false)
+    })
+  })
+
+  describe('parseMonthString', () => {
+    it('parses a well-formed YYYY-MM string', () => {
+      expect(parseMonthString('2026-02')).toEqual({ year: 2026, month: 2 })
+    })
+
+    it('falls back to year 0 / month 1 for non-numeric segments', () => {
+      expect(parseMonthString('2026-ab')).toEqual({ year: 2026, month: 1 })
+      expect(parseMonthString('ab-02')).toEqual({ year: 0, month: 2 })
     })
   })
 })

@@ -186,6 +186,116 @@ export function isValidISODate(dateString: string): boolean {
 }
 
 /**
+ * Add months to a "YYYY-MM" month string
+ *
+ * @param month - Month string in YYYY-MM format
+ * @param months - Number of months to add (can be negative)
+ * @returns New month as a YYYY-MM string
+ *
+ * @example
+ * addMonths('2026-01', 1)  // '2026-02'
+ * addMonths('2026-01', -1) // '2025-12'
+ */
+export function addMonths(month: string, months: number): string {
+  const { month: monthNum, year } = parseMonthString(month)
+  const result = new Date(year, monthNum - 1 + months, 1)
+  const resultYear = String(result.getFullYear())
+  const resultMonth = String(result.getMonth() + 1).padStart(2, '0')
+  return `${resultYear}-${resultMonth}`
+}
+
+/**
+ * Format a "YYYY-MM" month string as a long month/year label
+ *
+ * @param month - Month string in YYYY-MM format
+ * @returns Formatted label (e.g. "February 2026")
+ *
+ * @example
+ * formatMonthYear('2026-02') // 'February 2026'
+ */
+export function formatMonthYear(month: string): string {
+  const { month: monthNum, year } = parseMonthString(month)
+  const date = new Date(year, monthNum - 1, 1)
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+}
+
+/**
+ * Parse a "YYYY-MM" month string into its numeric year and 1-indexed month.
+ * A missing or non-numeric segment falls back to 0 (year) or 1 (month) —
+ * callers that accept untrusted input (e.g. a URL param) should validate
+ * with isValidMonthString first rather than relying on this fallback.
+ */
+export function parseMonthString(month: string): {
+  year: number
+  month: number
+} {
+  const [yearStr, monthStr] = month.split('-')
+  const year = Number(yearStr)
+  const monthNum = Number(monthStr)
+  return {
+    year: Number.isNaN(year) ? 0 : year,
+    month: Number.isNaN(monthNum) ? 1 : monthNum
+  }
+}
+
+/**
+ * Validate a "YYYY-MM" month string (zero-padded, month 01-12)
+ *
+ * @param month - String to validate
+ * @returns true if the string is a well-formed, zero-padded YYYY-MM month
+ *
+ * @example
+ * isValidMonthString('2026-02') // true
+ * isValidMonthString('2026-2')  // false (not zero-padded)
+ * isValidMonthString('2026-13') // false (month out of range)
+ */
+export function isValidMonthString(month: string): boolean {
+  if (!/^\d{4}-\d{2}$/.test(month)) return false
+  const monthNum = Number(month.slice(5, 7))
+  return monthNum >= 1 && monthNum <= 12
+}
+
+/**
+ * Build a month's calendar grid as weeks of ISO date strings
+ *
+ * Each week is a 7-element array running Sunday through Saturday. Cells
+ * outside the given month (padding at the start/end of the grid) are `null`.
+ *
+ * @param year - Full year (e.g. 2026)
+ * @param month - Month number, 1-indexed (1 = January)
+ * @returns Array of weeks, each a 7-element array of ISO date strings or null
+ *
+ * @example
+ * getMonthGrid(2026, 2)
+ * // [[null, null, null, null, null, null, '2026-02-01'], ['2026-02-02', ...], ...]
+ */
+export function getMonthGrid(year: number, month: number): (string | null)[][] {
+  const firstOfMonth = new Date(year, month - 1, 1)
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const leadingBlanks = firstOfMonth.getDay()
+
+  const cells: (string | null)[] = Array.from(
+    { length: leadingBlanks },
+    () => null
+  )
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    cells.push(formatDateISO(new Date(year, month - 1, day)))
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null)
+  }
+
+  const weeks: (string | null)[][] = []
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7))
+  }
+
+  return weeks
+}
+
+/**
  * Format timestamp as short string (e.g., "Feb 10, 2026, 2:30 PM")
  *
  * @param timestamp - Unix timestamp in milliseconds

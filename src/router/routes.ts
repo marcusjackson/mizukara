@@ -13,7 +13,8 @@ export const ROUTES = {
   HOME: '/',
   ENTRY_DAY: '/entries/:date?',
   SETTINGS: '/settings',
-  TAGS: '/tags'
+  TAGS: '/tags',
+  SEARCH: '/search'
 } as const
 
 /**

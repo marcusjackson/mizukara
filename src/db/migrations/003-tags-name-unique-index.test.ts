@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { runMigrations } from './index'
 
 describe('003-tags-name-unique-index migration', () => {
-  it('applies cleanly to a fresh database (version 0 → 3)', async () => {
+  it('applies cleanly to a fresh database (version 0 → latest)', async () => {
     const SQL = await initSqlJs()
     const db = new SQL.Database()
 
@@ -16,7 +16,7 @@ describe('003-tags-name-unique-index migration', () => {
 
     const versionResult = db.exec('PRAGMA user_version')
     const version = versionResult[0]?.values[0]?.[0]
-    expect(version).toBe(3)
+    expect(version).toBeGreaterThanOrEqual(3)
   })
 
   it('creates the case-insensitive unique index on tags name', async () => {

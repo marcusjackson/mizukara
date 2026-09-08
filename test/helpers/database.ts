@@ -9,3 +9,6 @@ export * from './entries'
 
 // Re-export tag helpers
 export * from './tags'
+
+// Re-export search helpers
+export * from './search'

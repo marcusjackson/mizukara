@@ -37,6 +37,12 @@ const appRoutes: RouteRecordRaw[] = [
     name: 'tags',
     component: () => import('@/pages/TagsPage.vue'),
     meta: { title: 'Tags' }
+  },
+  {
+    path: ROUTES.SEARCH,
+    name: 'search',
+    component: () => import('@/pages/SearchPage.vue'),
+    meta: { title: 'Search' }
   }
 ]
 
