@@ -21,6 +21,14 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizelegibility;
+
+  /*
+   * Reserve the scrollbar's width always, instead of only once content grows
+   * tall enough to need it — without this, centered max-width containers
+   * (e.g. the Search and Tags pages) visibly shift sideways the moment a
+   * results list pushes the page past the viewport height.
+   */
+  scrollbar-gutter: stable;
 }
 
 /* Root styles */

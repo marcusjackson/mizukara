@@ -11,6 +11,7 @@
 import migration001 from './001-create-entries.sql?raw'
 import migration002 from './002-create-tags.sql?raw'
 import migration003 from './003-tags-name-unique-index.sql?raw'
+import migration004 from './004-create-entries-fts.sql?raw'
 
 import type { Database } from 'sql.js'
 
@@ -43,6 +44,11 @@ export function runMigrations(db: Database): void {
     // Apply migration 3 if not already applied
     if (currentVersion < 3) {
       db.exec(migration003)
+    }
+
+    // Apply migration 4 if not already applied
+    if (currentVersion < 4) {
+      db.exec(migration004)
     }
   } catch (error) {
     // If migration fails, re-throw so the caller can handle it

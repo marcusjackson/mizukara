@@ -26,6 +26,10 @@ describe('Route Constants', () => {
   it('has correct tags route', () => {
     expect(ROUTES.TAGS).toBe('/tags')
   })
+
+  it('has correct search route', () => {
+    expect(ROUTES.SEARCH).toBe('/search')
+  })
 })
 
 describe('buildEntryDayRoute', () => {

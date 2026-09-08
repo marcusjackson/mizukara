@@ -249,6 +249,23 @@ describe('BaseTagInput', () => {
     expect(emitted?.[0]).toEqual(['NewTag'])
   })
 
+  it('does not show create option when allowCreate is false', async () => {
+    const user = userEvent.setup()
+    render(BaseTagInput, {
+      props: {
+        allowCreate: false,
+        label: 'Tags',
+        modelValue: [],
+        options: testOptions
+      }
+    })
+
+    const input = screen.getByRole('combobox')
+    await user.type(input, 'NewTag')
+
+    expect(screen.queryByText(/create 'NewTag'/i)).not.toBeInTheDocument()
+  })
+
   it('does not add synthetic create option to modelValue emits', async () => {
     const user = userEvent.setup()
     const result = render(BaseTagInput, {

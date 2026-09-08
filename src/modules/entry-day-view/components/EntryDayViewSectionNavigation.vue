@@ -21,7 +21,7 @@
  * ```
  */
 
-import { RouterLink } from 'vue-router'
+import { BaseIconButton } from '@/base/components'
 
 import { SharedKeyboardShortcutsHelp } from '@/shared/components'
 
@@ -63,16 +63,13 @@ defineEmits<{
     />
 
     <div class="entry-day-view-section-actions">
-      <button
+      <BaseIconButton
         v-if="!isToday"
         aria-label="Jump to today"
-        class="today-button"
-        type="button"
         @click="$emit('go-to-today')"
       >
         <svg
           aria-hidden="true"
-          class="today-icon"
           fill="none"
           height="20"
           stroke="currentColor"
@@ -116,16 +113,71 @@ defineEmits<{
             stroke="none"
           />
         </svg>
-      </button>
+      </BaseIconButton>
       <SharedKeyboardShortcutsHelp />
-      <RouterLink
+      <BaseIconButton
+        aria-label="Search"
+        :to="ROUTES.SEARCH"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="20"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="11"
+            cy="11"
+            r="8"
+          />
+          <line
+            x1="21"
+            x2="16.65"
+            y1="21"
+            y2="16.65"
+          />
+        </svg>
+      </BaseIconButton>
+      <BaseIconButton
+        aria-label="Tags"
+        :to="ROUTES.TAGS"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="20"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24L4 3a1 1 0 0 0-1 1l.24 5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"
+          />
+          <circle
+            cx="7.5"
+            cy="7.5"
+            fill="currentColor"
+            r="1.5"
+            stroke="none"
+          />
+        </svg>
+      </BaseIconButton>
+      <BaseIconButton
         aria-label="Settings"
-        class="settings-link"
         :to="ROUTES.SETTINGS"
       >
         <svg
           aria-hidden="true"
-          class="settings-icon"
           fill="none"
           height="20"
           stroke="currentColor"
@@ -145,7 +197,7 @@ defineEmits<{
             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
           />
         </svg>
-      </RouterLink>
+      </BaseIconButton>
     </div>
   </section>
 </template>
@@ -157,40 +209,5 @@ defineEmits<{
   align-items: center;
   gap: var(--spacing-2);
   padding: 0 var(--spacing-4) var(--spacing-2);
-}
-
-.settings-link,
-.today-button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 44px;
-  min-height: 44px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: none;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    color var(--transition-fast),
-    background-color var(--transition-fast);
-}
-
-.settings-link:hover,
-.today-button:hover {
-  background-color: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-
-.settings-link:focus-visible,
-.today-button:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
-.settings-icon,
-.today-icon {
-  display: block;
 }
 </style>

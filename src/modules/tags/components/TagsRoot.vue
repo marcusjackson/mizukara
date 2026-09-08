@@ -13,6 +13,9 @@
 import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { BaseIconButton } from '@/base/components'
+
+import { ROUTES } from '@/router/routes'
 import { useTagMutations } from '../composables/use-tag-mutations'
 import { useTags } from '../composables/use-tags'
 
@@ -70,6 +73,25 @@ function handleClearFilter(): void {
   activeTagIds.value = []
 }
 
+/**
+ * Navigate back a step in-app. Prefers browser history (so the originating
+ * page/date is preserved) over a fixed link to today's entries, which would
+ * silently discard that context. `history.state.back` is only set once
+ * vue-router's own navigation has written to it, so this only takes the
+ * history branch when the previous entry is actually in-app — unlike
+ * `history.length`, which is also incremented by navigation that happened
+ * before the app was reached (e.g. an external link into /tags) and would
+ * otherwise send `router.back()` off the site entirely.
+ */
+function handleBack(): void {
+  const historyState = globalThis.history.state as { back?: string } | null
+  if (historyState?.back) {
+    router.back()
+  } else {
+    void router.push(ROUTES.HOME)
+  }
+}
+
 // =============================================================================
 // Tag mutations
 // =============================================================================
@@ -107,7 +129,65 @@ watch(
 
 <template>
   <main class="tags-root">
-    <h1 class="tags-root__title">Tags</h1>
+    <div class="tags-root__header">
+      <BaseIconButton
+        aria-label="Back"
+        @click="handleBack"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="20"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <line
+            x1="19"
+            x2="5"
+            y1="12"
+            y2="12"
+          />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+      </BaseIconButton>
+
+      <h1 class="tags-root__title">Tags</h1>
+
+      <BaseIconButton
+        aria-label="Search"
+        :to="ROUTES.SEARCH"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          height="20"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="11"
+            cy="11"
+            r="8"
+          />
+          <line
+            x1="21"
+            x2="16.65"
+            y1="21"
+            y2="16.65"
+          />
+        </svg>
+      </BaseIconButton>
+    </div>
 
     <div class="tags-root__layout">
       <TagsSectionBrowse
@@ -131,13 +211,21 @@ watch(
 
 <style scoped>
 .tags-root {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
 
+.tags-root__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
 .tags-root__title {
-  margin: 0 0 var(--spacing-xl);
   color: var(--color-text-primary);
   font-family: var(--font-family-sans);
   font-size: var(--font-size-2xl);

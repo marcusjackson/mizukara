@@ -38,6 +38,7 @@ import AppSettingsSectionDeviceSync from './AppSettingsSectionDeviceSync.vue'
 
 <style scoped>
 .app-settings-root {
+  width: 100%;
   max-width: 800px;
   margin: 0 auto;
   padding: var(--spacing-lg);

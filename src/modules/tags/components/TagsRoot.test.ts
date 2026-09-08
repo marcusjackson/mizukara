@@ -29,12 +29,19 @@ const mockRouter = {
       string,
       string | string[]
     >
-  })
+  }),
+  back: vi.fn(),
+  push: vi.fn()
 }
 
 vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
-  useRouter: () => mockRouter
+  useRouter: () => mockRouter,
+  RouterLink: {
+    name: 'RouterLink',
+    props: ['to'],
+    template: "<a :href=\"typeof to === 'string' ? to : ''\"><slot /></a>"
+  }
 }))
 
 // ---------------------------------------------------------------------------
@@ -137,6 +144,40 @@ describe('TagsRoot', () => {
         >
       }
     )
+  })
+
+  describe('header navigation', () => {
+    it('renders a back button and a search link', () => {
+      const wrapper = mountRoot()
+
+      expect(wrapper.find('[aria-label="Back"]').exists()).toBe(true)
+      expect(wrapper.find('a[href="/search"]').exists()).toBe(true)
+    })
+
+    it('falls back to pushing the home route when there is no in-app history to go back to', async () => {
+      // jsdom starts each test with a fresh, state-less history entry.
+      const wrapper = mountRoot()
+
+      await wrapper.find('[aria-label="Back"]').trigger('click')
+
+      expect(mockRouter.push).toHaveBeenCalledWith('/')
+      expect(mockRouter.back).not.toHaveBeenCalled()
+    })
+
+    it('goes back through history when the previous entry was reached in-app', async () => {
+      // vue-router's history mode writes { back, current, forward } onto
+      // history.state on every in-app navigation; simulate having arrived
+      // here from the search page.
+      globalThis.history.replaceState({ back: '/search', current: '/tags' }, '')
+      const wrapper = mountRoot()
+
+      await wrapper.find('[aria-label="Back"]').trigger('click')
+
+      expect(mockRouter.back).toHaveBeenCalledTimes(1)
+      expect(mockRouter.push).not.toHaveBeenCalled()
+
+      globalThis.history.replaceState(null, '')
+    })
   })
 
   describe('initial mount', () => {

@@ -28,7 +28,9 @@ function createTestRouter() {
         path: '/settings',
         name: 'settings',
         component: { template: '<div />' }
-      }
+      },
+      { path: '/search', name: 'search', component: { template: '<div />' } },
+      { path: '/tags', name: 'tags', component: { template: '<div />' } }
     ]
   })
 }
@@ -123,6 +125,20 @@ describe('EntryDayViewSectionNavigation', () => {
 
     const settingsLink = screen.getByRole('link', { name: /settings/i })
     expect(settingsLink).toHaveAttribute('href', '/settings')
+  })
+
+  it('renders search link pointing to /search', () => {
+    renderNavigation('2026-02-10')
+
+    const searchLink = screen.getByRole('link', { name: /search/i })
+    expect(searchLink).toHaveAttribute('href', '/search')
+  })
+
+  it('renders tags link pointing to /tags', () => {
+    renderNavigation('2026-02-10')
+
+    const tagsLink = screen.getByRole('link', { name: /tags/i })
+    expect(tagsLink).toHaveAttribute('href', '/tags')
   })
 
   it('hides the jump-to-today button when already on today', () => {

@@ -26,9 +26,18 @@ interface Props {
   disabled?: boolean
   /** Input name attribute */
   name?: string
+  /** Whether typing a non-matching term offers a "Create '...'" option */
+  allowCreate?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  label: '',
+  placeholder: 'Search tags...',
+  error: '',
+  disabled: false,
+  name: '',
+  allowCreate: true
+})
 
 const emit = defineEmits<{
   /** Fired when user confirms creating a new tag; parent must persist and add to options */
@@ -57,6 +66,7 @@ const filteredOptions = computed(() =>
 
 /** Show the synthetic create item when a non-empty, non-exact-match term is typed */
 const showCreateOption = computed(() => {
+  if (!props.allowCreate) return false
   const term = searchTerm.value.trim()
   if (!term) return false
   return !props.options.some(
@@ -132,7 +142,7 @@ function handleCreateSelect() {
           :aria-describedby="error ? `${comboboxId}-error` : undefined"
           :aria-invalid="error ? true : undefined"
           class="base-tag-input-input"
-          :placeholder="placeholder ?? 'Search tags...'"
+          :placeholder="placeholder"
           @keydown="handleKeydown"
         />
       </ComboboxAnchor>
