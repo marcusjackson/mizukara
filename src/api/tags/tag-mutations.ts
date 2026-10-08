@@ -9,6 +9,8 @@ import { softDeleteByTagId } from '@/api/entry-tags/entry-tag-mutations'
 
 import { generateUUID } from '@/shared/utils/uuid-utils'
 
+import { schedulePersist } from '@/db/indexeddb'
+
 import { rowToTag } from './tag-row-mappers'
 import { TagNotFoundError, TagValidationError } from './tag-validation'
 
@@ -106,6 +108,8 @@ export function createTag(db: Database, input: CreateTagInput): Tag {
     [id, name.trim(), now, now]
   )
 
+  schedulePersist()
+
   return fetchTagByIdRaw(db, id)
 }
 
@@ -146,6 +150,8 @@ export function renameTag(db: Database, id: string, name: string): Tag {
     id
   ])
 
+  schedulePersist()
+
   return fetchTagByIdRaw(db, id)
 }
 
@@ -185,6 +191,7 @@ export function softDeleteTag(db: Database, id: string): void {
     softDeleteByTagId(db, id)
 
     db.run('COMMIT')
+    schedulePersist()
   } catch (error) {
     db.run('ROLLBACK')
     throw error

@@ -8,17 +8,49 @@ import {
   seedEntryTag,
   seedTag
 } from '@test/helpers/database'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { schedulePersist } from '@/db/indexeddb'
 
 import { assignTag, removeTag, softDeleteByTagId } from './entry-tag-mutations'
 
 import type { Database } from 'sql.js'
 
+vi.mock('@/db/indexeddb', () => ({
+  schedulePersist: vi.fn()
+}))
+
 describe('entry-tag-mutations', () => {
   let db: Database
 
   beforeEach(async () => {
+    vi.mocked(schedulePersist).mockClear()
     db = await createTestDatabaseForTags()
+  })
+
+  it('schedules a persist after assign, remove and cascade delete', () => {
+    const entryId = seedEntryForTags(db, { id: 'entry-1' })
+    seedTag(db, { id: 'tag-1', name: 'Work' })
+
+    assignTag(db, { entryId, tagId: 'tag-1' })
+    expect(schedulePersist).toHaveBeenCalledTimes(1)
+
+    removeTag(db, entryId, 'tag-1')
+    expect(schedulePersist).toHaveBeenCalledTimes(2)
+
+    softDeleteByTagId(db, 'tag-1')
+    expect(schedulePersist).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not schedule a persist for an idempotent assign', () => {
+    const entryId = seedEntryForTags(db, { id: 'entry-1' })
+    seedTag(db, { id: 'tag-1', name: 'Work' })
+    assignTag(db, { entryId, tagId: 'tag-1' })
+    vi.mocked(schedulePersist).mockClear()
+
+    assignTag(db, { entryId, tagId: 'tag-1' })
+
+    expect(schedulePersist).not.toHaveBeenCalled()
   })
 
   describe('assignTag', () => {

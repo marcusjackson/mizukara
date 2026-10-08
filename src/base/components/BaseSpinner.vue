@@ -67,4 +67,10 @@ withDefaults(
     transform: rotate(360deg);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .base-spinner-circle {
+    animation: none;
+  }
+}
 </style>

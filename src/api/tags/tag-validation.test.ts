@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { EntityNotFoundError, RepositoryError } from '@/api/types'
+
 import { TagNotFoundError, TagValidationError } from './tag-validation'
 
 describe('TagValidationError', () => {
@@ -39,6 +41,23 @@ describe('TagValidationError', () => {
 
     expect(caught instanceof TagValidationError).toBe(true)
     expect(caught instanceof Error).toBe(true)
+  })
+})
+
+describe('shared repository error hierarchy', () => {
+  it('lets a caller catching RepositoryError see a TagValidationError, with its field', () => {
+    const error = new TagValidationError('Tag name must not be empty')
+
+    expect(error).toBeInstanceOf(RepositoryError)
+    expect(error.field).toBe('name')
+    expect(error.message).toBe('Tag name must not be empty')
+  })
+
+  it('lets a caller catching EntityNotFoundError see a TagNotFoundError', () => {
+    const error = new TagNotFoundError('abc-123')
+
+    expect(error).toBeInstanceOf(EntityNotFoundError)
+    expect(error.entity).toBe('Tag')
   })
 })
 

@@ -57,6 +57,7 @@ const mockTags = ref<TagWithCount[]>([])
 const mockFilteredEntries = ref<Entry[]>([])
 const mockTagOptions = ref([])
 const mockIsLoading = ref(false)
+const mockLoadError = ref<string | null>(null)
 
 vi.mock('../composables/use-tags', () => ({
   useTags: () => ({
@@ -64,6 +65,7 @@ vi.mock('../composables/use-tags', () => ({
     filteredEntries: mockFilteredEntries,
     tagOptions: mockTagOptions,
     isLoading: mockIsLoading,
+    loadError: mockLoadError,
     fetchTags: mockFetchTags,
     fetchEntriesByTags: mockFetchEntriesByTags
   })
@@ -104,12 +106,12 @@ function mountRoot() {
           template: `
             <div data-testid="section-browse">
               <button data-testid="trigger-toggle" @click="$emit('toggle-tag', 'tag-1')" />
-              <button data-testid="trigger-rename" @click="$emit('rename-tag', 'tag-1', 'New Name')" />
+              <button data-testid="trigger-rename" @click="renameTag('tag-1', 'New Name')" />
               <button data-testid="trigger-delete" @click="$emit('delete-tag', 'tag-1')" />
             </div>
           `,
-          emits: ['toggle-tag', 'rename-tag', 'delete-tag'],
-          props: ['tags', 'activeTagIds']
+          emits: ['toggle-tag', 'delete-tag'],
+          props: ['tags', 'activeTagIds', 'renameTag']
         },
         TagsSectionEntries: {
           template:
@@ -135,6 +137,7 @@ describe('TagsRoot', () => {
     mockTags.value = []
     mockFilteredEntries.value = []
     mockIsLoading.value = false
+    mockLoadError.value = null
     mockRoute.query = {}
     mockRouter.replace.mockImplementation(
       (location: { query?: Record<string, unknown> }) => {
@@ -271,7 +274,7 @@ describe('TagsRoot', () => {
   })
 
   describe('tag mutations', () => {
-    it('calls renameTag when rename-tag is emitted from browse section', async () => {
+    it('calls renameTag when the browse section requests a rename', async () => {
       const wrapper = mountRoot()
       await flushPromises()
 
@@ -343,6 +346,47 @@ describe('TagsRoot', () => {
       await flushPromises()
 
       expect(mockFetchTags).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('loading and error states', () => {
+    it('shows a loading indicator, not the sections, during the first tag load', () => {
+      mockIsLoading.value = true
+      const wrapper = mountRoot()
+
+      expect(wrapper.find('[data-testid="tags-loading"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="section-browse"]').exists()).toBe(
+        false
+      )
+    })
+
+    it('keeps the sections on screen while entries refetch for a filter change', () => {
+      mockIsLoading.value = true
+      mockTags.value = [
+        { id: 'tag-1', name: 'work', entryCount: 1 } as TagWithCount
+      ]
+      const wrapper = mountRoot()
+
+      expect(wrapper.find('[data-testid="tags-loading"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="section-browse"]').exists()).toBe(true)
+    })
+
+    it('shows the load error with a Retry that fetches the tags again', async () => {
+      mockLoadError.value = 'DB read error'
+      const wrapper = mountRoot()
+      await flushPromises()
+      mockFetchTags.mockClear()
+
+      expect(wrapper.find('[data-testid="tags-error"]').text()).toContain(
+        'DB read error'
+      )
+      expect(wrapper.find('[data-testid="section-browse"]').exists()).toBe(
+        false
+      )
+
+      await wrapper.find('[data-testid="tags-error"] button').trigger('click')
+
+      expect(mockFetchTags).toHaveBeenCalledOnce()
     })
   })
 })

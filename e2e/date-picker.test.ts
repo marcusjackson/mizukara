@@ -9,12 +9,16 @@
 
 import { expect, test } from '@playwright/test'
 
-import { VIEWPORTS } from './helpers/test-constants'
+import { TIMEOUTS, VIEWPORTS } from './helpers/test-constants'
 import {
   getTodayDate,
   getYesterdayDate,
   waitForPageReady
 } from './helpers/test-utils'
+
+/** Dates typed into the picker's text input. */
+const TYPED_DATE_MARCH = '2026-03-15'
+const TYPED_DATE_JANUARY = '2026-01-15'
 
 test.describe('Date Picker Navigation', () => {
   test.beforeEach(async ({ context, page }) => {
@@ -67,7 +71,7 @@ test.describe('Date Picker Navigation', () => {
 
     // Page navigates to target date
     await expect(page).toHaveURL(new RegExp(`/entries/${targetDate}`), {
-      timeout: 3000
+      timeout: TIMEOUTS.short
     })
   })
 
@@ -112,7 +116,7 @@ test.describe('Date Picker Navigation', () => {
 
     // Dialog should not open
     const dialog = page.getByRole('dialog')
-    await expect(dialog).not.toBeVisible({ timeout: 1000 })
+    await expect(dialog).not.toBeVisible({ timeout: TIMEOUTS.short })
 
     // 'g' should be typed in textarea
     await expect(textarea).toHaveValue('g')
@@ -169,11 +173,13 @@ test.describe('Date Picker Navigation', () => {
     await expect(input).toBeVisible()
 
     // Navigate to a date
-    await input.fill('2026-03-15')
+    await input.fill(TYPED_DATE_MARCH)
     await dialog.getByRole('button', { name: /go to date/i }).click()
 
     await expect(dialog).not.toBeVisible()
-    await expect(page).toHaveURL(/\/entries\/2026-03-15/, { timeout: 3000 })
+    await expect(page).toHaveURL(new RegExp(`/entries/${TYPED_DATE_MARCH}`), {
+      timeout: TIMEOUTS.short
+    })
   })
 
   test('date picker entries reload after navigation', async ({ page }) => {
@@ -183,11 +189,13 @@ test.describe('Date Picker Navigation', () => {
 
     const dialog = page.getByRole('dialog')
     const input = dialog.getByLabel(/select date/i)
-    await input.fill('2026-01-15')
+    await input.fill(TYPED_DATE_JANUARY)
     await dialog.getByRole('button', { name: /go to date/i }).click()
 
     await expect(dialog).not.toBeVisible()
-    await expect(page).toHaveURL(/\/entries\/2026-01-15/, { timeout: 3000 })
+    await expect(page).toHaveURL(new RegExp(`/entries/${TYPED_DATE_JANUARY}`), {
+      timeout: TIMEOUTS.short
+    })
 
     // Page should show the day view for that date
     await waitForPageReady(page)

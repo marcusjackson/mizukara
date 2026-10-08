@@ -6,7 +6,9 @@
  * Manages its own inline rename and delete confirmation state.
  *
  * @emits toggle  - User clicked the tag toggle button
- * @emits rename  - User confirmed a rename with the trimmed new name
+ * Rename is a prop rather than an emit: the row keeps its rename box open until the
+ * parent reports the rename succeeded, so a rejected name does not lose the typed text.
+ *
  * @emits delete  - User confirmed deletion
  */
 
@@ -27,11 +29,12 @@ const props = defineProps<{
   tag: TagWithCount
   /** Whether this tag is currently active (selected as filter) */
   isActive: boolean
+  /** Apply a rename with the trimmed new name; resolves true when it succeeded */
+  rename: (name: string) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
   toggle: []
-  rename: [name: string]
   delete: []
 }>()
 
@@ -55,18 +58,17 @@ function startRename(): void {
   renameValue.value = props.tag.name
 }
 
-function confirmRename(): void {
+async function confirmRename(): Promise<void> {
   const trimmed = renameValue.value.trim()
   if (!trimmed) return
 
-  emit('rename', trimmed)
-  isRenaming.value = false
+  if (await props.rename(trimmed)) isRenaming.value = false
 }
 
 function handleRenameKeydown(event: KeyboardEvent): void {
   if (event.key === 'Enter') {
     event.preventDefault()
-    confirmRename()
+    void confirmRename()
   } else if (event.key === 'Escape') {
     event.preventDefault()
     isRenaming.value = false
@@ -186,7 +188,7 @@ function cancelDelete(): void {
 
 .tag-row--active {
   border-color: var(--color-primary);
-  background-color: var(--color-bg-muted);
+  background-color: var(--color-surface-tertiary);
 }
 
 .tag-row__toggle {
@@ -216,7 +218,7 @@ function cancelDelete(): void {
 .tag-row__count {
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-full);
-  background-color: var(--color-bg-muted);
+  background-color: var(--color-surface-tertiary);
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }

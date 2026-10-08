@@ -210,7 +210,7 @@ function countFor(date: string): number {
 
 .search-section-calendar__nav-button:focus-visible {
   outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+  outline-offset: var(--focus-ring-offset);
 }
 
 .search-section-calendar__loading {

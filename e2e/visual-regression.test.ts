@@ -46,9 +46,19 @@ async function preparePageForVRT(page: Page): Promise<void> {
 }
 
 /**
+ * Fixed wall-clock time (local) for the page under test.
+ *
+ * A mask covers an element's box, and the box is as wide as the timestamp text it holds
+ * ("Feb 14, 2026, 9:30 AM" vs "Oct 8, 2026, 10:21 AM"). Masking alone therefore leaves the
+ * screenshot dependent on the time the suite runs, so the clock is frozen as well.
+ */
+const FIXED_NOW = new Date(2026, 1, 14, 9, 30)
+
+/**
  * Setup for all VRT tests
  */
 test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW)
   await disableAnimations(page)
 })
 
@@ -173,6 +183,9 @@ test.describe('Visual Regression: Components', () => {
 
       // Create and edit entry to trigger edited indicator
       const entry = await createEntry(page, 'Test entry for visual regression')
+      // The clock is frozen, so move it on: an entry only counts as edited when
+      // its update time is later than its creation time
+      await page.clock.setFixedTime(new Date(FIXED_NOW.getTime() + 60_000))
       // Force click edit button (hover-reveal pattern on desktop)
       await entry.getByRole('button', { name: /edit/i }).click({ force: true })
 

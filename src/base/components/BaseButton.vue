@@ -198,4 +198,10 @@ const classes = computed(() => [
     transform: rotate(360deg);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .base-button-spinner {
+    animation: none;
+  }
+}
 </style>

@@ -30,7 +30,7 @@ export interface UseEntrySectionHandlersReturn {
   handleEntryCreated: (data: {
     content: string
     assignedDay: string
-  }) => Promise<void>
+  }) => Promise<boolean>
   /** Handle moving an entry down */
   handleMoveDown: (entryId: string, entries: Entry[]) => void
   /** Handle moving an entry up */
@@ -39,35 +39,28 @@ export interface UseEntrySectionHandlersReturn {
   handleSaveRequested: (
     entryId: string,
     data: { content: string; assignedDay: string }
-  ) => Promise<void>
+  ) => Promise<boolean>
   /** Whether a reorder operation is in progress */
   isReordering: Ref<boolean>
 }
 
 /**
- * Wrap async operation with toast notifications
+ * Run a mutation and announce success; the mutation reports its own failure.
  *
- * @param operation - Async function to execute
- * @param operationName - Name for success/error messages (e.g., 'created', 'updated')
+ * @returns Whether the operation succeeded
+ *
+ * @param operation - Async mutation resolving to whether it succeeded
+ * @param operationName - Name for the success message (e.g., 'created', 'updated')
  * @param toast - Toast service instance
  */
-async function withToast<T>(
-  operation: () => Promise<T>,
+async function withSuccessToast(
+  operation: () => Promise<boolean>,
   operationName: string,
   toast: UseToast
-): Promise<T | undefined> {
-  try {
-    const result = await operation()
-    toast.success(`Entry ${operationName} successfully`)
-    return result
-  } catch (error) {
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : `Failed to ${operationName} entry`
-    )
-    return undefined
-  }
+): Promise<boolean> {
+  const succeeded = await operation()
+  if (succeeded) toast.success(`Entry ${operationName} successfully`)
+  return succeeded
 }
 
 /**
@@ -106,13 +99,18 @@ export function useEntrySectionHandlers(
     canMoveDown,
     canMoveUp,
     handleEntryCreated: (data: { content: string; assignedDay: string }) =>
-      withToast(() => createNewEntry(data), 'created', toast),
+      withSuccessToast(() => createNewEntry(data), 'created', toast),
     handleMoveDown,
     handleMoveUp,
     handleSaveRequested: (
       entryId: string,
       data: { content: string; assignedDay: string }
-    ) => withToast(() => updateExistingEntry(entryId, data), 'updated', toast),
+    ) =>
+      withSuccessToast(
+        () => updateExistingEntry(entryId, data),
+        'updated',
+        toast
+      ),
     isReordering
   }
 }

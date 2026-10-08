@@ -7,6 +7,10 @@
 
 import { generateUUID } from '@/shared/utils/uuid-utils'
 
+import { schedulePersist } from '@/db/indexeddb'
+
+import { rowToEntryTag } from './entry-tag-row-mappers'
+
 import type { AssignTagInput, EntryTag } from '@/shared/types/tag-types'
 import type { Database } from 'sql.js'
 
@@ -25,6 +29,21 @@ import type { Database } from 'sql.js'
  * const et = assignTag(db, { entryId: 'entry-uuid', tagId: 'tag-uuid' })
  */
 export function assignTag(db: Database, input: AssignTagInput): EntryTag {
+  db.run('BEGIN TRANSACTION')
+  try {
+    const entryTag = assignTagWrites(db, input)
+    db.run('COMMIT')
+    return entryTag
+  } catch (error) {
+    db.run('ROLLBACK')
+    throw error
+  }
+}
+
+/**
+ * The reads and writes behind assignTag, run inside its transaction
+ */
+function assignTagWrites(db: Database, input: AssignTagInput): EntryTag {
   const { entryId, tagId } = input
   const now = Date.now()
 
@@ -43,6 +62,8 @@ export function assignTag(db: Database, input: AssignTagInput): EntryTag {
       `UPDATE entry_tags SET is_deleted = 0, updated_at = ? WHERE id = ?`,
       [now, existingId]
     )
+
+    schedulePersist()
 
     return fetchEntryTagById(db, existingId)
   }
@@ -69,6 +90,8 @@ export function assignTag(db: Database, input: AssignTagInput): EntryTag {
     [id, entryId, tagId, now, now]
   )
 
+  schedulePersist()
+
   return fetchEntryTagById(db, id)
 }
 
@@ -91,6 +114,8 @@ export function removeTag(db: Database, entryId: string, tagId: string): void {
      WHERE entry_id = ? AND tag_id = ? AND is_deleted = 0`,
     [now, entryId, tagId]
   )
+
+  schedulePersist()
 }
 
 /**
@@ -111,23 +136,10 @@ export function softDeleteByTagId(db: Database, tagId: string): void {
      WHERE tag_id = ? AND is_deleted = 0`,
     [now, tagId]
   )
+
+  schedulePersist()
 }
 
-/**
- * Convert SQLite query result row to EntryTag object
- *
- * Expected column order: id, entry_id, tag_id, created_at, updated_at, is_deleted
- */
-function rowToEntryTag(row: unknown[]): EntryTag {
-  return {
-    id: row[0] as string,
-    entryId: row[1] as string,
-    tagId: row[2] as string,
-    createdAt: row[3] as number,
-    updatedAt: row[4] as number,
-    isDeleted: Boolean(row[5])
-  }
-}
 /**
  * Fetch an entry-tag association by ID
  *

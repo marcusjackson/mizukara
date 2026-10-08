@@ -31,6 +31,7 @@ function renderResults(
   props: Partial<{
     entries: Entry[]
     isLoading: boolean
+    isCapped: boolean
     hasSubmitted: boolean
   }> = {}
 ) {
@@ -38,6 +39,7 @@ function renderResults(
     props: {
       entries: [],
       isLoading: false,
+      isCapped: false,
       hasSubmitted: false,
       ...props
     },
@@ -71,6 +73,46 @@ describe('SearchSectionResults', () => {
     })
 
     expect(screen.getAllByTestId('search-result-card')).toHaveLength(2)
+  })
+
+  describe('cap notice', () => {
+    const manyEntries = (count: number): Entry[] =>
+      Array.from({ length: count }, (_, i) =>
+        makeEntry({ id: `e${String(i)}` })
+      )
+
+    it('tells the reader more matches may exist when a capped list is full', () => {
+      renderResults({
+        hasSubmitted: true,
+        isCapped: true,
+        entries: manyEntries(20)
+      })
+
+      expect(screen.getByTestId('cap-notice')).toHaveTextContent(
+        'Show all results'
+      )
+      expect(screen.getAllByTestId('search-result-card')).toHaveLength(20)
+    })
+
+    it('shows no notice for a capped list that is not full', () => {
+      renderResults({
+        hasSubmitted: true,
+        isCapped: true,
+        entries: manyEntries(19)
+      })
+
+      expect(screen.queryByTestId('cap-notice')).not.toBeInTheDocument()
+    })
+
+    it('shows no notice when "Show all results" is on', () => {
+      renderResults({
+        hasSubmitted: true,
+        isCapped: false,
+        entries: manyEntries(25)
+      })
+
+      expect(screen.queryByTestId('cap-notice')).not.toBeInTheDocument()
+    })
   })
 
   it('prioritizes the loading state over the empty states', () => {

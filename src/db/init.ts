@@ -130,13 +130,24 @@ export async function replaceDatabaseWithImported(
   const newDb = new SQL.Database(data)
 
   // Run migrations to ensure schema is up to date
-  runMigrations(newDb)
+  try {
+    runMigrations(newDb)
+  } catch (error) {
+    newDb.close()
+    throw error
+  }
+
+  // Persist first: if the save fails the caller keeps its current database,
+  // so the persistence target must still be that one
+  try {
+    await saveToIndexedDB(newDb.export())
+  } catch (error) {
+    newDb.close()
+    throw error
+  }
 
   // Update database reference for persistence
   setDatabaseRef(newDb)
-
-  // Persist to IndexedDB
-  await saveToIndexedDB(newDb.export())
 
   return newDb
 }

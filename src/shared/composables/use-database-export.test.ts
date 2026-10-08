@@ -367,13 +367,36 @@ describe('clearDatabase', () => {
     vi.clearAllMocks()
   })
 
-  it('executes single DELETE FROM entries statement', async () => {
+  it('deletes assignments, tags and entries in one transaction', async () => {
     const { clearDatabase } = useDatabaseExport()
 
     await clearDatabase()
 
-    expect(mockRun).toHaveBeenCalledWith('DELETE FROM entries')
-    expect(mockRun).toHaveBeenCalledTimes(1)
+    expect(mockRun.mock.calls.map(([sql]) => sql as string)).toEqual([
+      'BEGIN TRANSACTION',
+      'DELETE FROM entry_tags',
+      'DELETE FROM tags',
+      'DELETE FROM entries',
+      'COMMIT'
+    ])
+  })
+
+  it('rolls back and reports failure when a delete throws', async () => {
+    mockRun.mockImplementation((sql: string) => {
+      if (sql === 'DELETE FROM tags') throw new Error('locked')
+    })
+    const { clearDatabase } = useDatabaseExport()
+
+    try {
+      const result = await clearDatabase()
+
+      expect(result).toBe(false)
+      expect(mockRun).toHaveBeenCalledWith('ROLLBACK')
+      expect(mockRun).not.toHaveBeenCalledWith('COMMIT')
+      expect(mockPersist).not.toHaveBeenCalled()
+    } finally {
+      mockRun.mockReset()
+    }
   })
 
   it('persists after clearing', async () => {
@@ -387,8 +410,9 @@ describe('clearDatabase', () => {
   it('shows success toast on clear', async () => {
     const { clearDatabase } = useDatabaseExport()
 
-    await clearDatabase()
+    const result = await clearDatabase()
 
+    expect(result).toBe(true)
     expect(mockSuccess).toHaveBeenCalledWith('All data cleared successfully')
   })
 
@@ -397,8 +421,9 @@ describe('clearDatabase', () => {
     mockDatabase.value = null as unknown as typeof originalValue
 
     const { clearDatabase } = useDatabaseExport()
-    await clearDatabase()
+    const result = await clearDatabase()
 
+    expect(result).toBe(false)
     expect(mockError).toHaveBeenCalledWith('Database not initialized')
 
     mockDatabase.value = originalValue

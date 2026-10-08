@@ -231,7 +231,7 @@ const {
 
 .base-file-input-drop-zone--dragging {
   border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
+  background-color: var(--color-primary-subtle);
 }
 
 .base-file-input-drop-zone--has-preview {
@@ -281,13 +281,13 @@ const {
   border: none;
   border-radius: var(--radius-full);
   background-color: var(--color-danger);
-  color: var(--color-white);
+  color: var(--color-text-inverse);
   cursor: pointer;
   transition: background-color var(--transition-fast);
 }
 
 .base-file-input-remove:hover {
-  background-color: var(--color-danger-dark);
+  background-color: var(--color-danger-active);
 }
 
 .base-file-input-empty {

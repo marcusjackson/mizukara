@@ -73,16 +73,26 @@ const baseTagInputStub = {
 }
 
 function mountComponent(
-  props?: Partial<{ entryId: string; allTags: TagInputOption[] }>
+  props?: Partial<{
+    entryId: string
+    allTags: TagInputOption[]
+    entryText: string
+  }>
 ) {
   return mount(EntryDayViewEntryEditorTags, {
     props: {
       entryId: 'entry-id-1',
       allTags,
+      entryText: 'A day of work',
       ...props
     },
     global: {
-      stubs: { BaseTagInput: baseTagInputStub }
+      stubs: {
+        BaseTagInput: baseTagInputStub,
+        EntryDayViewEntryEditorTagSuggestions: {
+          template: '<div data-testid="tag-suggestions" />'
+        }
+      }
     }
   })
 }
@@ -169,6 +179,38 @@ describe('EntryDayViewEntryEditorTags', () => {
 
     expect(mockRemoveTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
     expect(mockAssignTag).not.toHaveBeenCalled()
+  })
+
+  it('applies overlapping selection changes in order, so a removal is not lost', async () => {
+    mockFindByEntryId.mockReturnValue([
+      {
+        id: 'tag-1',
+        name: 'work',
+        createdAt: 0,
+        updatedAt: 0,
+        isDeleted: false
+      }
+    ])
+    let releaseAssign: () => void = () => {
+      throw new Error('assignTag was never called')
+    }
+    mockAssignTag.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseAssign = resolve
+        })
+    )
+    const wrapper = mountComponent({ entryId: 'entry-id-1' })
+    await flushPromises()
+
+    // Add tag-2, and before that finishes, drop it again
+    await wrapper.find('[data-testid="emit-add-tag2"]').trigger('click')
+    await wrapper.find('[data-testid="emit-remove-tag2"]').trigger('click')
+    releaseAssign()
+    await flushPromises()
+
+    expect(mockAssignTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
+    expect(mockRemoveTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
   })
 
   it('calls createAndAssignTag on create-tag emit', async () => {

@@ -133,7 +133,7 @@ function canMoveDown(id: string): boolean {
 
 .reorder-toggle-button:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline-offset: var(--focus-ring-offset);
 }
 
 .entry-list {
@@ -184,6 +184,6 @@ function canMoveDown(id: string): boolean {
 
 .reorder-button:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline-offset: var(--focus-ring-offset);
 }
 </style>

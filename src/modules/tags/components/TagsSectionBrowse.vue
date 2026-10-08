@@ -7,7 +7,6 @@
  * rename and delete state via TagsSectionBrowseRow.
  *
  * @emits toggle-tag  - User clicked a tag to add/remove it from the active filter
- * @emits rename-tag  - User confirmed a rename (id, trimmed new name)
  * @emits delete-tag  - User confirmed deletion of a tag
  */
 
@@ -24,11 +23,12 @@ const props = defineProps<{
   tags: TagWithCount[]
   /** IDs of currently selected filter tags */
   activeTagIds: string[]
+  /** Apply a rename (id, trimmed new name); resolves true when it succeeded */
+  renameTag: (id: string, name: string) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
   'toggle-tag': [tagId: string]
-  'rename-tag': [id: string, name: string]
   'delete-tag': [id: string]
 }>()
 </script>
@@ -56,9 +56,9 @@ const emit = defineEmits<{
         v-for="tag in props.tags"
         :key="tag.id"
         :is-active="props.activeTagIds.includes(tag.id)"
+        :rename="(name) => props.renameTag(tag.id, name)"
         :tag="tag"
         @delete="emit('delete-tag', tag.id)"
-        @rename="(name) => emit('rename-tag', tag.id, name)"
         @toggle="emit('toggle-tag', tag.id)"
       />
     </ul>

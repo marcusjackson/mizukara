@@ -7,7 +7,7 @@
 
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-import { mount } from '@vue/test-utils'
+import { render, screen } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 
 import AppSettingsRoot from './AppSettingsRoot.vue'
@@ -29,20 +29,24 @@ function createTestRouter(): Router {
   })
 }
 
-function mountRoot(router?: Router) {
+function renderRoot(router?: Router) {
   const testRouter = router ?? createTestRouter()
-  return mount(AppSettingsRoot, {
+  return render(AppSettingsRoot, {
     global: {
       plugins: [testRouter],
       stubs: {
         AppSettingsSectionAppearance: {
-          template: '<div data-testid="appearance-section">Appearance</div>'
+          template: '<section aria-label="Appearance">Appearance</section>'
         },
         AppSettingsSectionDatabase: {
-          template: '<div data-testid="database-section">Database</div>'
+          template: '<section aria-label="Database">Database</section>'
         },
         AppSettingsSectionDeviceSync: {
-          template: '<div data-testid="device-sync-section">Sync</div>'
+          template: '<section aria-label="Device sync">Sync</section>'
+        },
+        AppSettingsSectionLocalInference: {
+          template:
+            '<section aria-label="Tag suggestions">Tag suggestions</section>'
         }
       }
     }
@@ -51,44 +55,31 @@ function mountRoot(router?: Router) {
 
 describe('AppSettingsRoot', () => {
   it('renders page title', () => {
-    const wrapper = mountRoot()
+    renderRoot()
 
-    expect(wrapper.text()).toContain('Settings')
+    expect(screen.getByText('Settings')).toBeInTheDocument()
   })
 
   it('renders back link', () => {
-    const wrapper = mountRoot()
-    const backLink = wrapper.find('a')
+    renderRoot()
 
-    expect(backLink.exists()).toBe(true)
+    expect(screen.getByRole('link')).toBeInTheDocument()
   })
 
-  it('renders appearance section', () => {
-    const wrapper = mountRoot()
+  it.each([
+    ['appearance', 'Appearance'],
+    ['database', 'Database'],
+    ['device sync', 'Device sync'],
+    ['tag suggestion', 'Tag suggestions']
+  ])('renders %s section', (_label, name) => {
+    renderRoot()
 
-    expect(wrapper.find('[data-testid="appearance-section"]').exists()).toBe(
-      true
-    )
-  })
-
-  it('renders database section', () => {
-    const wrapper = mountRoot()
-
-    expect(wrapper.find('[data-testid="database-section"]').exists()).toBe(true)
-  })
-
-  it('renders device sync section', () => {
-    const wrapper = mountRoot()
-
-    expect(wrapper.find('[data-testid="device-sync-section"]').exists()).toBe(
-      true
-    )
+    expect(screen.getByRole('region', { name })).toBeInTheDocument()
   })
 
   it('has accessible page structure', () => {
-    const wrapper = mountRoot()
-    const main = wrapper.find('main')
+    renderRoot()
 
-    expect(main.exists()).toBe(true)
+    expect(screen.getByRole('main')).toBeInTheDocument()
   })
 })

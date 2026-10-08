@@ -136,7 +136,7 @@ const hasEntries = computed(() => props.entries.length > 0)
 }
 
 .tags-section-entries__clear-btn:hover {
-  background-color: var(--color-bg-muted);
+  background-color: var(--color-surface-tertiary);
   color: var(--color-text-primary);
 }
 

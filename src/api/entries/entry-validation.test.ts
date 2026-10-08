@@ -69,6 +69,18 @@ describe('validateEntryInput', () => {
       }).toThrow(EntryValidationError)
     })
 
+    it('accepts content of exactly the maximum length', () => {
+      expect(() => {
+        validateEntryInput({ content: 'a'.repeat(10000) })
+      }).not.toThrow()
+    })
+
+    it('throws EntryValidationError for content over the maximum length', () => {
+      expect(() => {
+        validateEntryInput({ content: 'a'.repeat(10001) })
+      }).toThrow(EntryValidationError)
+    })
+
     it('throws TypeError for non-string content', () => {
       expect(() => {
         validateEntryInput({ content: 123 as unknown as string })

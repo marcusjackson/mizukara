@@ -15,11 +15,18 @@ import migration004 from './004-create-entries-fts.sql?raw'
 
 import type { Database } from 'sql.js'
 
+/** Migrations in order; the schema version is the 1-based position in this list */
+const MIGRATIONS = [migration001, migration002, migration003, migration004]
+
+/** The schema version this build writes and understands */
+export const LATEST_SCHEMA_VERSION = MIGRATIONS.length
+
 /**
  * Run all pending migrations on the database
  *
  * @param db - SQLite database instance to migrate
  * @returns void
+ * @throws {Error} If the database was saved by a newer version of the app
  * @throws {Error} If a migration SQL statement fails; wraps original error with context
  */
 export function runMigrations(db: Database): void {
@@ -28,27 +35,18 @@ export function runMigrations(db: Database): void {
   const versionValue = versionResult[0]?.values[0]?.[0]
   const currentVersion = typeof versionValue === 'number' ? versionValue : 0
 
+  // A newer build's database is refused untouched rather than opened and saved back
+  if (currentVersion > LATEST_SCHEMA_VERSION) {
+    throw new Error(
+      'This database was saved by a newer version of Mizukara. Update the app, then try again.'
+    )
+  }
+
   try {
-    // Apply migration 1 if not already applied
-    if (currentVersion < 1) {
-      // Use db.exec() for multiple SQL statements instead of db.run()
-      // db.exec() handles multi-statement SQL correctly
-      db.exec(migration001)
-    }
-
-    // Apply migration 2 if not already applied
-    if (currentVersion < 2) {
-      db.exec(migration002)
-    }
-
-    // Apply migration 3 if not already applied
-    if (currentVersion < 3) {
-      db.exec(migration003)
-    }
-
-    // Apply migration 4 if not already applied
-    if (currentVersion < 4) {
-      db.exec(migration004)
+    // Apply each migration the database has not seen yet.
+    // db.exec() handles multi-statement SQL correctly (db.run() does not).
+    for (const migration of MIGRATIONS.slice(currentVersion)) {
+      db.exec(migration)
     }
   } catch (error) {
     // If migration fails, re-throw so the caller can handle it

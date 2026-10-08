@@ -29,7 +29,13 @@
 
 import { computed } from 'vue'
 
-import { formatDateLong, formatDateMedium } from '@/shared/utils/date-utils'
+import {
+  addDays,
+  formatDateLong,
+  formatDateMedium,
+  isValidISODate,
+  subtractDays
+} from '@/shared/utils/date-utils'
 
 interface Props {
   /** Current date being viewed (ISO string YYYY-MM-DD) */
@@ -66,6 +72,12 @@ const handleOpenDatePicker = () => {
  */
 const dateLong = computed(() => formatDateLong(props.currentDate))
 const dateMedium = computed(() => formatDateMedium(props.currentDate))
+
+/** The arrows stop at the ends of the supported date range. */
+const isFirstDay = computed(
+  () => !isValidISODate(subtractDays(props.currentDate, 1))
+)
+const isLastDay = computed(() => !isValidISODate(addDays(props.currentDate, 1)))
 </script>
 
 <template>
@@ -77,6 +89,7 @@ const dateMedium = computed(() => formatDateMedium(props.currentDate))
     <button
       aria-label="Previous day"
       class="nav-button prev-button"
+      :disabled="isFirstDay"
       type="button"
       @click="handlePrevDay"
     >
@@ -102,6 +115,7 @@ const dateMedium = computed(() => formatDateMedium(props.currentDate))
     <button
       aria-label="Next day"
       class="nav-button next-button"
+      :disabled="isLastDay"
       type="button"
       @click="handleNextDay"
     >
@@ -136,13 +150,18 @@ const dateMedium = computed(() => formatDateMedium(props.currentDate))
   transition: background-color var(--transition-fast);
 }
 
-.nav-button:hover {
+.nav-button:hover:not(:disabled) {
   background: var(--color-background);
+}
+
+.nav-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .nav-button:focus-visible {
   outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+  outline-offset: var(--focus-ring-offset);
 }
 
 .current-date {
@@ -168,7 +187,7 @@ const dateMedium = computed(() => formatDateMedium(props.currentDate))
 
 .current-date:focus-visible {
   outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+  outline-offset: var(--focus-ring-offset);
 }
 
 .date-picker-icon {

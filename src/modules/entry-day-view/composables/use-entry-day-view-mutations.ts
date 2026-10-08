@@ -1,6 +1,7 @@
 import { createEntry, updateEntry } from '@/api/entries/entry-mutations'
 
 import { useDatabase } from '@/shared/composables/use-database'
+import { useToast } from '@/shared/composables/use-toast'
 
 import type {
   CreateEntryInput,
@@ -19,13 +20,13 @@ export interface UseEntryDayViewMutationsOptions {
  * Return type for useEntryDayViewMutations composable
  */
 export interface UseEntryDayViewMutationsReturn {
-  /** Create a new entry */
-  createNewEntry: (data: CreateEntryInput) => Promise<void>
-  /** Update an existing entry */
+  /** Create a new entry; resolves true on success, false after showing an error toast */
+  createNewEntry: (data: CreateEntryInput) => Promise<boolean>
+  /** Update an existing entry; resolves true on success, false after showing an error toast */
   updateExistingEntry: (
     entryId: string,
     data: UpdateEntryInput
-  ) => Promise<void>
+  ) => Promise<boolean>
 }
 
 /**
@@ -49,40 +50,54 @@ export function useEntryDayViewMutations(
 ): UseEntryDayViewMutationsReturn {
   const { onRefetch } = options
   const { database } = useDatabase()
+  const { error: showError } = useToast()
+
+  /**
+   * Run a database write followed by the refetch, turning any failure into an
+   * error toast so no caller has to catch it.
+   */
+  const runMutation = async (
+    mutate: (db: NonNullable<typeof database.value>) => void,
+    fallbackMessage: string
+  ): Promise<boolean> => {
+    try {
+      if (!database.value) {
+        throw new Error('Database not initialized')
+      }
+      mutate(database.value)
+      await onRefetch()
+      return true
+    } catch (err) {
+      showError(err instanceof Error ? err.message : fallbackMessage)
+      return false
+    }
+  }
 
   /**
    * Create a new entry
    *
    * @param data - Entry creation data
-   * @throws {Error} If database is not initialized
+   * @returns Whether the entry was created
    */
-  const createNewEntry = async (data: CreateEntryInput): Promise<void> => {
-    if (!database.value) {
-      throw new Error('Database not initialized')
-    }
-
-    createEntry(database.value, data)
-    await onRefetch()
-  }
+  const createNewEntry = (data: CreateEntryInput): Promise<boolean> =>
+    runMutation((db) => {
+      createEntry(db, data)
+    }, 'Failed to create entry')
 
   /**
    * Update an existing entry
    *
    * @param entryId - ID of entry to update
    * @param data - Entry update data
-   * @throws {Error} If database is not initialized
+   * @returns Whether the entry was updated
    */
-  const updateExistingEntry = async (
+  const updateExistingEntry = (
     entryId: string,
     data: UpdateEntryInput
-  ): Promise<void> => {
-    if (!database.value) {
-      throw new Error('Database not initialized')
-    }
-
-    updateEntry(database.value, entryId, data)
-    await onRefetch()
-  }
+  ): Promise<boolean> =>
+    runMutation((db) => {
+      updateEntry(db, entryId, data)
+    }, 'Failed to update entry')
 
   return {
     createNewEntry,

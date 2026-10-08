@@ -27,12 +27,13 @@ import {
 import { ROUTES } from '@/router/routes'
 import { useSearch } from '../composables/use-search'
 import { useSearchTagOptions } from '../composables/use-search-tag-options'
+import { toArrayParam, toStringParam } from '../utils/search-query-params'
 
 import SearchSectionCalendar from './SearchSectionCalendar.vue'
 import SearchSectionFilters from './SearchSectionFilters.vue'
 import SearchSectionResults from './SearchSectionResults.vue'
 
-import type { LocationQueryRaw, LocationQueryValue } from 'vue-router'
+import type { LocationQueryRaw } from 'vue-router'
 
 // =============================================================================
 // Composables
@@ -54,21 +55,6 @@ const router = useRouter()
 // =============================================================================
 // Applied filters — URL-synced via ?q=&tags=&all=&view=&month=
 // =============================================================================
-
-function toStringParam(
-  param: LocationQueryValue | LocationQueryValue[] | undefined
-): string {
-  const value = Array.isArray(param) ? param[0] : param
-  return value ?? ''
-}
-
-function toArrayParam(
-  param: LocationQueryValue | LocationQueryValue[] | undefined
-): string[] {
-  if (!param) return []
-  const values = Array.isArray(param) ? param : [param]
-  return values.filter((v): v is string => Boolean(v))
-}
 
 const appliedQuery = computed(() => toStringParam(route.query['q']))
 const appliedTagIds = computed(() => toArrayParam(route.query['tags']))
@@ -177,12 +163,23 @@ onMounted(() => {
   void fetchTagOptions()
 })
 
+// Staged fields follow the applied filters but not the view, so an unsubmitted
+// edit survives a view switch. The string key stops appliedTagIds' fresh array
+// on every URL change from firing this on a view switch.
+watch(
+  () =>
+    JSON.stringify([appliedQuery.value, appliedTagIds.value, appliedAll.value]),
+  () => {
+    stagedQuery.value = appliedQuery.value
+    stagedTagIds.value = appliedTagIds.value
+    stagedAll.value = appliedAll.value
+  },
+  { immediate: true }
+)
+
 watch(
   [appliedQuery, appliedTagIds, appliedAll, appliedView],
   ([query, tagIds, all, view]) => {
-    stagedQuery.value = query
-    stagedTagIds.value = tagIds
-    stagedAll.value = all
     // List view's query is potentially unbounded, so it only runs while list
     // is the active view — switching back to list re-triggers this watcher
     // and catches up on any filter change made while calendar was showing.
@@ -280,6 +277,7 @@ watch(
         class="search-root__results"
         :entries="entries"
         :has-submitted="Boolean(appliedQuery) || appliedTagIds.length > 0"
+        :is-capped="!appliedAll"
         :is-loading="isLoading"
       />
 

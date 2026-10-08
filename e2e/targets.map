@@ -1,0 +1,20 @@
+# Which e2e specs and VRT groups a change under src/ can break. Read by scripts/e2e-related.mjs
+# (make e2e-related); `make check-e2e-map` fails if a spec is named by no rule. Longest prefix wins.
+#   <path prefix> -> <target>, <target>     a target is a file under e2e/, a * glob, or file#grep (VRT groups)
+#   `*` runs the whole suite; `-` means no e2e test covers the path. An unmatched src/ path runs the whole suite.
+
+src/modules/app-settings/ -> app-settings.test.ts, visual-regression.test.ts#Settings Page
+src/modules/entry-day-view/ -> entry-creation.test.ts, entry-editing.test.ts, entry-reordering.test.ts, entry-day-reassignment.test.ts, day-navigation.test.ts, date-picker.test.ts, keyboard-shortcuts.test.ts, keyboard-shortcuts-help.test.ts, visual-regression.test.ts#EntryDayView|SharedEntryCard|Empty State
+src/modules/tags/ -> tags.test.ts, tag-suggestions.test.ts, visual-regression-tags.test.ts
+src/modules/local-inference/ -> tag-suggestions.test.ts
+src/modules/search/ -> -
+
+src/pages/HomePage -> home-redirect.test.ts
+src/pages/EntryDayPage -> day-navigation.test.ts, entry-creation.test.ts, visual-regression.test.ts#Layouts
+src/pages/SettingsPage -> app-settings.test.ts, visual-regression.test.ts#Settings Page
+src/pages/TagsPage -> tags.test.ts, visual-regression-tags.test.ts
+src/pages/SearchPage -> -
+src/pages/NotFoundPage -> -
+
+src/db/ -> offline-functionality.test.ts, entry-creation.test.ts, entry-editing.test.ts, entry-reordering.test.ts, entry-day-reassignment.test.ts, tags.test.ts
+src/styles/ -> responsive-desktop.test.ts, responsive-mobile.test.ts, visual-regression.test.ts, visual-regression-tags.test.ts

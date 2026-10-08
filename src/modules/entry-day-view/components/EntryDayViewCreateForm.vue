@@ -7,8 +7,7 @@
  *
  * Features:
  * - Validates content (non-empty, max 10,000 chars)
- * - Auto-clears form after successful submission
- * - Auto-focuses textarea after submission
+ * - Keeps the typed text on submit; the parent calls the exposed reset() once the save succeeds
  * - Keyboard shortcuts: Cmd/Ctrl+S to save, Escape to clear
  * - Accessible keyboard hints (hidden on mobile)
  *
@@ -67,11 +66,16 @@ const onSubmit = handleSubmit((values) => {
     content: values.content,
     assignedDay: props.defaultAssignedDay
   })
+})
 
-  // Clear form and refocus
+/**
+ * Empty the box and refocus it
+ * Exposed for the parent to call once the entry has been saved
+ */
+const reset = () => {
   resetForm()
   textareaRef.value?.focus()
-})
+}
 
 /**
  * Clear the typed content, confirming first if there's anything to lose
@@ -128,7 +132,8 @@ const clear = () => {
 defineExpose({
   focus,
   submit,
-  clear
+  clear,
+  reset
 })
 </script>
 

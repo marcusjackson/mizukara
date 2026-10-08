@@ -119,7 +119,9 @@ function handleDone(): void {
       <div class="app-settings-device-sync-body">
         <template v-if="step === 'role-select'">
           <p class="app-settings-device-sync-hint">
-            On one device, show a code. On the other, scan or paste it.
+            On one device, show a code. On the other, scan or paste it. Syncing
+            merges both devices in both directions; for an entry edited on both,
+            the newer edit wins on both.
           </p>
           <div class="app-settings-device-sync-role-buttons">
             <BaseButton @click="selectRole('initiator')">

@@ -15,6 +15,7 @@ import { useToast } from '@/shared/composables/use-toast'
 
 import type { Entry } from '@/shared/types/entry-types'
 import type { TagInputOption, TagWithCount } from '@/shared/types/tag-types'
+import type { Database } from 'sql.js'
 import type { ComputedRef, Ref } from 'vue'
 
 // =============================================================================
@@ -30,10 +31,38 @@ export interface UseTagsReturn {
   filteredEntries: Readonly<Ref<Entry[]>>
   /** True while any async fetch is in progress */
   isLoading: Readonly<Ref<boolean>>
+  /** Message from the last failed tag fetch; null after a successful one */
+  loadError: Readonly<Ref<string | null>>
   /** Fetch all tags (including zero-count) from the database */
   fetchTags: () => Promise<void>
   /** Fetch entries matching all provided tag IDs; empty array clears filteredEntries */
   fetchEntriesByTags: (tagIds: string[]) => Promise<void>
+}
+
+/**
+ * Run a read with the loading flag raised; a failure shows a toast.
+ *
+ * @returns The failure message, or null when the read succeeded (or there was no database)
+ */
+function runRead(
+  db: Database | null,
+  isLoading: Ref<boolean>,
+  showError: (message: string) => void,
+  read: (db: Database) => void,
+  fallbackMessage: string
+): string | null {
+  if (!db) return null
+  isLoading.value = true
+  try {
+    read(db)
+    return null
+  } catch (err) {
+    const message = err instanceof Error ? err.message : fallbackMessage
+    showError(message)
+    return message
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // =============================================================================
@@ -47,6 +76,7 @@ export function useTags(): UseTagsReturn {
   const tags = ref<TagWithCount[]>([])
   const filteredEntries = ref<Entry[]>([])
   const isLoading = ref(false)
+  const loadError = ref<string | null>(null)
 
   const tagOptions = computed<TagInputOption[]>(() =>
     tags.value.map((tag) => ({ value: tag.id, label: tag.name }))
@@ -57,19 +87,15 @@ export function useTags(): UseTagsReturn {
    * Includes zero-count tags. Ordered by name ascending (API responsibility).
    */
   function fetchTags(): Promise<void> {
-    if (!database.value) return Promise.resolve()
-
-    isLoading.value = true
-
-    try {
-      tags.value = findAllWithCount(database.value)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load tags'
-      showError(message)
-    } finally {
-      isLoading.value = false
-    }
-
+    loadError.value = runRead(
+      database.value,
+      isLoading,
+      showError,
+      (db) => {
+        tags.value = findAllWithCount(db)
+      },
+      'Failed to load tags'
+    )
     return Promise.resolve()
   }
 
@@ -82,17 +108,15 @@ export function useTags(): UseTagsReturn {
       filteredEntries.value = []
       return Promise.resolve()
     }
-
-    if (!database.value) return Promise.resolve()
-
-    try {
-      filteredEntries.value = findEntriesByTags(database.value, tagIds)
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to load entries'
-      showError(message)
-    }
-
+    runRead(
+      database.value,
+      isLoading,
+      showError,
+      (db) => {
+        filteredEntries.value = findEntriesByTags(db, tagIds)
+      },
+      'Failed to load entries'
+    )
     return Promise.resolve()
   }
 
@@ -101,6 +125,7 @@ export function useTags(): UseTagsReturn {
     fetchTags,
     filteredEntries,
     isLoading,
+    loadError,
     tagOptions,
     tags
   }

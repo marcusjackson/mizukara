@@ -10,6 +10,7 @@
  *
  * @prop entryId - ID of the entry being edited
  * @prop allTags - All available tag options (from use-tags at section level)
+ * @prop entryText - Live editor content, so suggestions reflect unsaved edits
  */
 
 import { computed, onMounted, ref } from 'vue'
@@ -22,6 +23,8 @@ import { useDatabase } from '@/shared/composables/use-database'
 
 import { useEntryTagMutations } from '@/modules/tags/composables/use-entry-tag-mutations'
 
+import EntryDayViewEntryEditorTagSuggestions from './EntryDayViewEntryEditorTagSuggestions.vue'
+
 import type { TagInputOption } from '@/shared/types/tag-types'
 
 interface Props {
@@ -29,6 +32,8 @@ interface Props {
   entryId: string
   /** All available tag options for the combobox; provided from section level */
   allTags: TagInputOption[]
+  /** Live editor content, so suggestions reflect edits not yet saved */
+  entryText: string
 }
 
 const props = defineProps<Props>()
@@ -61,9 +66,25 @@ function loadCurrentTags(): void {
 }
 
 /**
+ * Every change to the selection runs through this queue, one at a time. Each
+ * diffs against the selection as the one before it left it, so overlapping
+ * changes cannot diff against stale state and lose a removal.
+ */
+let changeQueue: Promise<void> = Promise.resolve()
+
+function enqueue(task: () => Promise<void>): Promise<void> {
+  changeQueue = changeQueue.then(task)
+  return changeQueue
+}
+
+/**
  * Diff old vs new selection and apply add/remove mutations immediately.
  */
-async function handleSelectionChange(newIds: string[]): Promise<void> {
+function handleSelectionChange(newIds: string[]): Promise<void> {
+  return enqueue(() => applySelection(newIds))
+}
+
+async function applySelection(newIds: string[]): Promise<void> {
   const prev = selectedTagIds.value
   const added = newIds.filter((id) => !prev.includes(id))
   const removed = prev.filter((id) => !newIds.includes(id))
@@ -81,15 +102,31 @@ async function handleSelectionChange(newIds: string[]): Promise<void> {
 /**
  * Inline creation: create the tag then assign it to the entry.
  */
-async function handleCreateTag(name: string): Promise<void> {
-  const tag = await createAndAssignTag(props.entryId, name)
-  if (tag) {
-    newlyCreatedTags.value = [
-      ...newlyCreatedTags.value,
-      { value: tag.id, label: tag.name }
-    ]
-    selectedTagIds.value = [...selectedTagIds.value, tag.id]
-  }
+function handleCreateTag(name: string): Promise<void> {
+  return enqueue(async () => {
+    const tag = await createAndAssignTag(props.entryId, name)
+    if (tag) {
+      newlyCreatedTags.value = [
+        ...newlyCreatedTags.value,
+        { value: tag.id, label: tag.name }
+      ]
+      selectedTagIds.value = [...selectedTagIds.value, tag.id]
+    }
+  })
+}
+
+/**
+ * Apply a suggested existing tag.
+ *
+ * Routed through the same selection change a manual add makes, rather than
+ * calling assignTag directly — the chips render from `selectedTagIds`, so a
+ * direct write would reach the database and leave the editor unchanged.
+ */
+function handleApplyExisting(tagId: string): Promise<void> {
+  return enqueue(async () => {
+    if (selectedTagIds.value.includes(tagId)) return
+    await applySelection([...selectedTagIds.value, tagId])
+  })
 }
 
 onMounted(() => {
@@ -106,6 +143,12 @@ onMounted(() => {
       placeholder="Add tags…"
       @create-tag="handleCreateTag"
       @update:model-value="handleSelectionChange"
+    />
+    <EntryDayViewEntryEditorTagSuggestions
+      :assigned-tag-ids="selectedTagIds"
+      :entry-text="entryText"
+      :vocabulary="effectiveOptions"
+      @apply-existing="handleApplyExisting"
     />
   </div>
 </template>

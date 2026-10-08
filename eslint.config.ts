@@ -2,7 +2,8 @@ import eslint from '@eslint/js'
 import vitest from '@vitest/eslint-plugin'
 import { defineConfig } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier'
-import importPlugin from 'eslint-plugin-import'
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript'
+import importPlugin from 'eslint-plugin-import-x'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
 import pluginVue from 'eslint-plugin-vue'
@@ -19,7 +20,12 @@ export default defineConfig([
       'playwright-report/**',
       'test-results/**',
       '*.min.js',
+      'scripts/check-links.mjs', // machine-written by fleet-sync; not repo-styled
       'ignore/**',
+      '.claude/worktrees/**', // Other checkouts of this repo made by agents; each is linted in its own tree
+      '_local/**', // Throwaway spike archives — outside every tsconfig, so type-aware linting cannot parse them
+      'spikes/**', // Committed spike code and data (records in docs/spikes/) — Node scripts outside every tsconfig
+      'scripts/tag-head/**', // Offline training tooling: plain Node .mjs outside every tsconfig, like spikes/
       'specs/**', // Specification documentation - not runtime code
       '*.config.mjs' // Ignore plain JS/MJS config files
     ]
@@ -134,13 +140,13 @@ export default defineConfig([
   // Import plugin for validating imports
   {
     plugins: {
-      import: importPlugin
+      'import-x': importPlugin
     },
     settings: {
-      'import/resolver': 'typescript'
+      'import-x/resolver-next': [createTypeScriptImportResolver()]
     },
     rules: {
-      'import/no-unresolved': ['error', { ignore: ['^virtual:'] }]
+      'import-x/no-unresolved': ['error', { ignore: ['^virtual:'] }]
     }
   },
 
@@ -176,14 +182,14 @@ export default defineConfig([
   // lines and comment lines are excluded from the count. Limits apply to
   // code lines only, which keeps them predictable and tool-independent.
 
-  // Test files - most permissive (650 lines)
+  // Test files - most permissive (600 lines)
   // max-lines-per-function is disabled for test files because:
   // - describe() blocks naturally grow with comprehensive test coverage
   // - A repository test might have 20+ test cases, making 200+ line describe blocks normal
   // - The important metric is keeping individual it() callbacks short and focused
   // - Splitting describe blocks just to meet line limits reduces test cohesion
   // - This is standard practice in the testing community (Jest, Vitest, etc.)
-  // - We still enforce max-lines (650) on the overall test file to prevent runaway growth
+  // - We still enforce max-lines (600) on the overall test file to prevent runaway growth
   {
     files: ['**/*.test.ts', '**/*.spec.ts', 'test/**/*.ts', 'e2e/**/*.ts'],
     rules: {

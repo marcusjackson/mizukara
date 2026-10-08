@@ -23,7 +23,8 @@ import type { DayCount, SearchFilters } from './search-types'
 import type { Entry } from '@/shared/types/entry-types'
 import type { Database } from 'sql.js'
 
-const CAPPED_LIMIT = 20
+/** How many matches the list view shows unless "Show all results" is on */
+export const CAPPED_LIMIT = 20
 
 const ENTRY_COLUMNS = `e.id, e.content, e.created_at, e.updated_at,
             e.assigned_day, e.order_position, e.is_deleted`

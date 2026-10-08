@@ -5,7 +5,7 @@
  * Delegates all UI to TagsRoot module component.
  */
 
-import { mount } from '@vue/test-utils'
+import { render, screen } from '@testing-library/vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import TagsPage from './TagsPage.vue'
@@ -14,27 +14,29 @@ import TagsPage from './TagsPage.vue'
 vi.mock('@/modules/tags/components/TagsRoot.vue', () => ({
   default: {
     name: 'TagsRoot',
-    template: '<div data-testid="tags-root">TagsRoot</div>'
+    template: '<main aria-label="Tags">TagsRoot</main>'
   }
 }))
 
 vi.mock('@/shared/components', () => ({
   SharedToast: {
     name: 'SharedToast',
-    template: '<div data-testid="shared-toast" />'
+    template: '<div role="status" aria-label="Notifications"></div>'
   }
 }))
 
 describe('TagsPage', () => {
   it('renders TagsRoot component', () => {
-    const wrapper = mount(TagsPage)
+    render(TagsPage)
 
-    expect(wrapper.find('[data-testid="tags-root"]').exists()).toBe(true)
+    expect(screen.getByRole('main', { name: /tags/i })).toBeInTheDocument()
   })
 
   it('renders SharedToast for notifications', () => {
-    const wrapper = mount(TagsPage)
+    render(TagsPage)
 
-    expect(wrapper.find('[data-testid="shared-toast"]').exists()).toBe(true)
+    expect(
+      screen.getByRole('status', { name: /notifications/i })
+    ).toBeInTheDocument()
   })
 })

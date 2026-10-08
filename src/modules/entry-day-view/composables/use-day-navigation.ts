@@ -98,14 +98,18 @@ export function useDayNavigation(
    * Navigate to the previous day
    */
   function goToPrevDay(): void {
-    currentDate.value = subtractDays(currentDate.value, 1)
+    const previous = subtractDays(currentDate.value, 1)
+    // Stay on the first supported day rather than moving past the range
+    if (isValidISODate(previous)) currentDate.value = previous
   }
 
   /**
    * Navigate to the next day
    */
   function goToNextDay(): void {
-    currentDate.value = addDays(currentDate.value, 1)
+    const next = addDays(currentDate.value, 1)
+    // Stay on the last supported day rather than moving past the range
+    if (isValidISODate(next)) currentDate.value = next
   }
 
   /**
@@ -187,18 +191,19 @@ function setupDateRouteSync(
    * Watch route changes and update currentDate
    *
    * Handles browser back/forward navigation by syncing route param to state.
+   * An address with no date, or an invalid one, means today.
    * Guard: Set flag to prevent the currentDate watch from re-updating the route.
    */
   watch(
     () => route.params['date'],
     (newRouteDate) => {
-      if (
-        newRouteDate &&
-        isValidISODate(newRouteDate as string) &&
-        newRouteDate !== currentDate.value
-      ) {
+      const targetDate =
+        typeof newRouteDate === 'string' && isValidISODate(newRouteDate)
+          ? newRouteDate
+          : getToday()
+      if (targetDate !== currentDate.value) {
         setIsUpdating(true)
-        currentDate.value = newRouteDate as string
+        currentDate.value = targetDate
         // Reset flag on next tick after currentDate watch has run
         void Promise.resolve().then(() => {
           setIsUpdating(false)

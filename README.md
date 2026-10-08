@@ -61,6 +61,8 @@ already valuable on its own, and later features are meant to arrive without ever
 **Organization:**
 
 - Tag items for loose grouping
+- Suggest tags for an entry, on request — from words the entry already shares with your tags, and
+  from meaning, using a small model you download and run on your own device
 - Export/import entire database as SQLite file
 
 **Offline & Data:**
@@ -73,8 +75,8 @@ already valuable on its own, and later features are meant to arrive without ever
 
 ### Future
 
-- Optional auto-generated titles and tags via local LLM, plus suggested summaries and themes —
-  always optional, always editable, never hidden or forced on the user
+- Optional auto-generated titles, plus suggested summaries and themes — always optional, always
+  editable, never hidden or forced on the user
 - An LLM able to act as a Socratic partner: asking follow-up questions and surfacing patterns
   across recent items, without replacing the user's own voice or writing entries on their behalf
 - Quick retrospective views (weekly, monthly)
@@ -210,7 +212,8 @@ pnpm dev              # Start dev server (hot reload)
 pnpm build            # Build for production
 pnpm preview          # Preview production build
 pnpm test             # Run unit tests
-pnpm test:e2e         # Run E2E tests
+pnpm test:e2e         # Run E2E tests (matches CI)
+pnpm test:e2e:local   # Run E2E tests locally at lower concurrency
 pnpm lint             # Lint code (ESLint + Prettier + Stylelint)
 make format           # Format code with Prettier
 pnpm type-check       # TypeScript type checking
@@ -239,9 +242,12 @@ make ci-full            # Full validation (lint + unit + E2E)
 
 ## 🔐 Privacy & Data
 
-- **All data stays local** — Nothing is sent to external servers. Device sync connects your
-  devices directly; a public STUN server is used only to discover a local network address, and
-  never carries your data
+- **All data stays local** — No journal content is sent to external servers. Device sync connects
+  your devices directly; a public STUN server is used only to discover a local network address, and
+  never carries your data. If you download the tag suggestion model, its files come from
+  Hugging Face when you press Download in Settings — those requests reveal your IP address, when you
+  asked, and which model it is, and nothing else. Your entries are never sent anywhere; the
+  model runs on your device, and once downloaded it works offline
 - **Full ownership** — Export your database anytime as a standard SQLite file
 - **Offline-first** — Works without internet connection
 - **Standard format** — SQLite is a widely-supported, future-proof format

@@ -12,6 +12,7 @@
 
 import { expect, test } from '@playwright/test'
 
+import { TEST_ENTRY_CONTENT } from './helpers/test-data'
 import {
   createEntry,
   getEntryEditor,
@@ -74,7 +75,7 @@ test.describe('Tag creation via entry editor (12.1)', () => {
   test('creates a tag via the entry editor and chip appears', async ({
     page
   }) => {
-    const entryCard = await createEntry(page, 'Entry for tag creation test')
+    const entryCard = await createEntry(page, TEST_ENTRY_CONTENT.TAG_CREATION)
     await startEditingEntry(entryCard, isMobileViewport(page))
 
     const editor = getEntryEditor(page)
@@ -143,7 +144,7 @@ test.describe('Tag removal via entry editor (12.2)', () => {
   }) => {
     test.slow() // Two open/save/reopen cycles
 
-    const entryCard = await createEntry(page, 'Entry to remove tag from E2E')
+    const entryCard = await createEntry(page, TEST_ENTRY_CONTENT.TAG_REMOVAL)
 
     // Add a tag first
     await startEditingEntry(entryCard, isMobileViewport(page))
@@ -152,7 +153,7 @@ test.describe('Tag removal via entry editor (12.2)', () => {
 
     // Reopen and remove the chip
     const card = page.getByTestId('entry-card').filter({
-      hasText: 'Entry to remove tag from E2E'
+      hasText: TEST_ENTRY_CONTENT.TAG_REMOVAL
     })
     await startEditingEntry(card, isMobileViewport(page))
     const editor = getEntryEditor(page)
@@ -197,8 +198,8 @@ test.describe('Tag browsing and multi-tag filtering (12.3)', () => {
     test.slow() // Setup requires creating entries and tags
 
     // Create two entries
-    const entry1 = await createEntry(page, 'FilterEntry1 E2E (alpha only)')
-    await createEntry(page, 'FilterEntry2 E2E (alpha and beta)')
+    const entry1 = await createEntry(page, TEST_ENTRY_CONTENT.TAG_FILTER_ALPHA)
+    await createEntry(page, TEST_ENTRY_CONTENT.TAG_FILTER_ALPHA_BETA)
 
     // Entry 1 gets only TagAlphaE2E
     await startEditingEntry(entry1, isMobileViewport(page))
@@ -208,7 +209,7 @@ test.describe('Tag browsing and multi-tag filtering (12.3)', () => {
     // Entry 2 gets TagAlphaE2E (existing) and TagBetaE2E (new to create)
     const card2 = page
       .getByTestId('entry-card')
-      .filter({ hasText: 'FilterEntry2 E2E (alpha and beta)' })
+      .filter({ hasText: TEST_ENTRY_CONTENT.TAG_FILTER_ALPHA_BETA })
     await startEditingEntry(card2, isMobileViewport(page))
 
     const editor = getEntryEditor(page)
@@ -256,7 +257,7 @@ test.describe('Tag browsing and multi-tag filtering (12.3)', () => {
     await expect(page.getByTestId('entry-card')).toHaveCount(1)
     await expect(
       page.getByTestId('entry-card').getByTestId('entry-content')
-    ).toContainText('FilterEntry2 E2E (alpha and beta)')
+    ).toContainText(TEST_ENTRY_CONTENT.TAG_FILTER_ALPHA_BETA)
 
     // Clear filter — entry list should clear (empty-no-filter shown)
     await page.getByTestId('clear-filter-btn').click()
@@ -282,7 +283,7 @@ test.describe('Tag rename and delete from browse view (12.4)', () => {
     test.slow()
 
     // Create an entry and add a tag
-    const entryCard = await createEntry(page, 'Entry for rename test E2E')
+    const entryCard = await createEntry(page, TEST_ENTRY_CONTENT.TAG_RENAME)
     await startEditingEntry(entryCard, isMobileViewport(page))
     await addTagViaEditor(page, 'OldNameTagE2E')
     await saveEntryEdit(page)
@@ -316,7 +317,7 @@ test.describe('Tag rename and delete from browse view (12.4)', () => {
     test.slow()
 
     // Create an entry and add a tag
-    const entryCard = await createEntry(page, 'Entry for delete test E2E')
+    const entryCard = await createEntry(page, TEST_ENTRY_CONTENT.TAG_DELETE)
     await startEditingEntry(entryCard, isMobileViewport(page))
     await addTagViaEditor(page, 'DeleteMeTagE2E')
     await saveEntryEdit(page)
@@ -421,7 +422,10 @@ test.describe('Keyboard-only rename flow (T-9)', () => {
     test.slow()
 
     // Create an entry and add a tag
-    const entryCard = await createEntry(page, 'Entry for keyboard rename T9')
+    const entryCard = await createEntry(
+      page,
+      TEST_ENTRY_CONTENT.TAG_KEYBOARD_RENAME
+    )
     await startEditingEntry(entryCard, isMobileViewport(page))
     await addTagViaEditor(page, 'KeyboardRenameTagT9')
     await saveEntryEdit(page)
@@ -470,7 +474,7 @@ test.describe('Zero-count tag appears in tag list (T-10)', () => {
     test.slow()
 
     // Create an entry and add a tag
-    const entryCard = await createEntry(page, 'Entry for zero-count tag T10')
+    const entryCard = await createEntry(page, TEST_ENTRY_CONTENT.TAG_ZERO_COUNT)
     await startEditingEntry(entryCard, isMobileViewport(page))
     await addTagViaEditor(page, 'ZeroCountTagT10')
     await saveEntryEdit(page)
@@ -488,7 +492,7 @@ test.describe('Zero-count tag appears in tag list (T-10)', () => {
 
     const card = page
       .getByTestId('entry-card')
-      .filter({ hasText: 'Entry for zero-count tag T10' })
+      .filter({ hasText: TEST_ENTRY_CONTENT.TAG_ZERO_COUNT })
     await startEditingEntry(card, isMobileViewport(page))
 
     // Remove the tag chip from the editor
@@ -511,7 +515,7 @@ test.describe('Zero-count tag appears in tag list (T-10)', () => {
       .filter({
         has: page.getByRole('button', { name: 'Select ZeroCountTagT10' })
       })
-      .locator('.tag-row__count')
+      .getByTitle('0 entries')
     await expect(countBadge).toContainText('0')
   })
 })

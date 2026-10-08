@@ -58,7 +58,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
     await expect(editor).toBeVisible()
 
     // Change assigned day to yesterday
-    const dateInput = editor.locator('input[type="date"]')
+    const dateInput = editor.getByLabel('Assigned Day')
     await dateInput.fill(yesterdayDate)
 
     // Verify date was set correctly
@@ -102,7 +102,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
 
     // Change assigned day to tomorrow
     const editor = getEntryEditor(page)
-    const dateInput = editor.locator('input[type="date"]')
+    const dateInput = editor.getByLabel('Assigned Day')
     await dateInput.fill(tomorrowDate)
 
     // Save changes
@@ -140,7 +140,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
     // Edit and reassign to yesterday
     await startEditingEntry(entryCard, isMobileViewport(page))
     const editor = getEntryEditor(page)
-    await editor.locator('input[type="date"]').fill(yesterdayDate)
+    await editor.getByLabel('Assigned Day').fill(yesterdayDate)
     await saveEntryEdit(page)
 
     // Navigate to yesterday
@@ -175,7 +175,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
       .filter({ hasText: TEST_ENTRY_CONTENT.REFERENCE })
     await startEditingEntry(entryCard, isMobileViewport(page))
     let editor = getEntryEditor(page)
-    let dateInput = editor.locator('input[type="date"]')
+    let dateInput = editor.getByLabel('Assigned Day')
     await dateInput.fill(yesterdayDate)
     await expect(dateInput).toHaveValue(yesterdayDate)
     await saveEntryEdit(page)
@@ -196,7 +196,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
       .filter({ hasText: TEST_ENTRY_CONTENT.REFERENCE })
     await startEditingEntry(entryCard, isMobileViewport(page))
     editor = getEntryEditor(page)
-    dateInput = editor.locator('input[type="date"]')
+    dateInput = editor.getByLabel('Assigned Day')
     await dateInput.fill(tomorrowDate)
     await expect(dateInput).toHaveValue(tomorrowDate)
     await saveEntryEdit(page)
@@ -231,7 +231,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
 
     // Change assigned day
     const editor = getEntryEditor(page)
-    await editor.locator('input[type="date"]').fill(yesterdayDate)
+    await editor.getByLabel('Assigned Day').fill(yesterdayDate)
 
     // Cancel instead of saving
     const cancelButton = editor.getByRole('button', { name: 'Cancel' })
@@ -273,7 +273,7 @@ test.describe('Assigned Day Reassignment Flow', () => {
     await startEditingEntry(entryCard, isMobileViewport(page))
 
     const editor = getEntryEditor(page)
-    const dateInput = editor.locator('input[type="date"]')
+    const dateInput = editor.getByLabel('Assigned Day')
 
     // Try to set invalid date (browser's date input should prevent this, but test the validation)
     // HTML5 date input enforces YYYY-MM-DD format, so we test by checking error message appears

@@ -35,8 +35,10 @@ vi.mock('@/base/components/BaseDialog.vue', () => {
     setup(
       props: { open: boolean; title: string },
       {
+        emit,
         slots
       }: {
+        emit: (event: 'update:open', value: boolean) => void
         slots: Record<string, (() => unknown) | undefined>
       }
     ) {
@@ -44,6 +46,15 @@ vi.mock('@/base/components/BaseDialog.vue', () => {
         if (!props.open) return null
         return vue.h('div', { role: 'dialog', 'aria-label': props.title }, [
           props.title ? vue.h('h2', props.title) : null,
+          vue.h(
+            'button',
+            {
+              onClick: () => {
+                emit('update:open', false)
+              }
+            },
+            'Dismiss'
+          ),
           slots['default']?.() as never
         ])
       }
@@ -119,6 +130,17 @@ describe('EntryDayViewDatePicker', () => {
     await user.click(cancelButton)
 
     expect(emitted()['close']).toBeTruthy()
+  })
+
+  it('emits close once when the dialog is dismissed', async () => {
+    const user = userEvent.setup()
+    const { emitted } = render(EntryDayViewDatePicker, {
+      props: defaultProps
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+
+    expect(emitted()['close']).toHaveLength(1)
   })
 
   it('shows validation error for invalid date format', async () => {

@@ -6,7 +6,9 @@
 #   make lint-fix FILES="path"   # Fix specific files
 #   make type-check              # TypeScript type checking only
 #   make test FILES="path"       # Run tests
-#   make test-changed            # Run tests on changed files
+#   make test-changed            # Run unit tests related to the changed paths (alias of test-related)
+#   make e2e-related             # Run only the e2e specs and VRT files the changed paths map to (e2e/targets.map)
+#   make test-e2e / test-e2e-vrt # Full e2e / full visual regression suite
 #
 # Individual tools (for targeted use):
 #   make format / format-check   # Prettier
@@ -14,7 +16,7 @@
 #   make stylelint / stylelint-check  # Stylelint
 
 # Define phony targets (not actual files)
-.PHONY: check-node test test-e2e lint lint-fix check check-fix ci ci-full lint-changed lint-fix-changed check-changed check-fix-changed test-changed type-check format format-check eslint eslint-check stylelint stylelint-check check-unused check-untested dev build preview install clean
+.PHONY: check-node check-docs check-links test test-coverage test-e2e test-e2e-production lint lint-fix check check-fix ci ci-full pre-push test-related e2e-related check-e2e-map lint-changed lint-fix-changed check-changed check-fix-changed test-changed type-check format format-check eslint eslint-check stylelint stylelint-check check-unused check-untested dev build preview install clean
 
 # =============================================================================
 # File Patterns (defined once, used everywhere)
@@ -32,6 +34,7 @@ ESLINT_FILES = $(filter %.ts %.tsx %.js %.jsx %.vue,$(FILES))
 PRETTIER_FILES = $(filter %.ts %.tsx %.js %.jsx %.vue %.css %.scss %.json %.md,$(FILES))
 STYLELINT_FILES = $(filter %.css %.scss %.vue,$(FILES))
 
+# fleet:begin check-node sha=2f6998ed22 | machine-written; edit the source, not this region
 # Node version guard.
 # package.json requires Node ^24.0.0. Running these targets on an older Node
 # (a system install ahead of nvm on PATH, say) crashes corepack's pnpm shim with an
@@ -51,6 +54,7 @@ check-node:
 	echo "error: Node $$v is too old — this project needs ^24.0.0."; \
 	echo "       Run 'nvm use' (see .nvmrc), or 'nvm install 24' if it is not installed."; \
 	exit 1
+# fleet:end check-node
 
 # =============================================================================
 # Type Checking
@@ -132,12 +136,16 @@ test: check-node
 		pnpm test $(FILES); \
 	fi
 
-# Run E2E tests
+# Run all tests with coverage thresholds enforced (vitest.config.ts)
+test-coverage: check-node
+	pnpm test:coverage
+
+# Run E2E tests (local: capped workers, this machine can't run full parallelism)
 test-e2e: check-node
 	@if [ "$(FILES)" = "." ]; then \
-		pnpm test:e2e; \
+		pnpm test:e2e:local; \
 	else \
-		pnpm test:e2e $(FILES); \
+		pnpm test:e2e:local $(FILES); \
 	fi
 
 # Visual regression tests (single, easy command)
@@ -145,12 +153,17 @@ test-e2e-vrt: check-node
 	@echo "Running visual regression tests..."
 	pnpm test:e2e:vrt
 
+# Checks that need a production build (network origins). Downloads the model,
+# so it is not part of ci or ci-full.
+test-e2e-production: check-node
+	pnpm test:e2e:production
+
 # =============================================================================
 # Combined Commands (lint = CI-style check)
 # =============================================================================
 
 # Full CI-style lint check (matches pnpm lint behavior)
-# Runs: Prettier check + ESLint check + Stylelint check + Type check + doc link check
+# Runs: Prettier check + ESLint check + Stylelint check + Type check + CSS variable check + doc link check
 lint:
 	@echo "Running type check..."
 	@$(MAKE) type-check
@@ -160,8 +173,10 @@ lint:
 	@$(MAKE) eslint-check FILES="$(FILES)"
 	@echo "Checking Stylelint..."
 	@$(MAKE) stylelint-check FILES="$(FILES)"
+	@echo "Checking CSS custom properties..."
+	@node scripts/check-css-vars.mjs
 	@echo "Checking documentation links..."
-	@python3 check-doc-links.py
+	@node scripts/check-links.mjs
 	@echo "All lint checks complete!"
 
 # Apply all fixes (format + eslint + stylelint)
@@ -181,11 +196,104 @@ check: lint
 check-fix: lint-fix
 
 # CI commands
+# fleet:begin docs-gate-detect sha=3642bd5ef7 | machine-written; edit the source, not this region
+# Path-scoped gate. Every path this branch changes against origin/develop (committed, uncommitted and
+# untracked, deletions included) is classified, and the gate runs only what those paths can break.
+# Default-deny: a path no set claims counts as "other" and runs everything. FULL=1 runs everything.
+#   DOCS_PATHS  paths no test, linter or type-checker reads: only format, links and DOCS_EXTRA run.
+#   UNIT_PATHS  paths the unit suite (and its coverage and unused/untested scans) can break; a repo sets them.
+#   E2E_PATHS   paths the end-to-end suite can break; a repo sets them.
+GATE_BASE ?= origin/develop
+DOCS_PATHS ?= %.md .gitignore .gitattributes LICENSE% docs/% .claude/% .github/%
+UNIT_PATHS ?=
+E2E_PATHS ?=
+gate_paths = $(shell { git rev-parse -q --verify $(GATE_BASE) >/dev/null || echo no-base; \
+  git diff --no-renames --name-only $(GATE_BASE)...HEAD; git diff --no-renames --name-only HEAD; \
+  git ls-files --others --exclude-standard; } 2>/dev/null | sort -u)
+gate_other = $(filter-out $(DOCS_PATHS) $(UNIT_PATHS) $(E2E_PATHS),$(gate_paths))
+docs_only = $(if $(FULL),,$(if $(strip $(gate_paths)),$(if $(filter-out $(DOCS_PATHS),$(gate_paths)),,yes)))
+not_docs = $(if $(docs_only),,yes)
+gate_all = $(if $(or $(FULL),$(strip $(gate_other)),$(if $(strip $(gate_paths)),,x)),yes)
+run_unit = $(if $(or $(gate_all),$(strip $(filter $(UNIT_PATHS),$(gate_paths)))),yes)
+run_e2e = $(if $(or $(gate_all),$(strip $(filter $(E2E_PATHS),$(gate_paths)))),yes)
+gate_tier = $(if $(docs_only),docs,$(if $(and $(run_unit),$(run_e2e)),full,$(if $(run_unit),unit,e2e)))
+gate_counts = docs:$(words $(filter $(DOCS_PATHS),$(gate_paths))) unit:$(words $(filter $(UNIT_PATHS),$(gate_paths))) e2e:$(words $(filter $(E2E_PATHS),$(gate_paths))) other:$(words $(gate_other))
+# Step bookkeeping. $(call gate_step,name,command) runs and records a step, $(call gate_skip,name,reason)
+# records a skip, and gate_summary prints the one line a session reads in place of the log:
+#   GATE-SUMMARY tier=unit ran=lint,test-coverage skipped=test-e2e paths=docs:0 unit:3 e2e:0 other:0
+# The records come from what actually executed, so a dispatch bug shows up as a mismatch.
+GATE_TMP = $${TMPDIR:-/tmp}/gate.$$PPID
+define gate_begin
+@rm -f $(GATE_TMP).ran $(GATE_TMP).skip
+endef
+define gate_step
+@echo "$(1)" >> $(GATE_TMP).ran; $(2)
+endef
+define gate_skip
+@echo "$(1)" >> $(GATE_TMP).skip; echo "Skipping $(1): $(2). FULL=1 runs everything."
+endef
+# $(call gate_do,name,condition,command,skip reason): run and record the step when the condition is non-empty.
+define gate_do
+$(if $(2),$(call gate_step,$(1),$(3)),$(call gate_skip,$(1),$(4)))
+endef
+define gate_summary
+@R=$$(paste -sd, $(GATE_TMP).ran 2>/dev/null); S=$$(paste -sd, $(GATE_TMP).skip 2>/dev/null); \
+  echo "GATE-SUMMARY tier=$(gate_tier) ran=$${R:-none} skipped=$${S:-none} paths=$(gate_counts)"; \
+  rm -f $(GATE_TMP).ran $(GATE_TMP).skip
+endef
+# fleet:end docs-gate-detect
+
+# Path classes for this repo (see the gate block above). A path in neither set runs the full gate.
+UNIT_PATHS = src/% test/% vitest.config.ts tsconfig.test.json
+E2E_PATHS = src/% e2e/% playwright%.config.ts tsconfig.e2e.json
+
 ci:
-	$(MAKE) lint && $(MAKE) test && python3 find-unused-files.py && python3 find-untested-files.py
+	$(gate_begin)
+	$(if $(docs_only),$(call gate_step,check-docs,$(MAKE) check-docs))
+	$(call gate_do,lint,$(not_docs),$(MAKE) lint,only docs paths changed)
+	$(call gate_do,check-e2e-map,$(and $(not_docs),$(run_e2e)),$(MAKE) check-e2e-map,no e2e-suite paths changed)
+	$(call gate_do,test-coverage,$(and $(not_docs),$(run_unit)),$(MAKE) test-coverage,no unit-suite paths changed)
+	$(call gate_do,find-unused,$(and $(not_docs),$(run_unit)),python3 find-unused-files.py,no unit-suite paths changed)
+	$(call gate_do,find-untested,$(and $(not_docs),$(run_unit)),python3 find-untested-files.py,no unit-suite paths changed)
+	$(gate_summary)
+
+# Quick tier for the pre-push hook (.githooks/pre-push): lint plus the tests related to the pushed paths.
+# The coverage run, unused/untested scans and e2e stay in `ci`, the merge gate.
+push_src = $(wildcard $(filter src/%.ts src/%.tsx src/%.vue src/%.js test/%.ts,$(gate_paths)))
+push_test = $(if $(filter vitest.config.ts tsconfig.test.json,$(gate_paths)),pnpm test,pnpm exec vitest related --run $(push_src))
+pre-push:
+	$(gate_begin)
+	$(if $(docs_only),$(call gate_step,check-docs,$(MAKE) check-docs))
+	$(call gate_do,lint,$(not_docs),$(MAKE) lint,only docs paths changed)
+	$(call gate_do,check-e2e-map,$(and $(not_docs),$(run_e2e)),$(MAKE) check-e2e-map,no e2e-suite paths changed)
+	$(call gate_do,test-related,$(and $(not_docs),$(or $(push_src),$(filter vitest.config.ts tsconfig.test.json,$(gate_paths)))),$(MAKE) test-related,no source paths changed)
+	$(call gate_skip,merge-gate-only,pre-push skips coverage and the unused/untested scans; make ci runs them)
+	$(gate_summary)
+
+# fleet:begin docs-gate-target sha=cfca3865e0 | machine-written; edit the source, not this region
+# What markdown can break. DOCS_EXTRA names further targets to run (a repo whose convention
+# text is inlined into .claude/rules/ sets DOCS_EXTRA = check-rules, since a convention .md
+# feeds that generated text).
+check-docs: check-node
+	@$(MAKE) format-check FILES="$(wildcard $(gate_paths))"
+	@$(MAKE) check-links
+	@for t in $(DOCS_EXTRA); do $(MAKE) $$t || exit 1; done
+# fleet:end docs-gate-target
+
+check-links: check-node
+	node scripts/check-links.mjs
 
 ci-full:
-	$(MAKE) lint && $(MAKE) test && $(MAKE) test-e2e && $(MAKE) test-e2e-vrt && python3 find-unused-files.py && python3 find-untested-files.py
+	$(gate_begin)
+	$(if $(docs_only),$(call gate_step,check-docs,$(MAKE) check-docs))
+	$(call gate_do,lint,$(not_docs),$(MAKE) lint,only docs paths changed)
+	$(call gate_do,check-e2e-map,$(and $(not_docs),$(run_e2e)),$(MAKE) check-e2e-map,no e2e-suite paths changed)
+	$(call gate_do,test-coverage,$(and $(not_docs),$(run_unit)),$(MAKE) test-coverage,no unit-suite paths changed)
+	$(call gate_do,test-e2e,$(and $(not_docs),$(run_e2e)),$(MAKE) test-e2e,no e2e-suite paths changed)
+	$(call gate_do,test-e2e-vrt,$(and $(not_docs),$(run_e2e)),$(MAKE) test-e2e-vrt,no e2e-suite paths changed)
+	$(call gate_do,find-unused,$(and $(not_docs),$(run_unit)),python3 find-unused-files.py,no unit-suite paths changed)
+	$(call gate_do,find-untested,$(and $(not_docs),$(run_unit)),python3 find-untested-files.py,no unit-suite paths changed)
+	$(gate_summary)
 
 # =============================================================================
 # Git-Changed File Commands
@@ -194,18 +302,6 @@ ci-full:
 # Get changed files (staged and unstaged, excluding deleted)
 # Falls back to staged changes (--cached) if HEAD doesn't exist (new repo)
 changed_files = $(shell git diff --name-only --diff-filter=ACMRTUXB HEAD 2>/dev/null || git diff --name-only --diff-filter=ACMRTUXB --cached)
-
-# Source files that might have tests (exclude test files themselves)
-source_files = $(filter-out %.test.ts %.spec.ts, $(filter %.vue %.ts %.tsx %.js %.jsx, $(changed_files)))
-
-# Generate test file paths from source files (assume .test.ts extension)
-test_files_from_source = $(addsuffix .test.ts, $(basename $(source_files)))
-
-# Changed test files
-changed_test_files = $(filter %.test.ts %.spec.ts, $(changed_files))
-
-# All test files to run (deduplicated)
-test_files_to_run = $(sort $(test_files_from_source) $(changed_test_files))
 
 # Run lint on changed files only (no fixes)
 lint-changed:
@@ -227,24 +323,16 @@ lint-fix-changed:
 check-changed: lint-changed
 check-fix-changed: lint-fix-changed
 
-# Run tests for changed files (including tests for changed source files)
-test-changed: check-node
-	@if [ -n "$(test_files_to_run)" ]; then \
-		echo "Running tests: $(test_files_to_run)"; \
-		existing_tests=""; \
-		for f in $(test_files_to_run); do \
-			if [ -f "$$f" ]; then \
-				existing_tests="$$existing_tests $$f"; \
-			fi; \
-		done; \
-		if [ -n "$$existing_tests" ]; then \
-			pnpm test $$existing_tests; \
-		else \
-			echo "No test files found for changed files"; \
-		fi; \
+# Unit tests related to the changed paths (committed, staged and unstaged), found by import graph.
+# This is the pre-push test step; a change to the vitest config runs the whole suite.
+test-related: check-node
+	@if [ -n "$(strip $(push_src) $(filter vitest.config.ts tsconfig.test.json,$(gate_paths)))" ]; then \
+		$(push_test); \
 	else \
-		echo "No test files to run"; \
+		echo "No source paths changed"; \
 	fi
+
+test-changed: test-related
 
 # =============================================================================
 # Development Server & Build
@@ -281,3 +369,22 @@ check-unused:
 # Check for untested files
 check-untested:
 	python3 find-untested-files.py
+
+# fleet:begin hooks-target sha=197971d12b | machine-written; edit the source, not this region
+# Point git at the tracked hooks. core.hooksPath is local config, so each clone runs this once.
+install-hooks:
+	git config core.hooksPath .githooks
+# fleet:end hooks-target
+
+# fleet:begin e2e-related-target sha=1a424bc223 | machine-written; edit the source, not this region
+# Targeted e2e and VRT: run only what the changed paths can break (map: e2e/targets.map).
+#   make e2e-related            run the specs and VRT files the changes map to
+#   make e2e-related UPDATE=1   same, regenerating the VRT baselines it ran
+#   make e2e-related DRY=1      print the playwright commands without running them
+e2e-related: check-node
+	@node scripts/e2e-related.mjs run --base $(GATE_BASE) $(if $(UPDATE),--update) $(if $(DRY),--dry)
+
+# Every e2e file is named in the map, and every map rule still points at something.
+check-e2e-map: check-node
+	@node scripts/e2e-related.mjs check
+# fleet:end e2e-related-target

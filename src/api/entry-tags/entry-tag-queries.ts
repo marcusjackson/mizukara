@@ -103,7 +103,8 @@ export function findByEntryIds(
  *
  * @param db - SQLite database instance
  * @param tagIds - Array of tag UUIDs; entry must have all tags to be included
- * @returns Array of Entry objects ordered by assigned_day descending
+ * @returns Array of Entry objects ordered by assigned_day descending, then by
+ *   their order within the day (order_position, created_at, id)
  *
  * @example
  * const entries = findEntriesByTags(db, ['tag-1', 'tag-2'])
@@ -123,7 +124,7 @@ export function findEntriesByTags(db: Database, tagIds: string[]): Entry[] {
        AND et.tag_id IN (${placeholders})
      GROUP BY e.id
      HAVING COUNT(DISTINCT et.tag_id) = ?
-     ORDER BY e.assigned_day DESC`,
+     ORDER BY e.assigned_day DESC, e.order_position ASC, e.created_at ASC, e.id ASC`,
     [...tagIds, tagIds.length]
   )
 

@@ -156,7 +156,7 @@ useEntryDayViewShortcuts({
         :current-date="currentDate"
         :entry-tags-map="entryTagsMap"
         :items="entries"
-        :on-refetch="refetchEntries"
+        @refetch="refetchEntries"
       />
 
       <EntryDayViewDatePicker
@@ -179,12 +179,12 @@ useEntryDayViewShortcuts({
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: var(--layout-state-min-height);
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
+  width: var(--spinner-size-lg);
+  height: var(--spinner-size-lg);
   border: 4px solid var(--color-border);
   border-top-color: var(--color-primary);
   border-radius: 50%;
@@ -197,13 +197,19 @@ useEntryDayViewShortcuts({
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+  }
+}
+
 .error-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: var(--spacing-4);
-  min-height: 400px;
+  min-height: var(--layout-state-min-height);
   padding: var(--spacing-6);
 }
 

@@ -26,17 +26,30 @@ from pathlib import Path
 from typing import List
 
 # Directories to skip during traversal entirely (not walked at all).
-SKIP_DIRS = frozenset({"node_modules", ".git", "dist", "build", "playwright-report", "test-results"})
+# _local/ holds throwaway spike archives kept outside the repository's history.
+# .claude/ holds agent worktrees, which are whole checkouts of this repo; walking
+# into one reports every file in it a second time.
+SKIP_DIRS = frozenset(
+    {
+        "node_modules",
+        ".git",
+        ".claude",
+        "dist",
+        "build",
+        "playwright-report",
+        "test-results",
+        "_local",
+    }
+)
 
 # Directories whose files are never checked for test coverage.
 # e2e/ contains Playwright E2E tests and helpers — not application source files.
 # test/helpers, test/mocks, test/constants are test infrastructure reused by unit tests.
-# src/db/ is browser-specific IndexedDB/SQLite infrastructure (no test environment).
 IGNORED_DIRS = frozenset({
     "scripts",
+    "e2e-production",  # Production-build Playwright checks
     "e2e",           # Playwright E2E tests and helpers — not unit-testable source files
     "ignore",
-    "src/db",        # Browser-specific database infrastructure (IndexedDB/SQLite)
     "test/helpers",  # Test helper utilities — infrastructure for unit tests, not app code
     "test/mocks",    # Test mocks — infrastructure for unit tests, not app code
     "test/constants",  # Test constants — infrastructure for unit tests, not app code
@@ -45,8 +58,16 @@ IGNORED_DIRS = frozenset({
 # Individual files to ignore (relative paths from project root).
 # These are entry points, config files, types-only files, barrel exports, or stubs.
 IGNORED_FILES = frozenset({
+    # Runs only inside a Web Worker, and needs a real graphics adapter and a
+    # real model download to do anything. Everything in it that can be tested
+    # without those lives in src/modules/local-inference/utils/ instead.
+    "src/modules/local-inference/inference-worker.ts",
+    # Only attaches visibility, pagehide and beforeunload listeners to the
+    # real document; the persistence logic they call is tested in indexeddb.test.ts.
+    "src/db/lifecycle.ts",
     "eslint.config.ts",
     "playwright.config.ts",
+    "playwright.production.config.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "src/router/index.ts",
@@ -56,17 +77,14 @@ IGNORED_FILES = frozenset({
     "test/setup.ts",
     # Types-only files — interfaces and type definitions with no runtime logic
     "src/api/types.ts",
+    "src/modules/local-inference/tag-head-types.ts",
+    "src/api/search/search-types.ts",
+    # Types plus one derived constant list; no behavior to exercise
+    "src/shared/types/device-sync-types.ts",
     # Re-export index files not detected as barrel by the simple heuristic
     # (they have doc comments before the export block)
     "src/api/index.ts",
-    "src/shared/validation/index.ts",
-    # Thin wrappers / infrastructure bootstrapping with no testable logic
-    "src/api/persistence.ts",
-    # Stub with no real implementation
-    "src/shared/composables/seed-data/index.ts",
-    # Abstract base class — tested indirectly via concrete repository subclasses.
-    # Direct unit testing would require a concrete subclass fixture.
-    "src/api/base-repository.ts",
+    "src/shared/composables/index.ts",
     # TODO: Add tests for these tags feature components (merged from master).
     # These are UI-layer components exercised by E2E tests; unit tests pending.
     "src/base/components/BaseTagInputChips.vue",

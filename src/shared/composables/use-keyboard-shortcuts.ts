@@ -103,16 +103,18 @@ function matchesShortcut(event: KeyboardEvent, keyCombo: string): boolean {
     // 'cmd' means metaKey on Mac, ctrlKey on Windows/Linux
     const isMac =
       typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac')
-    return isMac ? event.metaKey : event.ctrlKey
+    return (isMac ? event.metaKey : event.ctrlKey) && !event.altKey
   }
 
   if (hasCtrl) {
     // 'ctrl' always means ctrlKey on all platforms
-    return event.ctrlKey
+    return event.ctrlKey && !event.altKey
   }
 
-  // No modifiers specified, or all matched
-  return true
+  // A combo with no modifier must not fire for a keystroke that carries one:
+  // Ctrl+K or Cmd+K belongs to the browser or the OS. Shift is left alone
+  // because a key like '?' is only reachable with it.
+  return !event.ctrlKey && !event.metaKey && !event.altKey
 }
 
 /**
@@ -128,6 +130,7 @@ function isInputElement(element: Element | null): boolean {
 function shouldTriggerShortcut(keyCombo: string): boolean {
   const activeElement = document.activeElement
   const normalizedCombo = keyCombo.toLowerCase()
+  const parts = normalizedCombo.split('+')
 
   // Navigation shortcuts (J/K/Arrow) only when no input focused
   if (NAVIGATION_KEYS.includes(normalizedCombo as NavigationKey)) {
@@ -135,13 +138,12 @@ function shouldTriggerShortcut(keyCombo: string): boolean {
   }
 
   // Escape always triggers, but context handled in handler
-  // Must be checked before includes('s') — 'escape' contains the letter 's'
   if (normalizedCombo === 'escape') {
     return true
   }
 
   // Save shortcut (cmd/ctrl+s) when textarea focused
-  if (normalizedCombo.includes('s')) {
+  if (parts.length > 1 && parts.at(-1) === 's') {
     return activeElement?.tagName === 'TEXTAREA'
   }
 

@@ -53,7 +53,8 @@ const {
   handleBeforeUnload,
   handleKeyDown,
   meta,
-  updateAssignedDay
+  updateAssignedDay,
+  validatedSave
 } = useEntryEditor(props.entry, onCancel, onSave)
 const textareaRef = ref<{ focus: () => void }>()
 
@@ -87,7 +88,7 @@ onUnmounted(() => {
 })
 
 defineExpose({
-  save: onSave,
+  save: validatedSave,
   cancel: onCancel
 })
 </script>
@@ -96,7 +97,7 @@ defineExpose({
   <form
     class="entry-editor"
     data-testid="entry-editor"
-    @submit.prevent="onSave"
+    @submit.prevent="validatedSave"
   >
     <div class="entry-editor-content">
       <BaseTextarea
@@ -121,6 +122,7 @@ defineExpose({
       <EntryDayViewEntryEditorTags
         :all-tags="allTags ?? []"
         :entry-id="entry.id"
+        :entry-text="contentValue"
       />
     </div>
 

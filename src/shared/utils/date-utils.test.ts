@@ -6,7 +6,6 @@ import {
   formatDateISO,
   formatDateLong,
   formatDateMedium,
-  formatDateShort,
   formatMonthYear,
   formatTimestampShort,
   getMonthGrid,
@@ -39,17 +38,6 @@ describe('date-utils', () => {
 
     it('accepts string input', () => {
       expect(formatDateLong('2026-01-15')).toBe('Thursday, January 15, 2026')
-    })
-  })
-
-  describe('formatDateShort', () => {
-    it('returns short date string', () => {
-      const date = new Date(2026, 0, 15) // January 15, 2026
-      expect(formatDateShort(date)).toBe('Jan 15')
-    })
-
-    it('accepts string input', () => {
-      expect(formatDateShort('2026-01-15')).toBe('Jan 15')
     })
   })
 

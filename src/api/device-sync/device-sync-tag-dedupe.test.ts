@@ -64,6 +64,15 @@ describe('device-sync-tag-dedupe', () => {
     expect(loser[0]?.values[0]).toEqual([1])
   })
 
+  it('treats names differing only by an accented capital as distinct, like the name rule', () => {
+    seedTag(db, { id: 'a', name: 'Élan' })
+    seedTag(db, { id: 'b', name: 'élan' })
+
+    dedupeActiveTags(db)
+
+    expect(activeTagIds(db)).toEqual(['a', 'b'])
+  })
+
   it('resolves a three-way collision down to a single survivor', () => {
     seedTag(db, { id: 'c', name: 'WORK' })
     seedTag(db, { id: 'a', name: 'work' })

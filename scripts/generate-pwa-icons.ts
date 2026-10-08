@@ -14,7 +14,7 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { deflateSync } from 'node:zlib'
+import { crc32, deflateSync } from 'node:zlib'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -51,19 +51,6 @@ function generateSolidPng(
   g: number,
   b: number
 ): Buffer {
-  const crc32 = (buf: Buffer): number => {
-    const table = new Uint32Array(256)
-    for (let i = 0; i < 256; i++) {
-      let c = i
-      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-      table[i] = c
-    }
-    let crc = 0xffffffff
-    for (const byte of buf)
-      crc = (crc >>> 8) ^ (table[(crc ^ byte) & 0xff] ?? 0)
-    return (crc ^ 0xffffffff) >>> 0
-  }
-
   const chunk = (type: string, data: Buffer): Buffer => {
     const typeBuf = Buffer.from(type, 'ascii')
     const lenBuf = Buffer.allocUnsafe(4)

@@ -341,6 +341,64 @@ describe('useKeyboardShortcuts', () => {
     expect(handler).toHaveBeenCalled()
   })
 
+  describe('modifier matching', () => {
+    const body = () =>
+      Object.defineProperty(document, 'activeElement', {
+        value: document.body,
+        writable: true
+      })
+
+    function registerShortcut(key: string): ReturnType<typeof vi.fn> {
+      const handler = vi.fn()
+      render(
+        defineComponent({
+          setup() {
+            useKeyboardShortcuts([{ key, handler }])
+          },
+          template: '<div></div>'
+        })
+      )
+      body()
+      return handler
+    }
+
+    it('does not fire a plain-key shortcut for a keystroke carrying Ctrl, Meta or Alt', () => {
+      const handler = registerShortcut('g')
+
+      for (const modifier of ['ctrlKey', 'metaKey', 'altKey']) {
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'g', [modifier]: true })
+        )
+      }
+
+      expect(handler).not.toHaveBeenCalled()
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g' }))
+      expect(handler).toHaveBeenCalledOnce()
+    })
+
+    it('still fires a key that needs Shift to type, such as ?', () => {
+      const handler = registerShortcut('?')
+
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '?', shiftKey: true })
+      )
+
+      expect(handler).toHaveBeenCalledOnce()
+    })
+
+    it('does not treat every combo containing the letter s as the save shortcut', () => {
+      const handler = registerShortcut('ctrl+escape')
+
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', ctrlKey: true })
+      )
+
+      // Not gated to a focused textarea, which only the save shortcut is
+      expect(handler).toHaveBeenCalledOnce()
+    })
+  })
+
   describe('key aliases', () => {
     it('maps J key to ArrowDown', () => {
       const handler = vi.fn()

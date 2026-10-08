@@ -29,13 +29,17 @@ vi.mock('@/shared/composables/use-toast', () => ({
   })
 }))
 
-const { mockAssignTagApi, mockCreateTagApi, mockRemoveTagApi } = vi.hoisted(
-  () => ({
-    mockAssignTagApi: vi.fn(),
-    mockCreateTagApi: vi.fn(),
-    mockRemoveTagApi: vi.fn()
-  })
-)
+const {
+  mockAssignTagApi,
+  mockCreateTagApi,
+  mockRemoveTagApi,
+  mockSoftDeleteTagApi
+} = vi.hoisted(() => ({
+  mockSoftDeleteTagApi: vi.fn(),
+  mockAssignTagApi: vi.fn(),
+  mockCreateTagApi: vi.fn(),
+  mockRemoveTagApi: vi.fn()
+}))
 
 vi.mock('@/api/entry-tags/entry-tag-mutations', () => ({
   assignTag: mockAssignTagApi,
@@ -46,7 +50,7 @@ vi.mock('@/api/entry-tags/entry-tag-mutations', () => ({
 vi.mock('@/api/tags/tag-mutations', () => ({
   createTag: mockCreateTagApi,
   renameTag: vi.fn(),
-  softDeleteTag: vi.fn()
+  softDeleteTag: mockSoftDeleteTagApi
 }))
 
 // Import after mocks
@@ -88,6 +92,7 @@ function resetMocks() {
   mockAssignTagApi.mockReset()
   mockRemoveTagApi.mockReset()
   mockCreateTagApi.mockReset()
+  mockSoftDeleteTagApi.mockReset()
   mockShowError.mockReset()
 }
 
@@ -228,6 +233,51 @@ describe('useEntryTagMutations', () => {
 
       expect(result).toBeNull()
       expect(mockShowError).toHaveBeenCalledOnce()
+    })
+
+    it('soft-deletes the tag it just created when the assignment fails', async () => {
+      resetMocks()
+      const tag = makeTag({ id: 'orphan-candidate' })
+      mockCreateTagApi.mockReturnValue(tag)
+      mockAssignTagApi.mockImplementation(() => {
+        throw new Error('DB error during assign')
+      })
+
+      const { createAndAssignTag } = useEntryTagMutations()
+      await createAndAssignTag('entry-1', 'work')
+
+      expect(mockSoftDeleteTagApi).toHaveBeenCalledWith(
+        mockDatabase,
+        'orphan-candidate'
+      )
+    })
+
+    it('still reports the assignment error when the undo also fails', async () => {
+      resetMocks()
+      mockCreateTagApi.mockReturnValue(makeTag())
+      mockAssignTagApi.mockImplementation(() => {
+        throw new Error('assign failed')
+      })
+      mockSoftDeleteTagApi.mockImplementation(() => {
+        throw new Error('undo failed')
+      })
+
+      const { createAndAssignTag } = useEntryTagMutations()
+      const result = await createAndAssignTag('entry-1', 'work')
+
+      expect(result).toBeNull()
+      expect(mockShowError).toHaveBeenCalledWith('assign failed')
+    })
+
+    it('does not soft-delete anything when the assignment succeeds', async () => {
+      resetMocks()
+      mockCreateTagApi.mockReturnValue(makeTag())
+      mockAssignTagApi.mockReturnValue(makeEntryTag())
+
+      const { createAndAssignTag } = useEntryTagMutations()
+      await createAndAssignTag('entry-1', 'work')
+
+      expect(mockSoftDeleteTagApi).not.toHaveBeenCalled()
     })
   })
 })

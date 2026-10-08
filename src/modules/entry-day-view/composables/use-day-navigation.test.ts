@@ -1,4 +1,4 @@
-import { nextTick } from 'vue'
+import { nextTick, reactive } from 'vue'
 
 import { TEST_DATES } from '@test/constants/dates'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDayNavigation } from './use-day-navigation'
 
 // Mock vue-router
-const mockRoute = {
+const mockRoute = reactive<{ params: Record<string, string> }>({
   params: {}
-}
+})
 
 const mockRouter = {
   push: vi.fn()
@@ -23,8 +23,11 @@ vi.mock('vue-router', () => ({
 vi.mock('@/shared/utils/date-utils', () => ({
   getToday: vi.fn(() => TEST_DATES.DEFAULT),
   isValidISODate: vi.fn((date: string) => {
-    const regex = /^\d{4}-\d{2}-\d{2}$/
-    return regex.exec(date) !== null
+    const regex = /^(\d{4})-\d{2}-\d{2}$/
+    const match = regex.exec(date)
+    if (match === null) return false
+    const year = Number(match[1])
+    return year >= 1900 && year <= 2100
   }),
   addDays: vi.fn((date: string, days: number) => {
     const d = new Date(date)
@@ -155,16 +158,77 @@ describe('useDayNavigation', () => {
     expect(isToday.value).toBe(true)
   })
 
-  it('handles browser back/forward navigation', () => {
+  it('syncs a route change (browser back/forward) into currentDate without pushing the route again', async () => {
     const { currentDate } = useDayNavigation()
 
-    // Simulate route change (browser back/forward)
     mockRoute.params = { date: TEST_DATES.PREV_DAY }
-
-    // Trigger watch manually since we can't easily trigger Vue watchers in tests
-    // In real usage, Vue's watch would handle this automatically
-    currentDate.value = TEST_DATES.PREV_DAY
+    await nextTick()
+    // The loop guard resets on the next microtask; let it run, then let the
+    // currentDate watcher settle.
+    await Promise.resolve()
+    await nextTick()
 
     expect(currentDate.value).toBe(TEST_DATES.PREV_DAY)
+    expect(mockRouter.push).not.toHaveBeenCalled()
+  })
+
+  it('pushes the route again for a user-driven change after a route sync', async () => {
+    const { currentDate } = useDayNavigation()
+
+    mockRoute.params = { date: TEST_DATES.PREV_DAY }
+    await nextTick()
+    await Promise.resolve()
+    await nextTick()
+
+    currentDate.value = TEST_DATES.THIRD_DAY
+    await nextTick()
+
+    expect(mockRouter.push).toHaveBeenCalledOnce()
+  })
+
+  it('stops at the last supported day instead of moving past it', () => {
+    const { currentDate, goToNextDay } = useDayNavigation({
+      initialDate: '2100-12-31'
+    })
+
+    goToNextDay()
+
+    expect(currentDate.value).toBe('2100-12-31')
+  })
+
+  it('stops at the first supported day instead of moving past it', () => {
+    const { currentDate, goToPrevDay } = useDayNavigation({
+      initialDate: '1900-01-01'
+    })
+
+    goToPrevDay()
+
+    expect(currentDate.value).toBe('1900-01-01')
+  })
+
+  it('returns to today when Back lands on an address with no date', async () => {
+    mockRoute.params = { date: TEST_DATES.PREV_DAY }
+    const { currentDate } = useDayNavigation()
+    expect(currentDate.value).toBe(TEST_DATES.PREV_DAY)
+
+    mockRoute.params = {}
+    await nextTick()
+    await Promise.resolve()
+    await nextTick()
+
+    expect(currentDate.value).toBe(TEST_DATES.DEFAULT)
+    expect(mockRouter.push).not.toHaveBeenCalled()
+  })
+
+  it('treats an invalid date in the address as today', async () => {
+    mockRoute.params = { date: TEST_DATES.PREV_DAY }
+    const { currentDate } = useDayNavigation()
+
+    mockRoute.params = { date: '9999-01-01' }
+    await nextTick()
+    await Promise.resolve()
+    await nextTick()
+
+    expect(currentDate.value).toBe(TEST_DATES.DEFAULT)
   })
 })

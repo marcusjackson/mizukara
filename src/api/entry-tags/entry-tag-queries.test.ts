@@ -258,6 +258,44 @@ describe('entry-tag-queries', () => {
       expect(result[0]!.id).toBe(entryId1)
     })
 
+    it('orders entries within one day as the day page does, then by id', () => {
+      const late = seedEntryForTags(db, {
+        id: 'entry-late',
+        assignedDay: '2026-01-01',
+        orderPosition: 2
+      })
+      const first = seedEntryForTags(db, {
+        id: 'entry-first',
+        assignedDay: '2026-01-01',
+        orderPosition: 0
+      })
+      const tieB = seedEntryForTags(db, {
+        id: 'entry-b',
+        assignedDay: '2026-01-01',
+        orderPosition: 1,
+        createdAt: 5
+      })
+      const tieA = seedEntryForTags(db, {
+        id: 'entry-a',
+        assignedDay: '2026-01-01',
+        orderPosition: 1,
+        createdAt: 5
+      })
+      seedTag(db, { id: 'tag-1', name: 'All' })
+      for (const entryId of [late, first, tieB, tieA]) {
+        seedEntryTag(db, { id: `et-${entryId}`, entryId, tagId: 'tag-1' })
+      }
+
+      const result = findEntriesByTags(db, ['tag-1'])
+
+      expect(result.map((entry) => entry.id)).toEqual([
+        'entry-first',
+        'entry-a',
+        'entry-b',
+        'entry-late'
+      ])
+    })
+
     it('orders results by assigned_day descending', () => {
       const entryId1 = seedEntryForTags(db, {
         id: 'entry-1',

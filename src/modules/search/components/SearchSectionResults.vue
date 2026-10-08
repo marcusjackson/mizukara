@@ -13,6 +13,8 @@ import { computed } from 'vue'
 
 import { BaseSpinner } from '@/base/components'
 
+import { CAPPED_LIMIT } from '@/api/search'
+
 import SearchResultCard from './SearchResultCard.vue'
 
 import type { Entry } from '@/shared/types/entry-types'
@@ -26,6 +28,8 @@ interface Props {
   entries: Entry[]
   /** True while a search is in progress */
   isLoading: boolean
+  /** True while the list is limited to the most recent matches */
+  isCapped: boolean
   /** True once a text query or tag filter has been submitted at least once */
   hasSubmitted: boolean
 }
@@ -37,6 +41,11 @@ const props = defineProps<Props>()
 // =============================================================================
 
 const hasEntries = computed(() => props.entries.length > 0)
+
+/** A full capped page means more matches may exist beyond it */
+const showsCapNotice = computed(
+  () => props.isCapped && props.entries.length >= CAPPED_LIMIT
+)
 </script>
 
 <template>
@@ -72,18 +81,26 @@ const hasEntries = computed(() => props.entries.length > 0)
       No entries found.
     </p>
 
-    <ol
-      v-else
-      class="search-section-results__list"
-    >
-      <li
-        v-for="entry in props.entries"
-        :key="entry.id"
-        class="search-section-results__item"
+    <template v-else>
+      <p
+        v-if="showsCapNotice"
+        class="search-section-results__notice"
+        data-testid="cap-notice"
       >
-        <SearchResultCard :entry="entry" />
-      </li>
-    </ol>
+        Showing the {{ CAPPED_LIMIT }} most recent matches. There may be more:
+        turn on "Show all results" and search again to see them all.
+      </p>
+
+      <ol class="search-section-results__list">
+        <li
+          v-for="entry in props.entries"
+          :key="entry.id"
+          class="search-section-results__item"
+        >
+          <SearchResultCard :entry="entry" />
+        </li>
+      </ol>
+    </template>
   </section>
 </template>
 
@@ -110,6 +127,12 @@ const hasEntries = computed(() => props.entries.length > 0)
 
 .search-section-results__empty {
   color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.search-section-results__notice {
+  margin: 0;
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }
 

@@ -4,6 +4,26 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-09
+
+### Added
+
+- Tag suggestions: an on-device model suggests existing tags from the meaning of an entry, and proposes new ones. Runs locally in a worker; nothing leaves the device.
+- Starter tag catalog: adopt tags from a built-in catalog of 98 from the Tags screen, one at a time or all at once.
+- Settings: a local inference section to download, cache and remove the tag suggestion model, with a Chrome recommendation note.
+- Tags outside your catalog are ranked by name similarity when the model has no direct match.
+
+### Fixed
+
+- Importing a database saves before the persist target switches, and a database from a newer app version is refused.
+- Clearing all data now clears everything, and model state refreshes when the tab regains focus.
+- A failed save in the day view keeps what you typed, including in the create box.
+- A failed tag rename keeps the rename box open.
+- Deleted entries no longer count toward tag totals, and tag changes persist when written.
+- Entry content length is enforced in the API.
+- Search, device sync, date picker and reduced-motion issues, and undefined CSS variables, were fixed.
+- The model runtime loads locally rather than from a CDN.
+
 ## [0.5.0] - 2026-09-09
 
 ### Added

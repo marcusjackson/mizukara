@@ -5,7 +5,10 @@
  * Ensures consistency in validation behavior across different entry forms.
  */
 
-import { ENTRY_VALIDATION_ERRORS } from '@/shared/validation/validation-errors'
+import {
+  ENTRY_CONTENT_MAX_LENGTH,
+  ENTRY_VALIDATION_ERRORS
+} from '@/shared/validation/validation-errors'
 
 /**
  * Content validation constraints
@@ -17,21 +20,17 @@ export const CONTENT_VALIDATION = {
   /** Minimum content length (1 character required) */
   MIN_LENGTH: 1,
   /** Maximum content length (10,000 characters) */
-  MAX_LENGTH: 10000,
+  MAX_LENGTH: ENTRY_CONTENT_MAX_LENGTH,
   messages: {
     required: ENTRY_VALIDATION_ERRORS.CONTENT_EMPTY,
-    maxLength: 'Must be no more than 10000 characters'
+    maxLength: ENTRY_VALIDATION_ERRORS.CONTENT_TOO_LONG
   }
 } as const
 
 /**
- * Date validation pattern for assigned day field
- *
- * Validates ISO 8601 date format (YYYY-MM-DD) used throughout the application.
+ * Date validation messages for assigned day field
  */
 export const DATE_VALIDATION = {
-  /** RegEx pattern for ISO 8601 date format (YYYY-MM-DD) */
-  PATTERN: /^\d{4}-\d{2}-\d{2}$/,
   messages: {
     invalid: 'Must be a valid date (YYYY-MM-DD)'
   }
