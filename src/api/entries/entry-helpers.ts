@@ -5,44 +5,10 @@
  * Contains pure transformation functions with no side effects.
  */
 
+import { assertNumber, assertString } from '@/api/row-assertions'
+
 import type { Entry } from '@/shared/types/entry-types'
 import type { QueryExecResult } from 'sql.js'
-
-// =============================================================================
-// Type Assertion Helpers
-// =============================================================================
-
-/**
- * Assert and return a string value from a sql.js row cell.
- *
- * @param v - The raw cell value from a sql.js row
- * @param col - Column name (used in error message)
- * @returns The value cast to string
- * @throws {TypeError} If the value is not a string
- */
-function assertString(v: unknown, col: string): string {
-  if (typeof v !== 'string')
-    throw new TypeError(
-      `rowToEntry: column "${col}" expected string, got ${typeof v}`
-    )
-  return v
-}
-
-/**
- * Assert and return a number value from a sql.js row cell.
- *
- * @param v - The raw cell value from a sql.js row
- * @param col - Column name (used in error message)
- * @returns The value cast to number
- * @throws {TypeError} If the value is not a number
- */
-function assertNumber(v: unknown, col: string): number {
-  if (typeof v !== 'number')
-    throw new TypeError(
-      `rowToEntry: column "${col}" expected number, got ${typeof v}`
-    )
-  return v
-}
 
 /**
  * Build a column-name → index map from a sql.js QueryExecResult
@@ -80,12 +46,20 @@ export function rowToEntry(row: unknown[], cols: Map<string, number>): Entry {
   }
 
   return {
-    id: assertString(row[idx('id')], 'id'),
-    content: assertString(row[idx('content')], 'content'),
-    createdAt: assertNumber(row[idx('created_at')], 'created_at'),
-    updatedAt: assertNumber(row[idx('updated_at')], 'updated_at'),
-    assignedDay: assertString(row[idx('assigned_day')], 'assigned_day'),
-    orderPosition: assertNumber(row[idx('order_position')], 'order_position'),
+    id: assertString(row[idx('id')], 'id', 'rowToEntry'),
+    content: assertString(row[idx('content')], 'content', 'rowToEntry'),
+    createdAt: assertNumber(row[idx('created_at')], 'created_at', 'rowToEntry'),
+    updatedAt: assertNumber(row[idx('updated_at')], 'updated_at', 'rowToEntry'),
+    assignedDay: assertString(
+      row[idx('assigned_day')],
+      'assigned_day',
+      'rowToEntry'
+    ),
+    orderPosition: assertNumber(
+      row[idx('order_position')],
+      'order_position',
+      'rowToEntry'
+    ),
     isDeleted: Boolean(row[idx('is_deleted')])
   }
 }

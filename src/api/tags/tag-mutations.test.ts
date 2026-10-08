@@ -8,18 +8,37 @@ import {
   seedEntryTag,
   seedTag
 } from '@test/helpers/database'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { schedulePersist } from '@/db/indexeddb'
 
 import { createTag, renameTag, softDeleteTag } from './tag-mutations'
 import { TagNotFoundError, TagValidationError } from './tag-validation'
 
 import type { Database } from 'sql.js'
 
+vi.mock('@/db/indexeddb', () => ({
+  schedulePersist: vi.fn()
+}))
+
 describe('tag-mutations', () => {
   let db: Database
 
   beforeEach(async () => {
+    vi.mocked(schedulePersist).mockClear()
     db = await createTestDatabaseForTags()
+  })
+
+  it('schedules a persist after create, rename and soft-delete', () => {
+    const tag = createTag(db, { name: 'Persist me' })
+    expect(schedulePersist).toHaveBeenCalledTimes(1)
+
+    renameTag(db, tag.id, 'Renamed')
+    expect(schedulePersist).toHaveBeenCalledTimes(2)
+
+    softDeleteTag(db, tag.id)
+    expect(schedulePersist).toHaveBeenCalled()
+    expect(vi.mocked(schedulePersist).mock.calls.length).toBeGreaterThan(2)
   })
 
   describe('createTag', () => {

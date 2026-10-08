@@ -189,6 +189,21 @@ describe('useTags', () => {
       expect(isLoading.value).toBe(false)
     })
 
+    it('records the failure message for the page to show, and clears it on success', async () => {
+      resetMocks()
+      mockFindAllWithCount.mockImplementationOnce(() => {
+        throw new Error('DB read error')
+      })
+
+      const { fetchTags, loadError } = useTags()
+      await fetchTags()
+      expect(loadError.value).toBe('DB read error')
+
+      mockFindAllWithCount.mockReturnValue([])
+      await fetchTags()
+      expect(loadError.value).toBeNull()
+    })
+
     it('includes zero-count tags in the result', async () => {
       resetMocks()
       const zeroCountTag = makeTag({ entryCount: 0 })
@@ -278,6 +293,33 @@ describe('useTags', () => {
       await fetchEntriesByTags([])
 
       expect(mockFindEntriesByTags).not.toHaveBeenCalled()
+    })
+
+    it('raises isLoading while the query runs and lowers it afterwards', async () => {
+      resetMocks()
+      const { fetchEntriesByTags, isLoading } = useTags()
+      let seenDuringQuery = false
+      mockFindEntriesByTags.mockImplementation(() => {
+        seenDuringQuery = isLoading.value
+        return []
+      })
+
+      await fetchEntriesByTags(['tag-1'])
+
+      expect(seenDuringQuery).toBe(true)
+      expect(isLoading.value).toBe(false)
+    })
+
+    it('lowers isLoading when the query throws', async () => {
+      resetMocks()
+      mockFindEntriesByTags.mockImplementation(() => {
+        throw new Error('Query failed')
+      })
+
+      const { fetchEntriesByTags, isLoading } = useTags()
+      await fetchEntriesByTags(['tag-1'])
+
+      expect(isLoading.value).toBe(false)
     })
 
     it('shows error toast when findEntriesByTags throws', async () => {

@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 import SharedDeviceSyncQrDisplay from './SharedDeviceSyncQrDisplay.vue'
 
+// QR generation is asynchronous and slow under full-suite coverage; the 1000 ms default flakes there.
+const QR_WAIT = { timeout: 5000 }
+
 describe('SharedDeviceSyncQrDisplay', () => {
   it('shows a loading spinner before the QR code is ready', () => {
     render(SharedDeviceSyncQrDisplay, { props: { value: 'abc123' } })
@@ -15,7 +18,11 @@ describe('SharedDeviceSyncQrDisplay', () => {
       props: { label: 'Offer code', value: 'abc123' }
     })
 
-    const image = await screen.findByRole('img', { name: 'Offer code' })
+    const image = await screen.findByRole(
+      'img',
+      { name: 'Offer code' },
+      QR_WAIT
+    )
     expect(image).toHaveAttribute('src', expect.stringMatching(/^data:image/))
   })
 
@@ -27,13 +34,13 @@ describe('SharedDeviceSyncQrDisplay', () => {
       const image = getByRole('img')
       expect(image).toHaveAttribute('src')
       return image.getAttribute('src')
-    })
+    }, QR_WAIT)
 
     await rerender({ value: 'a-completely-different-second-code' })
 
     await waitFor(() => {
       expect(getByRole('img').getAttribute('src')).not.toBe(firstSrc)
-    })
+    }, QR_WAIT)
   })
 
   it('shows an error message when QR generation fails', async () => {

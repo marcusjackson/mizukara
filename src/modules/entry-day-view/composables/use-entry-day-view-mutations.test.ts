@@ -5,13 +5,19 @@
  * Critical to data integrity in the entry day view.
  */
 
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // =============================================================================
 // Mocks
 // =============================================================================
 
 const mockDatabase = {}
+
+const { mockShowError } = vi.hoisted(() => ({ mockShowError: vi.fn() }))
+
+vi.mock('@/shared/composables/use-toast', () => ({
+  useToast: () => ({ error: mockShowError })
+}))
 
 vi.mock('@/shared/composables/use-database', () => ({
   useDatabase: () => ({
@@ -44,6 +50,65 @@ import type {
 describe('useEntryDayViewMutations', () => {
   const createMutations = (onRefetch = vi.fn().mockResolvedValue(undefined)) =>
     useEntryDayViewMutations({ onRefetch })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockCreateEntry.mockReset()
+    mockUpdateEntry.mockReset()
+  })
+
+  describe('failures', () => {
+    it('shows an error toast and resolves false when createEntry throws', async () => {
+      mockCreateEntry.mockImplementation(() => {
+        throw new Error('content: too long')
+      })
+      const onRefetch = vi.fn().mockResolvedValue(undefined)
+      const { createNewEntry } = createMutations(onRefetch)
+
+      const result = await createNewEntry({
+        content: 'x',
+        assignedDay: '2026-02-10'
+      })
+
+      expect(result).toBe(false)
+      expect(mockShowError).toHaveBeenCalledWith('content: too long')
+      expect(onRefetch).not.toHaveBeenCalled()
+    })
+
+    it('shows an error toast and resolves false when updateEntry throws', async () => {
+      mockUpdateEntry.mockImplementation(() => {
+        throw new Error('write failed')
+      })
+      const { updateExistingEntry } = createMutations()
+
+      const result = await updateExistingEntry('entry-uuid', { content: 'x' })
+
+      expect(result).toBe(false)
+      expect(mockShowError).toHaveBeenCalledWith('write failed')
+    })
+
+    it('shows an error toast when the refetch fails', async () => {
+      const onRefetch = vi.fn().mockRejectedValue(new Error('refetch failed'))
+      const { createNewEntry } = createMutations(onRefetch)
+
+      const result = await createNewEntry({
+        content: 'x',
+        assignedDay: '2026-02-10'
+      })
+
+      expect(result).toBe(false)
+      expect(mockShowError).toHaveBeenCalledWith('refetch failed')
+    })
+
+    it('resolves true when the mutation and refetch succeed', async () => {
+      const { createNewEntry } = createMutations()
+
+      await expect(
+        createNewEntry({ content: 'x', assignedDay: '2026-02-10' })
+      ).resolves.toBe(true)
+      expect(mockShowError).not.toHaveBeenCalled()
+    })
+  })
 
   describe('createNewEntry', () => {
     it('calls createEntry with database and input data', async () => {

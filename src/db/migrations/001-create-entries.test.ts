@@ -30,7 +30,7 @@ describe('001-create-entries migration', () => {
     expect(columns).toHaveLength(7)
 
     // Verify each column
-    const columnMap = new Map(columns.map((col: any[]) => [col[1], col]))
+    const columnMap = new Map(columns.map((col: unknown[]) => [col[1], col]))
 
     expect(columnMap.get('id')).toEqual([0, 'id', 'TEXT', 0, null, 1])
     expect(columnMap.get('content')).toEqual([1, 'content', 'TEXT', 1, null, 0])

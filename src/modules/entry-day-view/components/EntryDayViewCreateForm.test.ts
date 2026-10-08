@@ -61,6 +61,21 @@ describe('EntryDayViewCreateForm', () => {
     expect(emitted()['entry-created']).toBeUndefined()
   })
 
+  it('keeps blank-only text and shows the error on Cmd+S', async () => {
+    const user = userEvent.setup()
+    const { emitted } = renderComponent()
+
+    const textarea = screen.getByLabelText(/content/i)
+    await user.type(textarea, '   ')
+    await user.keyboard('{Control>}s{/Control}')
+
+    expect(
+      await screen.findByText('Please enter some content for your entry')
+    ).toBeInTheDocument()
+    expect(textarea).toHaveValue('   ')
+    expect(emitted()['entry-created']).toBeUndefined()
+  })
+
   it('emits entry-created event on successful save', async () => {
     const user = userEvent.setup()
     const { emitted } = renderComponent()
@@ -82,34 +97,18 @@ describe('EntryDayViewCreateForm', () => {
     ])
   })
 
-  it('textarea clears after successful save', async () => {
+  it('keeps the typed text on submit until the parent resets the form', async () => {
     const user = userEvent.setup()
-    renderComponent()
+    const { emitted } = renderComponent()
 
     const textarea = screen.getByLabelText(/content/i)
-    await user.type(textarea, 'Content to clear')
-
-    const saveButton = screen.getByRole('button', { name: /new entry/i })
-    await user.click(saveButton)
+    await user.type(textarea, 'Content to keep')
+    await user.click(screen.getByRole('button', { name: /new entry/i }))
 
     await waitFor(() => {
-      expect(textarea).toHaveValue('')
+      expect(emitted()['entry-created']).toBeDefined()
     })
-  })
-
-  it('focus returns to textarea after save', async () => {
-    const user = userEvent.setup()
-    renderComponent()
-
-    const textarea = screen.getByRole('textbox', { name: /content/i })
-    await user.type(textarea, 'Content')
-
-    const saveButton = screen.getByRole('button', { name: /new entry/i })
-    await user.click(saveButton)
-
-    await waitFor(() => {
-      expect(textarea).toHaveFocus()
-    })
+    expect(textarea).toHaveValue('Content to keep')
   })
 
   it('Cmd/Ctrl+S shortcut triggers save', async () => {

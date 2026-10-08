@@ -35,6 +35,20 @@ describe('EntryDayViewNavigator', () => {
     expect(emitted()['prev-day']).toBeTruthy()
   })
 
+  it('disables the previous arrow on the first supported day', () => {
+    render(EntryDayViewNavigator, { props: { currentDate: '1900-01-01' } })
+
+    expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /next/i })).toBeEnabled()
+  })
+
+  it('disables the next arrow on the last supported day', () => {
+    render(EntryDayViewNavigator, { props: { currentDate: '2100-12-31' } })
+
+    expect(screen.getByRole('button', { name: /next/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /previous/i })).toBeEnabled()
+  })
+
   it('emits next-day event when Next button is clicked', async () => {
     const user = userEvent.setup()
     const currentDate = '2026-02-10'

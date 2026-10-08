@@ -20,5 +20,13 @@ export const TEST_ENTRY_CONTENT = {
   DISCARDED: 'This content should be discarded',
   TIMESTAMP_TEST: 'Testing timestamp display',
   ESCAPE_TEST: 'Content that should remain after Escape',
-  REFERENCE: 'Reference entry for today'
+  REFERENCE: 'Reference entry for today',
+  TAG_CREATION: 'Entry for tag creation test',
+  TAG_REMOVAL: 'Entry to remove tag from E2E',
+  TAG_FILTER_ALPHA: 'FilterEntry1 E2E (alpha only)',
+  TAG_FILTER_ALPHA_BETA: 'FilterEntry2 E2E (alpha and beta)',
+  TAG_RENAME: 'Entry for rename test E2E',
+  TAG_DELETE: 'Entry for delete test E2E',
+  TAG_KEYBOARD_RENAME: 'Entry for keyboard rename T9',
+  TAG_ZERO_COUNT: 'Entry for zero-count tag T10'
 } as const

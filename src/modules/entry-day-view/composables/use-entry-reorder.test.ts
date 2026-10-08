@@ -80,6 +80,40 @@ describe('useEntryReorder', () => {
       expect(mockOnRefetch).toHaveBeenCalled()
     })
 
+    it('moves an entry past a neighbour holding the same position', () => {
+      const entries = [
+        { id: 'entry1', orderPosition: 3 },
+        { id: 'entry2', orderPosition: 3 }
+      ] as Entry[]
+
+      const { moveEntryUp } = useEntryReorder({ onRefetch: mockOnRefetch })
+
+      moveEntryUp('entry2', entries)
+
+      // entry2 first, then entry1, renumbered from 0
+      expect(vi.mocked(updateOrderPosition).mock.calls).toEqual([
+        [mockDbInstance, 'entry2', 0],
+        [mockDbInstance, 'entry1', 1]
+      ])
+    })
+
+    it('leaves other entries alone when positions are distinct, gaps included', () => {
+      const entries = [
+        { id: 'entry1', orderPosition: 0 },
+        { id: 'entry2', orderPosition: 4 },
+        { id: 'entry3', orderPosition: 9 }
+      ] as Entry[]
+
+      const { moveEntryDown } = useEntryReorder({ onRefetch: mockOnRefetch })
+
+      moveEntryDown('entry1', entries)
+
+      expect(vi.mocked(updateOrderPosition).mock.calls).toEqual([
+        [mockDbInstance, 'entry1', 4],
+        [mockDbInstance, 'entry2', 0]
+      ])
+    })
+
     it('returns at-boundary when entry at index 0', () => {
       const entries = [
         { id: 'entry1', orderPosition: 0 },
@@ -114,6 +148,41 @@ describe('useEntryReorder', () => {
       }
       expect(vi.mocked(updateOrderPosition)).not.toHaveBeenCalled()
       expect(mockOnRefetch).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('swap transaction', () => {
+    const entries = [
+      { id: 'entry1', orderPosition: 0 },
+      { id: 'entry2', orderPosition: 1 }
+    ] as Entry[]
+
+    it('commits both position updates together', () => {
+      const { moveEntryUp } = useEntryReorder({ onRefetch: mockOnRefetch })
+
+      moveEntryUp('entry2', entries)
+
+      const statements = vi
+        .mocked(mockDbInstance.run)
+        .mock.calls.map((call) => call[0])
+      expect(statements).toEqual(['BEGIN TRANSACTION', 'COMMIT'])
+    })
+
+    it('rolls back when the second update fails', () => {
+      vi.mocked(updateOrderPosition)
+        .mockReturnValueOnce({} as never)
+        .mockImplementationOnce(() => {
+          throw new Error('disk full')
+        })
+      const { moveEntryUp } = useEntryReorder({ onRefetch: mockOnRefetch })
+
+      const result = moveEntryUp('entry2', entries)
+
+      expect(result.success).toBe(false)
+      const statements = vi
+        .mocked(mockDbInstance.run)
+        .mock.calls.map((call) => call[0])
+      expect(statements).toEqual(['BEGIN TRANSACTION', 'ROLLBACK'])
     })
   })
 

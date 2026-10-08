@@ -27,25 +27,3 @@ export interface SeedEntryInput {
 
 // Re-export Entry type for convenience
 export type { Entry } from '@/shared/types/entry-types'
-
-/**
- * SQL to create the entries table and indexes for use in test databases.
- * Mirrors the production migration in 001-create-entries.sql.
- */
-export const ENTRIES_SCHEMA_SQL = `
-  CREATE TABLE IF NOT EXISTS entries (
-    id TEXT PRIMARY KEY,
-    content TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    assigned_day TEXT NOT NULL,
-    order_position INTEGER NOT NULL DEFAULT 0,
-    is_deleted INTEGER NOT NULL DEFAULT 0
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_entries_assigned_day
-    ON entries(assigned_day, is_deleted, order_position);
-
-  CREATE INDEX IF NOT EXISTS idx_entries_is_deleted
-    ON entries(is_deleted);
-`

@@ -24,7 +24,7 @@
   --color-text-secondary: #6b7280;
   --color-text-muted: #9ca3af;
   --color-text-inverse: #fff;
-  --color-text-disabled: #9ca3af;
+  --color-text-disabled: var(--color-text-muted);
 
   /* Primary (accent) - calm, contemplative teal-gray */
   --color-primary: #5a8a94;
@@ -34,14 +34,10 @@
 
   /* Semantic */
   --color-success: #10b981;
-  --color-success-bg: #ecfdf5;
   --color-warning: #f59e0b;
-  --color-warning-bg: #fffbeb;
   --color-error: #ef4444;
-  --color-error-bg: #fef2f2;
   --color-error-subtle: #fef2f2;
   --color-info: #3b82f6;
-  --color-info-bg: #eff6ff;
 
   /* Danger (destructive actions) */
   --color-danger: #dc2626;
@@ -87,14 +83,11 @@
   --font-size-xl: 1.25rem; /* 20px */
   --font-size-2xl: 1.5rem; /* 24px */
   --font-size-3xl: 1.875rem; /* 30px */
-  --font-size-4xl: 2.25rem; /* 36px */
-  --font-size-5xl: 3rem; /* 48px */
 
   /* Font Weights */
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
-  --font-weight-bold: 700;
 
   /* Line Heights */
   --line-height-tight: 1.25;
@@ -105,7 +98,6 @@
    * Spacing
    * ======================================== */
 
-  --spacing-0: 0;
   --spacing-1: 0.25rem; /* 4px */
   --spacing-2: 0.5rem; /* 8px */
   --spacing-3: 0.75rem; /* 12px */
@@ -116,7 +108,6 @@
   --spacing-9: 2.25rem; /* 36px */
   --spacing-10: 2.5rem; /* 40px */
   --spacing-12: 3rem; /* 48px */
-  --spacing-16: 4rem; /* 64px */
   --spacing-20: 5rem; /* 80px */
 
   /* Semantic Spacing Aliases */
@@ -125,17 +116,14 @@
   --spacing-md: var(--spacing-4);
   --spacing-lg: var(--spacing-6);
   --spacing-xl: var(--spacing-8);
-  --spacing-2xl: var(--spacing-12);
 
   /* ========================================
    * Border Radius
    * ======================================== */
 
-  --radius-none: 0;
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
-  --radius-xl: 1rem; /* 16px */
   --radius-full: 9999px; /* Pill shape */
 
   /* ========================================
@@ -164,28 +152,20 @@
    * Z-Index
    * ======================================== */
 
-  --z-sticky: 200;
   --z-dropdown: 250;
   --z-modal-backdrop: 300;
   --z-modal: 400;
   --z-toast: 500;
-  --z-tooltip: 600;
 
   /* ========================================
    * Layout
    * ======================================== */
 
-  /* Container widths */
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-
-  /* Sidebar */
-  --sidebar-width: 240px;
-
-  /* Header */
-  --header-height: 64px;
+  --layout-max-width-wide: 1200px; /* tags page */
+  --layout-max-width-narrow: 800px; /* settings page */
+  --layout-list-column-width: 320px; /* tags browse column */
+  --layout-state-min-height: 400px; /* loading and error states fill the page */
+  --spinner-size-lg: 40px;
 
   /* ========================================
    * Focus
@@ -224,18 +204,7 @@
   --input-radius: var(--radius-md);
 
   /* Cards */
-  --card-bg: var(--color-surface);
   --card-border: 1px solid var(--color-border);
-  --card-radius: var(--radius-lg);
-  --card-padding: var(--spacing-md);
-  --card-shadow: var(--shadow-sm);
-
-  /* Items (journal items) */
-  --item-card-bg: var(--color-surface);
-  --item-card-border: 1px solid var(--color-border);
-  --item-card-radius: var(--radius-md);
-  --item-card-padding: var(--spacing-md);
-  --item-card-hover-shadow: var(--shadow-md);
 }
 
 /* ========================================
@@ -259,7 +228,7 @@
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
   --color-text-inverse: #0f172a;
-  --color-text-disabled: #64748b;
+  --color-text-disabled: var(--color-text-muted);
 
   /* Primary (accent - slightly lighter for better contrast) */
   --color-primary: #6ba5b0;
@@ -269,14 +238,10 @@
 
   /* Semantic - adjust background variants for dark mode */
   --color-success: #22c55e;
-  --color-success-bg: #14532d;
   --color-warning: #fbbf24;
-  --color-warning-bg: #78350f;
   --color-error: #f87171;
-  --color-error-bg: #7f1d1d;
   --color-error-subtle: #7f1d1d;
   --color-info: #60a5fa;
-  --color-info-bg: #1e3a8a;
 
   /* Danger (destructive actions) */
   --color-danger: #f87171;
@@ -300,7 +265,5 @@
 
   /* Component Tokens */
   --input-bg: #1e293b;
-  --card-bg: #1e293b;
   --button-secondary-hover-bg: #334155;
-  --item-card-bg: #1e293b;
 }

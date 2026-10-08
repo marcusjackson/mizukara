@@ -117,7 +117,7 @@ function mountRoot() {
         },
         SearchSectionResults: {
           template: '<div data-testid="section-results" />',
-          props: ['entries', 'isLoading', 'hasSubmitted']
+          props: ['entries', 'isLoading', 'isCapped', 'hasSubmitted']
         },
         SearchSectionCalendar: {
           template: '<div data-testid="section-calendar" />',
@@ -362,6 +362,25 @@ describe('SearchRoot', () => {
       expect(mockRouter.replace).toHaveBeenCalledWith(
         expect.objectContaining({ query: { view: 'calendar' } })
       )
+    })
+
+    it('keeps unsubmitted filter edits when the view changes', async () => {
+      mockRoute.query = { q: 'coffee' }
+      const wrapper = mountRoot()
+      await flushPromises()
+
+      await wrapper.find('[data-testid="trigger-query"]').setValue('tea')
+      await wrapper
+        .find('[data-testid="trigger-view-calendar"]')
+        .trigger('click')
+      await flushPromises()
+
+      expect(
+        (
+          wrapper.find('[data-testid="trigger-query"]')
+            .element as HTMLInputElement
+        ).value
+      ).toBe('tea')
     })
 
     it('does not run the unbounded list search while calendar view is active', async () => {

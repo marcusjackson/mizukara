@@ -9,12 +9,16 @@ import {
   assignTag as assignTagApi,
   removeTag as removeTagApi
 } from '@/api/entry-tags/entry-tag-mutations'
-import { createTag as createTagApi } from '@/api/tags/tag-mutations'
+import {
+  createTag as createTagApi,
+  softDeleteTag as softDeleteTagApi
+} from '@/api/tags/tag-mutations'
 
 import { useDatabase } from '@/shared/composables/use-database'
 import { useToast } from '@/shared/composables/use-toast'
 
 import type { Tag } from '@/shared/types/tag-types'
+import type { Database } from 'sql.js'
 
 // =============================================================================
 // Types
@@ -28,9 +32,22 @@ export interface UseEntryTagMutationsReturn {
   /**
    * Create a new tag and immediately assign it to an entry.
    * Returns the created Tag or null on any failure (toast shown).
-   * If tag creation fails, no orphan association is created.
+   * If tag creation fails, no orphan association is created; if the
+   * assignment fails, the tag just created is soft-deleted again.
    */
   createAndAssignTag: (entryId: string, name: string) => Promise<Tag | null>
+}
+
+/**
+ * Soft-delete a tag whose assignment just failed. A failure here is dropped:
+ * the assignment error is the one worth reporting.
+ */
+function undoTagCreation(db: Database, tagId: string): void {
+  try {
+    softDeleteTagApi(db, tagId)
+  } catch {
+    // The tag stays
+  }
 }
 
 // =============================================================================
@@ -78,6 +95,8 @@ export function useEntryTagMutations(): UseEntryTagMutationsReturn {
     try {
       assignTagApi(database.value, { entryId, tagId: tag.id })
     } catch (err) {
+      // Undo the creation, so a failed assignment leaves no tag the person never saw made
+      undoTagCreation(database.value, tag.id)
       showError(err instanceof Error ? err.message : 'Failed to assign tag')
       return Promise.resolve(null)
     }

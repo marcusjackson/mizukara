@@ -1,0 +1,111 @@
+{
+  "Body and health": [
+    "health",
+    "illness",
+    "injury",
+    "doctor visit",
+    "fitness",
+    "running",
+    "yoga",
+    "sleep",
+    "nutrition"
+  ],
+  "Mind and feelings": [
+    "mental health",
+    "stress",
+    "burnout",
+    "gratitude",
+    "happiness",
+    "sadness",
+    "grief",
+    "anger",
+    "loneliness",
+    "motivation",
+    "confidence",
+    "boredom",
+    "meditation"
+  ],
+  "Self and growth": [
+    "reflection",
+    "goals",
+    "habits",
+    "productivity",
+    "decisions",
+    "challenges",
+    "wins"
+  ],
+  "Work and craft": [
+    "work",
+    "career",
+    "job search",
+    "meetings",
+    "coworkers",
+    "projects",
+    "coding",
+    "business",
+    "ideas",
+    "writing"
+  ],
+  "Learning": ["learning", "school", "reading", "language learning"],
+  "Money": ["finance", "investing", "taxes", "shopping", "debt"],
+  "People": [
+    "family",
+    "parenting",
+    "pregnancy",
+    "partner",
+    "dating",
+    "conflict",
+    "friends",
+    "social",
+    "neighbors",
+    "wedding"
+  ],
+  "Home and daily life": [
+    "home",
+    "chores",
+    "cooking",
+    "eating out",
+    "groceries",
+    "coffee",
+    "garden",
+    "diy",
+    "errands",
+    "moving",
+    "pets",
+    "decluttering"
+  ],
+  "Getting around and outdoors": [
+    "car",
+    "commute",
+    "travel",
+    "outdoors",
+    "hiking",
+    "weather"
+  ],
+  "Leisure and culture": [
+    "music",
+    "movies",
+    "tv",
+    "games",
+    "art",
+    "photography",
+    "crafts",
+    "sports",
+    "podcasts",
+    "live events",
+    "hobbies"
+  ],
+  "Life and world": [
+    "technology",
+    "social media",
+    "news",
+    "politics",
+    "spirituality",
+    "celebration",
+    "holidays",
+    "memories",
+    "legal",
+    "volunteering",
+    "self-care"
+  ]
+}

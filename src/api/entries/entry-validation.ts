@@ -7,7 +7,10 @@
 import { RepositoryError } from '@/api/types'
 
 import { isValidISODate } from '@/shared/utils/date-utils'
-import { ENTRY_VALIDATION_ERRORS } from '@/shared/validation/validation-errors'
+import {
+  ENTRY_CONTENT_MAX_LENGTH,
+  ENTRY_VALIDATION_ERRORS
+} from '@/shared/validation/validation-errors'
 
 /**
  * Custom error for entry validation failures
@@ -63,6 +66,12 @@ export function validateEntryInput(input: {
       throw new EntryValidationError(
         'content',
         ENTRY_VALIDATION_ERRORS.CONTENT_EMPTY
+      )
+    }
+    if (input.content.length > ENTRY_CONTENT_MAX_LENGTH) {
+      throw new EntryValidationError(
+        'content',
+        ENTRY_VALIDATION_ERRORS.CONTENT_TOO_LONG
       )
     }
   }

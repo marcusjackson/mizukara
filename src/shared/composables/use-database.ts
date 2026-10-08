@@ -115,10 +115,11 @@ function run(sql: string, params?: BindParams): void {
 }
 
 async function replaceDatabase(data: Uint8Array): Promise<void> {
-  if (database.value) {
-    database.value.close()
-  }
+  // Keep the current database open until the import has loaded and migrated,
+  // so a refused or failed import leaves it usable
+  const previous = database.value
   database.value = markRaw(await replaceDatabaseWithImported(data))
+  previous?.close()
   isInitialized.value = true
 }
 

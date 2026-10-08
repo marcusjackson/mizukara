@@ -5,7 +5,8 @@
  * Shows empty states and a clear-filter action.
  */
 
-import { mount } from '@vue/test-utils'
+import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import TagsSectionEntries from './TagsSectionEntries.vue'
@@ -32,14 +33,14 @@ const defaultEntries: Entry[] = [
   createEntry({ id: 'entry-2', content: 'Second entry' })
 ]
 
-function mountEntries(
+function renderEntries(
   props: {
     entries?: Entry[]
     activeTagIds?: string[]
     searchQuery?: string
   } = {}
 ) {
-  return mount(TagsSectionEntries, {
+  return render(TagsSectionEntries, {
     props: {
       entries: defaultEntries,
       activeTagIds: ['tag-1'],
@@ -48,14 +49,16 @@ function mountEntries(
     global: {
       stubs: {
         SharedEntryCard: {
-          template:
-            '<article data-testid="entry-card" :data-entry-id="entry.id">{{ entry.content }}</article>',
+          template: '<article>{{ entry.content }}</article>',
           props: ['entry', 'showEditButton', 'isEditDisabled']
         }
       }
     }
   })
 }
+
+const NO_FILTER_TEXT = 'Select a tag to filter entries.'
+const NO_RESULTS_TEXT = 'No entries found for the selected tags.'
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -68,96 +71,81 @@ describe('TagsSectionEntries', () => {
 
   describe('entry list rendering', () => {
     it('renders entry cards for each entry', () => {
-      const wrapper = mountEntries()
+      renderEntries()
 
-      const cards = wrapper.findAll('[data-testid="entry-card"]')
-      expect(cards).toHaveLength(2)
+      expect(screen.getAllByRole('article')).toHaveLength(2)
     })
 
     it('renders entry content', () => {
-      const wrapper = mountEntries()
+      renderEntries()
 
-      expect(wrapper.text()).toContain('First entry')
-      expect(wrapper.text()).toContain('Second entry')
-    })
-
-    it('renders entries with showEditButton false (read-only cards)', () => {
-      const wrapper = mountEntries()
-
-      const card = wrapper.find('[data-testid="entry-card"]')
-      // The stub receives showEditButton prop - check it's passed
-      expect(card.exists()).toBe(true)
+      expect(screen.getByText('First entry')).toBeInTheDocument()
+      expect(screen.getByText('Second entry')).toBeInTheDocument()
     })
   })
 
   describe('empty states', () => {
     it('shows no-filter-selected empty state when activeTagIds is empty', () => {
-      const wrapper = mountEntries({ activeTagIds: [], entries: [] })
+      renderEntries({ activeTagIds: [], entries: [] })
 
-      expect(wrapper.find('[data-testid="empty-no-filter"]').exists()).toBe(
-        true
-      )
+      expect(screen.getByText(NO_FILTER_TEXT)).toBeInTheDocument()
     })
 
     it('shows no-results empty state when activeTagIds is non-empty but entries is empty', () => {
-      const wrapper = mountEntries({ activeTagIds: ['tag-1'], entries: [] })
+      renderEntries({ activeTagIds: ['tag-1'], entries: [] })
 
-      expect(wrapper.find('[data-testid="empty-no-results"]').exists()).toBe(
-        true
-      )
+      expect(screen.getByText(NO_RESULTS_TEXT)).toBeInTheDocument()
     })
 
     it('does not show empty state when entries exist', () => {
-      const wrapper = mountEntries()
+      renderEntries()
 
-      expect(wrapper.find('[data-testid="empty-no-filter"]').exists()).toBe(
-        false
-      )
-      expect(wrapper.find('[data-testid="empty-no-results"]').exists()).toBe(
-        false
-      )
+      expect(screen.queryByText(NO_FILTER_TEXT)).toBeNull()
+      expect(screen.queryByText(NO_RESULTS_TEXT)).toBeNull()
     })
   })
 
   describe('clear filter action', () => {
     it('shows clear filter button when activeTagIds is non-empty', () => {
-      const wrapper = mountEntries({ activeTagIds: ['tag-1'] })
+      renderEntries({ activeTagIds: ['tag-1'] })
 
-      expect(wrapper.find('[data-testid="clear-filter-btn"]').exists()).toBe(
-        true
-      )
+      expect(
+        screen.getByRole('button', { name: 'Clear filter' })
+      ).toBeInTheDocument()
     })
 
     it('does not show clear filter button when activeTagIds is empty', () => {
-      const wrapper = mountEntries({ activeTagIds: [], entries: [] })
+      renderEntries({ activeTagIds: [], entries: [] })
 
-      expect(wrapper.find('[data-testid="clear-filter-btn"]').exists()).toBe(
-        false
-      )
+      expect(screen.queryByRole('button', { name: 'Clear filter' })).toBeNull()
     })
 
     it('emits clear-filter when clear filter button is clicked', async () => {
-      const wrapper = mountEntries({ activeTagIds: ['tag-1'] })
+      const { emitted } = renderEntries({ activeTagIds: ['tag-1'] })
 
-      await wrapper.find('[data-testid="clear-filter-btn"]').trigger('click')
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Clear filter' })
+      )
 
-      expect(wrapper.emitted('clear-filter')).toHaveLength(1)
+      expect(emitted('clear-filter')).toHaveLength(1)
     })
   })
 
   describe('section structure', () => {
-    it('renders a section element with accessible label', () => {
-      const wrapper = mountEntries()
-      const section = wrapper.find('section')
+    it('renders a labelled region', () => {
+      renderEntries()
 
-      expect(section.exists()).toBe(true)
-      expect(section.attributes('aria-label')).toBeTruthy()
+      expect(
+        screen.getByRole('region', { name: 'Filtered entries' })
+      ).toBeInTheDocument()
     })
 
     it('renders section title', () => {
-      const wrapper = mountEntries()
+      renderEntries()
 
-      expect(wrapper.text()).toContain('Entries')
+      expect(
+        screen.getByRole('heading', { name: 'Entries' })
+      ).toBeInTheDocument()
     })
   })
 })

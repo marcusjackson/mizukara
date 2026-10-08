@@ -154,15 +154,21 @@ test.describe('App Settings', () => {
     test('settings sections have aria labels', async ({ page }) => {
       await page.goto('/settings', { waitUntil: 'networkidle' })
 
-      const appearanceSection = page.locator(
-        'section[aria-label="Appearance settings"]'
-      )
-      const databaseSection = page.locator(
-        'section[aria-label="Database settings"]'
+      const appearanceSection = page.getByRole('region', {
+        name: 'Appearance settings'
+      })
+      const databaseSection = page.getByRole('region', {
+        name: 'Database settings'
+      })
+      // Present on every browser: where WebGPU is missing it renders one line
+      // explaining why rather than disappearing.
+      const tagSuggestionSection = page.locator(
+        'section[aria-label="Tag suggestion settings"]'
       )
 
       await expect(appearanceSection).toBeVisible()
       await expect(databaseSection).toBeVisible()
+      await expect(tagSuggestionSection).toBeVisible()
     })
 
     test('keyboard navigation through settings', async ({ page }) => {

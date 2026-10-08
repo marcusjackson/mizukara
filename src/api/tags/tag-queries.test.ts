@@ -72,6 +72,21 @@ describe('tag-queries', () => {
       expect(result[0]!.entryCount).toBe(2)
     })
 
+    it('does not count soft-deleted entries', () => {
+      seedTag(db, { id: 'tag-1', name: 'Popular' })
+      const liveId = seedEntryForTags(db, { id: 'entry-1' })
+      const deletedId = seedEntryForTags(db, {
+        id: 'entry-2',
+        isDeleted: true
+      })
+      seedEntryTag(db, { id: 'et-1', entryId: liveId, tagId: 'tag-1' })
+      seedEntryTag(db, { id: 'et-2', entryId: deletedId, tagId: 'tag-1' })
+
+      const result = findAllWithCount(db)
+
+      expect(result[0]!.entryCount).toBe(1)
+    })
+
     it('does not count soft-deleted associations', () => {
       seedTag(db, { id: 'tag-1', name: 'Tag' })
       const entryId1 = seedEntryForTags(db, { id: 'entry-1' })

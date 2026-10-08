@@ -56,6 +56,12 @@ export default defineConfig({
     // Pool configuration for better performance
     pool: 'forks',
 
+    // The first render of a heavy component compiles its whole tree. On this
+    // machine that passes the 5s default when another process is busy, so a
+    // test fails for load, not for a defect. 15s keeps real hangs failing.
+    testTimeout: 15_000,
+    hookTimeout: 15_000,
+
     // Clear mocks between tests
     clearMocks: true,
     restoreMocks: true

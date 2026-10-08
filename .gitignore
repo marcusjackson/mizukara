@@ -1,5 +1,5 @@
 # Dependencies
-node_modules/
+node_modules
 .pnpm-store/
 
 # Build outputs
@@ -10,6 +10,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+test-results-production/
 blob-report/
 .playwright-mcp/
 

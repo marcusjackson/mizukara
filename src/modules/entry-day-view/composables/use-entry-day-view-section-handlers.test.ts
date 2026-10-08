@@ -47,7 +47,7 @@ vi.mock('@/shared/composables/use-toast', () => ({
 }))
 
 describe('useEntrySectionHandlers', () => {
-  const mockDbInstance = {} as Database
+  const mockDbInstance = { run: vi.fn() } as unknown as Database
   const mockOnRefetch = vi.fn().mockResolvedValue(undefined)
   const mockSuccessToast = vi.fn()
   const mockErrorToast = vi.fn()

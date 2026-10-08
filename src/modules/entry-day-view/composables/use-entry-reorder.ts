@@ -161,12 +161,31 @@ function swapEntryPositions(
   if ('reason' in validated) return validated
   const { currentEntry, database, targetEntry } = validated
   ctx.isReordering.value = true
+  database.run('BEGIN TRANSACTION')
   try {
-    updateOrderPosition(database, currentEntry.id, targetEntry.orderPosition)
-    updateOrderPosition(database, targetEntry.id, currentEntry.orderPosition)
+    if (currentEntry.orderPosition === targetEntry.orderPosition) {
+      // Two entries holding the same position (one was moved here from another
+      // day) would swap to no visible change, so renumber the whole day from the
+      // swapped order instead.
+      const reordered = [...entries]
+      const currentIndex = reordered.indexOf(currentEntry)
+      const targetIndex = reordered.indexOf(targetEntry)
+      reordered[currentIndex] = targetEntry
+      reordered[targetIndex] = currentEntry
+      reordered.forEach((entry, position) => {
+        if (entry.orderPosition !== position) {
+          updateOrderPosition(database, entry.id, position)
+        }
+      })
+    } else {
+      updateOrderPosition(database, currentEntry.id, targetEntry.orderPosition)
+      updateOrderPosition(database, targetEntry.id, currentEntry.orderPosition)
+    }
+    database.run('COMMIT')
     scheduleRefetch(ctx.onRefetch)
     return { success: true }
   } catch (error) {
+    database.run('ROLLBACK')
     scheduleRefetch(ctx.onRefetch)
     return {
       success: false,

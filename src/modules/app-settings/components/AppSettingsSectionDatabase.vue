@@ -13,6 +13,7 @@ import { BaseButton } from '@/base/components'
 
 import SharedConfirmDialog from '@/shared/components/SharedConfirmDialog.vue'
 import { useDatabaseExport } from '@/shared/composables/use-database-export'
+import { useToast } from '@/shared/composables/use-toast'
 
 const {
   clearDatabase,
@@ -23,6 +24,8 @@ const {
   isImporting,
   validateDatabaseFile
 } = useDatabaseExport()
+
+const toast = useToast()
 
 const showImportDialog = ref(false)
 const showClearDialog = ref(false)
@@ -48,6 +51,8 @@ async function handleFileSelected(event: Event): Promise<void> {
 
   const isValid = await validateDatabaseFile(file)
   if (!isValid) {
+    toast.error("That file isn't a valid Mizukara database")
+    target.value = ''
     return
   }
 
@@ -80,9 +85,12 @@ function handleClearClick(): void {
 }
 
 async function handleConfirmClear(): Promise<void> {
-  await clearDatabase()
+  const success = await clearDatabase()
   showClearDialog.value = false
-  globalThis.location.reload()
+
+  if (success) {
+    globalThis.location.reload()
+  }
 }
 
 function handleCancelClear(): void {
@@ -169,7 +177,7 @@ function handleCancelClear(): void {
     <SharedConfirmDialog
       v-model:open="showClearDialog"
       confirm-label="Clear All Data"
-      description="This action is destructive and irreversible. All your journal entries will be permanently deleted."
+      description="This action is destructive and irreversible. All your journal entries and tags will be permanently deleted."
       :loading="isClearing"
       title="Clear all data?"
       variant="danger"

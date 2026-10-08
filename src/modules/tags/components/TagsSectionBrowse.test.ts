@@ -8,7 +8,7 @@
  * Tests use @vue/test-utils mount with stubbed Reka UI components.
  */
 
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import TagsSectionBrowse from './TagsSectionBrowse.vue'
@@ -56,6 +56,8 @@ const defaultTags: TagWithCount[] = [
   createTag({ id: 'tag-2', name: 'Personal', entryCount: 0 })
 ]
 
+const mockRenameTag = vi.fn<(id: string, name: string) => Promise<boolean>>()
+
 function mountBrowse(
   props: { tags?: TagWithCount[]; activeTagIds?: string[] } = {}
 ) {
@@ -63,6 +65,7 @@ function mountBrowse(
     props: {
       tags: defaultTags,
       activeTagIds: [],
+      renameTag: mockRenameTag,
       ...props
     },
     global: { stubs: rekaUiStubs }
@@ -153,18 +156,38 @@ describe('TagsSectionBrowse', () => {
       )
     })
 
-    it('emits rename-tag with id and trimmed name on Enter', async () => {
+    it('calls renameTag with id and trimmed name on Enter and closes the box on success', async () => {
+      mockRenameTag.mockResolvedValue(true)
       const wrapper = mountBrowse()
 
       await wrapper.find('[data-testid="rename-btn-tag-1"]').trigger('click')
       const input = wrapper.find('[data-testid="rename-input-tag-1"]')
       await input.setValue('Updated Work  ')
       await input.trigger('keydown', { key: 'Enter' })
+      await flushPromises()
 
-      expect(wrapper.emitted('rename-tag')).toEqual([['tag-1', 'Updated Work']])
+      expect(mockRenameTag).toHaveBeenCalledWith('tag-1', 'Updated Work')
+      expect(wrapper.find('[data-testid="rename-input-tag-1"]').exists()).toBe(
+        false
+      )
     })
 
-    it('does not emit rename-tag when name is blank', async () => {
+    it('keeps the rename box open with the typed text when the rename fails', async () => {
+      mockRenameTag.mockResolvedValue(false)
+      const wrapper = mountBrowse()
+
+      await wrapper.find('[data-testid="rename-btn-tag-1"]').trigger('click')
+      const input = wrapper.find('[data-testid="rename-input-tag-1"]')
+      await input.setValue('Personal')
+      await input.trigger('keydown', { key: 'Enter' })
+      await flushPromises()
+
+      const stillOpen = wrapper.find('[data-testid="rename-input-tag-1"]')
+      expect(stillOpen.exists()).toBe(true)
+      expect((stillOpen.element as HTMLInputElement).value).toBe('Personal')
+    })
+
+    it('does not call renameTag when name is blank', async () => {
       const wrapper = mountBrowse()
 
       await wrapper.find('[data-testid="rename-btn-tag-1"]').trigger('click')
@@ -172,7 +195,7 @@ describe('TagsSectionBrowse', () => {
       await input.setValue('   ')
       await input.trigger('keydown', { key: 'Enter' })
 
-      expect(wrapper.emitted('rename-tag')).toBeUndefined()
+      expect(mockRenameTag).not.toHaveBeenCalled()
     })
 
     it('cancels rename on Escape and restores tag name display', async () => {

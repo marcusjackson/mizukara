@@ -50,7 +50,7 @@ withDefaults(
 
 /* Visual variants */
 .base-badge-default {
-  background-color: var(--color-bg-muted);
+  background-color: var(--color-surface-tertiary);
   color: var(--color-text-primary);
 }
 
@@ -66,7 +66,7 @@ withDefaults(
 }
 
 .base-badge-muted {
-  background-color: var(--color-bg-muted);
+  background-color: var(--color-surface-tertiary);
   color: var(--color-text-muted);
 }
 </style>

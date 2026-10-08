@@ -78,12 +78,6 @@ watch(selectedDate, () => {
   validationError.value = null
 })
 
-const handleDialogUpdate = (value: boolean) => {
-  if (!value) {
-    emit('close')
-  }
-}
-
 const handleConfirm = () => {
   if (!isValidISODate(selectedDate.value)) {
     validationError.value = ENTRY_VALIDATION_ERRORS.DATE_FORMAT
@@ -109,7 +103,6 @@ const handleKeydown = (event: KeyboardEvent) => {
     v-model:open="dialogOpen"
     description="Navigate directly to a specific date."
     title="Jump to Date"
-    @update:open="handleDialogUpdate"
   >
     <div class="date-picker-content">
       <div class="date-picker-field">

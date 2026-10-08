@@ -235,9 +235,8 @@ async function executePersist(): Promise<void> {
   isPersisting = true
 
   const promise = saveToIndexedDB(databaseRef.export())
-    .catch((err: unknown) => {
-      // Log error but don't throw – persistence failure shouldn't crash the app
-      console.error('Failed to persist database:', err)
+    .catch(() => {
+      // Surface the failure as a toast, but don't throw – persistence failure shouldn't crash the app
       const { error } = useToast()
       error('Failed to auto-save. Your recent changes may not be saved.')
     })

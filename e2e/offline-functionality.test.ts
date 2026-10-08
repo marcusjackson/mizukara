@@ -231,8 +231,8 @@ test.describe('Offline Functionality', () => {
     // Verify no error messages are shown
     await expect(page.getByTestId('error-container')).not.toBeVisible()
 
-    // Verify no toast errors (check common error classes)
-    await expect(page.locator('.toast-error')).not.toBeVisible()
+    // Verify no error toast (no role-based locator separates error toasts from others)
+    await expect(page.locator('.base-toast-error')).not.toBeVisible()
 
     // Go back online
     await context.setOffline(false)

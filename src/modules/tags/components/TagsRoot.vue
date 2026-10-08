@@ -21,12 +21,21 @@ import { useTags } from '../composables/use-tags'
 
 import TagsSectionBrowse from './TagsSectionBrowse.vue'
 import TagsSectionEntries from './TagsSectionEntries.vue'
+import TagsSectionStarter from './TagsSectionStarter.vue'
+import TagsSectionStatus from './TagsSectionStatus.vue'
 
 // =============================================================================
 // Composables
 // =============================================================================
 
-const { fetchEntriesByTags, fetchTags, filteredEntries, tags } = useTags()
+const {
+  fetchEntriesByTags,
+  fetchTags,
+  filteredEntries,
+  isLoading,
+  loadError,
+  tags
+} = useTags()
 const { deleteTag, renameTag } = useTagMutations()
 
 const route = useRoute()
@@ -96,9 +105,10 @@ function handleBack(): void {
 // Tag mutations
 // =============================================================================
 
-async function handleRenameTag(id: string, name: string): Promise<void> {
+async function handleRenameTag(id: string, name: string): Promise<boolean> {
   const success = await renameTag(id, name)
   if (success) await fetchTags()
+  return success
 }
 
 async function handleDeleteTag(id: string): Promise<void> {
@@ -117,6 +127,9 @@ async function handleDeleteTag(id: string): Promise<void> {
 onMounted(() => {
   void fetchTags()
 })
+
+/** Nothing to show yet: the first tag load is under way. */
+const isInitialLoad = computed(() => isLoading.value && tags.value.length === 0)
 
 watch(
   activeTagIds,
@@ -189,15 +202,29 @@ watch(
       </BaseIconButton>
     </div>
 
-    <div class="tags-root__layout">
-      <TagsSectionBrowse
-        :active-tag-ids="activeTagIds"
-        class="tags-root__browse"
-        :tags="tags"
-        @delete-tag="handleDeleteTag"
-        @rename-tag="handleRenameTag"
-        @toggle-tag="handleToggleTag"
-      />
+    <TagsSectionStatus
+      v-if="isInitialLoad || loadError"
+      :error="loadError"
+      @retry="fetchTags"
+    />
+
+    <div
+      v-else
+      class="tags-root__layout"
+    >
+      <div class="tags-root__browse">
+        <TagsSectionBrowse
+          :active-tag-ids="activeTagIds"
+          :rename-tag="handleRenameTag"
+          :tags="tags"
+          @delete-tag="handleDeleteTag"
+          @toggle-tag="handleToggleTag"
+        />
+        <TagsSectionStarter
+          :tags="tags"
+          @tags-added="fetchTags"
+        />
+      </div>
 
       <TagsSectionEntries
         :active-tag-ids="activeTagIds"
@@ -212,7 +239,7 @@ watch(
 <style scoped>
 .tags-root {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--layout-max-width-wide);
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
@@ -234,7 +261,7 @@ watch(
 
 .tags-root__layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: var(--layout-list-column-width) 1fr;
   gap: var(--spacing-xl);
 }
 

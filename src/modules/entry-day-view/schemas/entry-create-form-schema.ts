@@ -31,6 +31,10 @@ export const entryCreateFormSchema = z.object({
     .string()
     .min(CONTENT_VALIDATION.MIN_LENGTH, CONTENT_VALIDATION.messages.required)
     .max(CONTENT_VALIDATION.MAX_LENGTH, CONTENT_VALIDATION.messages.maxLength)
+    .refine(
+      (value) => value.trim().length > 0,
+      CONTENT_VALIDATION.messages.required
+    )
 })
 
 // Export inferred type

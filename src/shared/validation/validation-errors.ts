@@ -11,8 +11,12 @@
 export const ENTRY_VALIDATION_ERRORS = {
   CONTENT_EMPTY: 'Please enter some content for your entry',
   CONTENT_TYPE: 'Content must be a string',
+  CONTENT_TOO_LONG: 'Must be no more than 10000 characters',
   DATE_FORMAT: 'Please enter a valid date in YYYY-MM-DD format'
 } as const
+
+/** Maximum entry content length, enforced by the form schemas and the API boundary */
+export const ENTRY_CONTENT_MAX_LENGTH = 10000
 
 /**
  * Date validation constraints

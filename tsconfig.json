@@ -53,6 +53,7 @@
     "src/**/*.vue",
     "test/**/*.ts",
     "e2e/**/*.ts",
+    "e2e-production/**/*.ts",
     "scripts/**/*.ts",
     "*.config.ts",
     "*.config.mts"

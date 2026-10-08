@@ -61,6 +61,8 @@ export function useSearch(): UseSearchReturn {
     try {
       entries.value = search(database.value, filters, { capped })
     } catch (err) {
+      // The applied filters changed, so the previous cards would belong to another search
+      entries.value = []
       const message = err instanceof Error ? err.message : 'Search failed'
       showError(message)
     } finally {
@@ -83,6 +85,7 @@ export function useSearch(): UseSearchReturn {
     try {
       dayCounts.value = findDayCounts(database.value, filters, month)
     } catch (err) {
+      dayCounts.value = []
       const message = err instanceof Error ? err.message : 'Search failed'
       showError(message)
     } finally {

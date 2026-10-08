@@ -1,64 +1,29 @@
-## Description
+<!-- fleet:begin pr-template sha=4e2bcbb49b | machine-written; edit the source, not this region -->
 
-<!-- Describe your changes in detail -->
+<!--
+Personal repo — no external reviewers. A PR here is a scoped, look-back-able
+package: a snapshot of one coherent chunk of work. Write in English. Delete any
+section that doesn't apply, along with these comments.
+-->
 
-## Related Issue
+## What this is
 
-<!-- Link to the issue this PR addresses -->
+<!-- One or two sentences: the coherent unit this branch delivers, and why. -->
 
-Closes #
+## Changes
 
-## Type of Change
+<!--
+The substance. One thread → a bulleted list is fine. A few threads → group them
+under ### headings so the scope stays legible later. Lead with what + why; the
+diff shows how.
+-->
 
-<!-- Mark the relevant option with an "x" -->
+## Incidental fixes
 
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] 📝 Documentation update
-- [ ] 🔧 Refactor (no functional changes)
-- [ ] 🧪 Test update
-- [ ] 🔨 Chore (tooling, dependencies, config)
+<!-- Drive-by fixes caught along the way (pre-existing drift, dead pointers). Omit if none. -->
 
-## Checklist
+## Notes / follow-ups
 
-<!-- Mark completed items with an "x" -->
+<!-- Deferred work, death-conditioned artifacts, anything a future look-back should know. Omit if none. -->
 
-### Code Quality
-
-- [ ] TypeScript strict — no `any`, all types explicit
-- [ ] CSS uses design token variables only
-- [ ] No console.log statements
-- [ ] No hardcoded strings that should be constants
-
-### Architecture
-
-- [ ] Components follow Root/Section/UI hierarchy
-- [ ] New composables follow naming conventions
-- [ ] New files follow naming conventions
-
-### Testing
-
-- [ ] Tests added/updated for changes
-- [ ] Tests colocated with source files
-- [ ] All tests pass locally
-
-### Accessibility
-
-- [ ] Interactive elements are keyboard accessible
-- [ ] ARIA labels on icon-only buttons
-- [ ] Focus states visible
-
-### UX
-
-- [ ] Loading states handled
-- [ ] Error states handled
-- [ ] No layout shift during loading
-
-## Screenshots
-
-<!-- If applicable, add screenshots to help explain your changes -->
-
-## Additional Notes
-
-<!-- Any additional information reviewers should know -->
+<!-- fleet:end pr-template -->

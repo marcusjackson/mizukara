@@ -21,7 +21,8 @@ import type { Ref } from 'vue'
 const mockExportDatabase = vi.fn()
 const mockImportDatabase = vi.fn().mockResolvedValue(true)
 const mockValidateDatabaseFile = vi.fn().mockResolvedValue(true)
-const mockClearDatabase = vi.fn().mockResolvedValue(undefined)
+const mockClearDatabase = vi.fn().mockResolvedValue(true)
+const mockToastError = vi.fn()
 const mockIsExporting: Ref<boolean> = ref(false)
 const mockIsImporting: Ref<boolean> = ref(false)
 const mockIsClearing: Ref<boolean> = ref(false)
@@ -36,6 +37,10 @@ vi.mock('@/shared/composables/use-database-export', () => ({
     validateDatabaseFile: mockValidateDatabaseFile,
     clearDatabase: mockClearDatabase
   })
+}))
+
+vi.mock('@/shared/composables/use-toast', () => ({
+  useToast: () => ({ error: mockToastError, success: vi.fn() })
 }))
 
 const rekaUiStubs = {
@@ -69,7 +74,7 @@ describe('AppSettingsSectionDatabase', () => {
     vi.clearAllMocks()
     mockImportDatabase.mockResolvedValue(true)
     mockValidateDatabaseFile.mockResolvedValue(true)
-    mockClearDatabase.mockResolvedValue(undefined)
+    mockClearDatabase.mockResolvedValue(true)
     mockIsExporting.value = false
     mockIsImporting.value = false
     mockIsClearing.value = false
@@ -79,6 +84,21 @@ describe('AppSettingsSectionDatabase', () => {
     mockIsExporting.value = false
     mockIsImporting.value = false
     mockIsClearing.value = false
+  })
+
+  it('shows an error toast when the selected file is rejected', async () => {
+    mockValidateDatabaseFile.mockResolvedValue(false)
+    const wrapper = mountDatabase()
+    const input = wrapper.find('input[type="file"]')
+    const file = new File(['x'], 'bad.db')
+    Object.defineProperty(input.element, 'files', { value: [file] })
+
+    await input.trigger('change')
+    await Promise.resolve()
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      "That file isn't a valid Mizukara database"
+    )
   })
 
   it('renders section title', () => {

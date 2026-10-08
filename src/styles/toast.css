@@ -124,11 +124,11 @@
 
 /* Toast animations */
 .base-toast[data-state='open'] {
-  animation: toast-slide-down var(--transition-normal) ease-out;
+  animation: toast-slide-down var(--transition-enter);
 }
 
 .base-toast[data-state='closed'] {
-  animation: toast-slide-up var(--transition-fast) ease-in;
+  animation: toast-slide-up var(--transition-exit);
 }
 
 @keyframes toast-slide-down {

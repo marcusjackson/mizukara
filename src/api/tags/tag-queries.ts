@@ -31,9 +31,10 @@ export function findAllWithCount(db: Database): TagWithCount[] {
       t.created_at,
       t.updated_at,
       t.is_deleted,
-      COUNT(et.id) AS entry_count
+      COUNT(e.id) AS entry_count
     FROM tags t
     LEFT JOIN entry_tags et ON et.tag_id = t.id AND et.is_deleted = 0
+    LEFT JOIN entries e ON e.id = et.entry_id AND e.is_deleted = 0
     WHERE t.is_deleted = 0
     GROUP BY t.id
     ORDER BY t.name ASC

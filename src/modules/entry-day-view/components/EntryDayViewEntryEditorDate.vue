@@ -50,6 +50,7 @@ function handleChange(event: Event): void {
       v-if="props.error"
       :id="errorId"
       class="entry-editor-date-error"
+      role="alert"
     >
       {{ props.error }}
     </p>

@@ -55,14 +55,13 @@ const createTestEntry = (overrides: Partial<Entry> = {}): Entry => ({
 describe('EntryDayViewSectionList', () => {
   const defaultProps = {
     items: [] as Entry[],
-    currentDate: '2026-02-10',
-    onRefetch: vi.fn()
+    currentDate: '2026-02-10'
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockCreateNewEntry.mockResolvedValue(undefined)
-    mockUpdateExistingEntry.mockResolvedValue(undefined)
+    mockCreateNewEntry.mockResolvedValue(true)
+    mockUpdateExistingEntry.mockResolvedValue(true)
   })
 
   describe('Create Form', () => {
@@ -246,13 +245,12 @@ describe('EntryDayViewSectionList', () => {
       ).toBeInTheDocument()
     })
 
-    it('exits edit mode on cancel without calling onRefetch', async () => {
+    it('exits edit mode on cancel without emitting refetch', async () => {
       const user = userEvent.setup()
-      const onRefetch = vi.fn()
       const entry = createTestEntry({ content: 'Original content' })
 
-      render(EntryDayViewSectionList, {
-        props: { ...defaultProps, items: [entry], onRefetch }
+      const { emitted } = render(EntryDayViewSectionList, {
+        props: { ...defaultProps, items: [entry] }
       })
 
       // Enter edit mode
@@ -268,8 +266,8 @@ describe('EntryDayViewSectionList', () => {
         expect(screen.getByText('Original content')).toBeInTheDocument()
       })
 
-      // Should not have refetched
-      expect(onRefetch).not.toHaveBeenCalled()
+      // Should not have asked the parent to refetch
+      expect(emitted('refetch')).toBeUndefined()
     })
 
     it('only allows editing one entry at a time', async () => {
@@ -444,6 +442,46 @@ describe('EntryDayViewSectionList', () => {
     })
   })
 
+  describe('Day change', () => {
+    it('ends an edit in progress when the viewed day changes', async () => {
+      const user = userEvent.setup()
+      const entry = createTestEntry({ content: 'Original content' })
+      const { rerender } = render(EntryDayViewSectionList, {
+        props: { ...defaultProps, items: [entry] }
+      })
+      await user.click(screen.getByRole('button', { name: /edit entry/i }))
+      expect(
+        screen.getByPlaceholderText(/enter your thoughts/i)
+      ).toBeInTheDocument()
+
+      await rerender({
+        ...defaultProps,
+        currentDate: '2026-02-11',
+        items: [createTestEntry({ id: 'other', content: 'Next day entry' })]
+      })
+
+      expect(screen.queryByPlaceholderText(/enter your thoughts/i)).toBeNull()
+      expect(screen.getByRole('button', { name: /edit entry/i })).toBeEnabled()
+    })
+
+    it('leaves reorder mode when the viewed day changes', async () => {
+      const user = userEvent.setup()
+      const items = [createTestEntry(), createTestEntry({ id: '2' })]
+      const { rerender } = render(EntryDayViewSectionList, {
+        props: { ...defaultProps, items }
+      })
+      await user.click(screen.getByRole('button', { name: /reorder entries/i }))
+
+      await rerender({
+        ...defaultProps,
+        currentDate: '2026-02-11',
+        items: [createTestEntry({ id: 'only', content: 'Only entry' })]
+      })
+
+      expect(screen.getByText('Only entry')).toBeInTheDocument()
+    })
+  })
+
   describe('Accessibility', () => {
     it('provides proper semantic structure', () => {
       const { container } = render(EntryDayViewSectionList, {
@@ -490,8 +528,9 @@ describe('EntryDayViewSectionList', () => {
       })
     })
 
-    it('shows error toast when entry creation fails', async () => {
-      mockCreateNewEntry.mockRejectedValueOnce(new Error('Database error'))
+    it('shows no success toast when entry creation fails', async () => {
+      // The mutation reports its own failure and resolves false
+      mockCreateNewEntry.mockResolvedValueOnce(false)
 
       render(EntryDayViewSectionList, {
         props: defaultProps
@@ -505,8 +544,39 @@ describe('EntryDayViewSectionList', () => {
       await user.click(submitButton)
 
       await waitFor(() => {
-        expect(mockErrorToast).toHaveBeenCalledWith('Database error')
+        expect(mockCreateNewEntry).toHaveBeenCalledOnce()
       })
+      expect(mockSuccessToast).not.toHaveBeenCalled()
+    })
+
+    it('keeps the typed text in the create box when creation fails', async () => {
+      // The mutation reports its own failure and resolves false
+      mockCreateNewEntry.mockResolvedValueOnce(false)
+      render(EntryDayViewSectionList, { props: defaultProps })
+      const user = userEvent.setup()
+      const textarea = screen.getByLabelText(/content/i)
+
+      await user.type(textarea, 'New entry content')
+      await user.click(screen.getByRole('button', { name: /new entry/i }))
+
+      await waitFor(() => {
+        expect(mockCreateNewEntry).toHaveBeenCalledOnce()
+      })
+      expect(textarea).toHaveValue('New entry content')
+    })
+
+    it('empties the create box and refocuses it after a successful create', async () => {
+      render(EntryDayViewSectionList, { props: defaultProps })
+      const user = userEvent.setup()
+      const textarea = screen.getByLabelText(/content/i)
+
+      await user.type(textarea, 'New entry content')
+      await user.click(screen.getByRole('button', { name: /new entry/i }))
+
+      await waitFor(() => {
+        expect(textarea).toHaveValue('')
+      })
+      expect(textarea).toHaveFocus()
     })
 
     it('shows success toast when entry is updated', async () => {
@@ -538,8 +608,9 @@ describe('EntryDayViewSectionList', () => {
       })
     })
 
-    it('shows error toast when entry update fails', async () => {
-      mockUpdateExistingEntry.mockRejectedValueOnce(new Error('Update failed'))
+    it('shows no success toast when entry update fails', async () => {
+      // The mutation reports its own failure and resolves false
+      mockUpdateExistingEntry.mockResolvedValueOnce(false)
 
       const entry = createTestEntry({ content: 'Original content' })
 
@@ -563,8 +634,32 @@ describe('EntryDayViewSectionList', () => {
       await user.click(saveButton)
 
       await waitFor(() => {
-        expect(mockErrorToast).toHaveBeenCalledWith('Update failed')
+        expect(mockUpdateExistingEntry).toHaveBeenCalledOnce()
       })
+      expect(mockSuccessToast).not.toHaveBeenCalled()
+    })
+
+    it('keeps the editor open with the edits when the update fails', async () => {
+      // The mutation reports its own failure and resolves false
+      mockUpdateExistingEntry.mockResolvedValueOnce(false)
+      const entry = createTestEntry({ content: 'Original content' })
+      render(EntryDayViewSectionList, {
+        props: { ...defaultProps, items: [entry] }
+      })
+      const user = userEvent.setup()
+
+      await user.click(screen.getByRole('button', { name: /edit entry/i }))
+      const textarea = screen.getByPlaceholderText(/enter your thoughts/i)
+      await user.clear(textarea)
+      await user.type(textarea, 'Updated content')
+      await user.click(screen.getByRole('button', { name: /^save$/i }))
+
+      await waitFor(() => {
+        expect(mockUpdateExistingEntry).toHaveBeenCalledOnce()
+      })
+      expect(screen.getByPlaceholderText(/enter your thoughts/i)).toHaveValue(
+        'Updated content'
+      )
     })
   })
 })

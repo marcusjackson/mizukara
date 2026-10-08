@@ -21,7 +21,7 @@
  * ```
  */
 
-import { BaseIconButton } from '@/base/components'
+import { BaseIcon, BaseIconButton } from '@/base/components'
 
 import { SharedKeyboardShortcutsHelp } from '@/shared/components'
 
@@ -68,135 +68,26 @@ defineEmits<{
         aria-label="Jump to today"
         @click="$emit('go-to-today')"
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="20"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <rect
-            height="18"
-            rx="2"
-            width="18"
-            x="3"
-            y="4"
-          />
-          <line
-            x1="16"
-            x2="16"
-            y1="2"
-            y2="6"
-          />
-          <line
-            x1="8"
-            x2="8"
-            y1="2"
-            y2="6"
-          />
-          <line
-            x1="3"
-            x2="21"
-            y1="10"
-            y2="10"
-          />
-          <circle
-            cx="12"
-            cy="15"
-            fill="currentColor"
-            r="1.5"
-            stroke="none"
-          />
-        </svg>
+        <BaseIcon name="today" />
       </BaseIconButton>
       <SharedKeyboardShortcutsHelp />
       <BaseIconButton
         aria-label="Search"
         :to="ROUTES.SEARCH"
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="20"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="11"
-            cy="11"
-            r="8"
-          />
-          <line
-            x1="21"
-            x2="16.65"
-            y1="21"
-            y2="16.65"
-          />
-        </svg>
+        <BaseIcon name="search" />
       </BaseIconButton>
       <BaseIconButton
         aria-label="Tags"
         :to="ROUTES.TAGS"
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="20"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24L4 3a1 1 0 0 0-1 1l.24 5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"
-          />
-          <circle
-            cx="7.5"
-            cy="7.5"
-            fill="currentColor"
-            r="1.5"
-            stroke="none"
-          />
-        </svg>
+        <BaseIcon name="tags" />
       </BaseIconButton>
       <BaseIconButton
         aria-label="Settings"
         :to="ROUTES.SETTINGS"
       >
-        <svg
-          aria-hidden="true"
-          fill="none"
-          height="20"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="3"
-          />
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-          />
-        </svg>
+        <BaseIcon name="settings" />
       </BaseIconButton>
     </div>
   </section>

@@ -145,6 +145,21 @@ describe('useSearch', () => {
       expect(mockShowError).toHaveBeenCalledWith('Query failed')
     })
 
+    it('clears the previous results when the search throws', async () => {
+      resetMocks()
+      mockSearch.mockReturnValueOnce([makeEntry()])
+      const { entries, runSearch } = useSearch()
+      await runSearch({ query: 'first' }, true)
+      expect(entries.value).toHaveLength(1)
+
+      mockSearch.mockImplementation(() => {
+        throw new Error('Query failed')
+      })
+      await runSearch({ query: 'second' }, true)
+
+      expect(entries.value).toEqual([])
+    })
+
     it('sets isLoading to false after error', async () => {
       resetMocks()
       mockSearch.mockImplementation(() => {
@@ -192,6 +207,23 @@ describe('useSearch', () => {
       await runDayCounts({}, '2026-02')
 
       expect(isLoadingDayCounts.value).toBe(false)
+    })
+
+    it('clears the previous counts when the query throws', async () => {
+      resetMocks()
+      mockFindDayCounts.mockReturnValueOnce([
+        { assignedDay: '2026-02-03', count: 2 }
+      ])
+      const { dayCounts, runDayCounts } = useSearch()
+      await runDayCounts({ query: 'x' }, '2026-02')
+      expect(dayCounts.value).toHaveLength(1)
+
+      mockFindDayCounts.mockImplementation(() => {
+        throw new Error('Query failed')
+      })
+      await runDayCounts({ query: 'y' }, '2026-02')
+
+      expect(dayCounts.value).toEqual([])
     })
 
     it('shows error toast when findDayCounts throws', async () => {

@@ -4,7 +4,8 @@
 
 import { ref } from 'vue'
 
-import { mount } from '@vue/test-utils'
+import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import SharedUpdatePrompt from './SharedUpdatePrompt.vue'
@@ -34,23 +35,26 @@ describe('SharedUpdatePrompt', () => {
   })
 
   it('renders nothing when no update is available', () => {
-    const wrapper = mount(SharedUpdatePrompt)
-    expect(wrapper.find('.shared-update-prompt').exists()).toBe(false)
+    render(SharedUpdatePrompt)
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('renders the prompt when an update is available', () => {
     mockNeedRefresh.value = true
-    const wrapper = mount(SharedUpdatePrompt)
+    render(SharedUpdatePrompt)
 
-    expect(wrapper.find('.shared-update-prompt').exists()).toBe(true)
-    expect(wrapper.text()).toContain('A new version is available.')
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'A new version is available.'
+    )
   })
 
   it('calls reload when the button is clicked', async () => {
     mockNeedRefresh.value = true
-    const wrapper = mount(SharedUpdatePrompt)
+    render(SharedUpdatePrompt)
 
-    await wrapper.find('button').trigger('click')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Reload to update' })
+    )
 
     expect(mockReload).toHaveBeenCalledOnce()
   })

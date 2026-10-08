@@ -59,7 +59,7 @@ export interface UseDatabaseExport {
   exportDatabase: () => void
   importDatabase: (file: File) => Promise<boolean>
   validateDatabaseFile: (file: File) => Promise<boolean>
-  clearDatabase: () => Promise<void>
+  clearDatabase: () => Promise<boolean>
 }
 
 // =============================================================================
@@ -237,26 +237,37 @@ async function performImport(
 
 /**
  * Execute database clear operation.
- * Deletes all entries and persists the empty state.
+ * Deletes every entry, tag and tag assignment, and persists the empty state.
  */
 async function performClear(
   database: Ref<Database | null>,
   toast: ReturnType<typeof useToast>,
   run: (sql: string) => void,
   persist: () => Promise<void>
-): Promise<void> {
+): Promise<boolean> {
   if (!database.value) {
     toast.error('Database not initialized')
-    return
+    return false
   }
 
   isClearing.value = true
   try {
-    run('DELETE FROM entries')
+    run('BEGIN TRANSACTION')
+    try {
+      run('DELETE FROM entry_tags')
+      run('DELETE FROM tags')
+      run('DELETE FROM entries')
+      run('COMMIT')
+    } catch (err) {
+      run('ROLLBACK')
+      throw err
+    }
     await persist()
     toast.success('All data cleared successfully')
+    return true
   } catch (err) {
     toast.error(getErrorMessage(err, 'Clear failed'))
+    return false
   } finally {
     isClearing.value = false
   }

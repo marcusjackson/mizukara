@@ -77,23 +77,6 @@ export function formatDateMedium(date: string | Date): string {
 }
 
 /**
- * Format date as short string (e.g., "Jan 15")
- *
- * @param date - Date object or ISO string to format
- * @returns Short format date string with abbreviated month and day
- *
- * @example
- * formatDateShort('2026-01-15') // 'Jan 15'
- */
-export function formatDateShort(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISODate(date) : date
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-/**
  * Add days to a date
  *
  * @param date - Date object or ISO string

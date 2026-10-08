@@ -8,6 +8,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { Database } from 'sql.js'
+
 // Mock IndexedDB since it's not available in jsdom
 const mockIDBStore = new Map<string, Uint8Array>()
 
@@ -116,5 +118,59 @@ describe('useDatabase', () => {
         db.run('SELECT 1')
       }).toThrow('Database not initialized')
     })
+  })
+})
+
+describe('useDatabase replaceDatabase', () => {
+  const mockInitializeDatabase = vi.fn()
+  const mockReplaceDatabaseWithImported = vi.fn()
+
+  function fakeDatabase(): Database {
+    return {
+      close: vi.fn(),
+      exec: vi.fn(),
+      run: vi.fn()
+    } as unknown as Database
+  }
+
+  async function loadWithMockedInit() {
+    vi.resetModules()
+    vi.doMock('@/db/init', () => ({
+      initializeDatabase: mockInitializeDatabase,
+      replaceDatabaseWithImported: mockReplaceDatabaseWithImported
+    }))
+    const { useDatabase: freshUseDatabase } = await import('./use-database')
+    return freshUseDatabase()
+  }
+
+  it('keeps the current database open when the import is refused', async () => {
+    const current = fakeDatabase()
+    mockInitializeDatabase.mockResolvedValue(current)
+    mockReplaceDatabaseWithImported.mockRejectedValue(
+      new Error('saved by a newer version')
+    )
+    const db = await loadWithMockedInit()
+    await db.initialize()
+
+    await expect(db.replaceDatabase(new Uint8Array(16))).rejects.toThrow(
+      'saved by a newer version'
+    )
+
+    expect(current.close).not.toHaveBeenCalled()
+    expect(db.database.value).toBe(current)
+  })
+
+  it('closes the old database once the import has loaded', async () => {
+    const current = fakeDatabase()
+    const imported = fakeDatabase()
+    mockInitializeDatabase.mockResolvedValue(current)
+    mockReplaceDatabaseWithImported.mockResolvedValue(imported)
+    const db = await loadWithMockedInit()
+    await db.initialize()
+
+    await db.replaceDatabase(new Uint8Array(16))
+
+    expect(current.close).toHaveBeenCalledOnce()
+    expect(db.database.value).toBe(imported)
   })
 })

@@ -2,6 +2,13 @@ import { defineConfig, devices } from '@playwright/test'
 
 const isCI = !!process.env['CI']
 
+// Another project's dev server may already hold 5173, and reusing it would run
+// these specs against the wrong app. E2E_PORT=5199 starts this app's own server
+// on a free port instead.
+const customPort = process.env['E2E_PORT']
+const port = customPort ?? '5173'
+const origin = `http://localhost:${port}`
+
 export default defineConfig({
   testDir: './e2e',
   outputDir: './test-results',
@@ -10,7 +17,8 @@ export default defineConfig({
   timeout: 30_000,
 
   // Global expect assertion timeout (default: 5000ms, increase for load resilience)
-  expect: { timeout: 10_000 },
+  // Screenshots never capture a mid-animation frame, whatever a test file does
+  expect: { timeout: 10_000, toHaveScreenshot: { animations: 'disabled' } },
 
   // Run tests in parallel
   fullyParallel: true,
@@ -32,7 +40,7 @@ export default defineConfig({
 
   // Shared settings for all projects
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: origin,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 10_000,
@@ -52,14 +60,14 @@ export default defineConfig({
     {
       name: 'firefox',
       testMatch: '*.test.ts',
-      testIgnore: ['**/visual-regression.test.ts'],
+      testIgnore: ['**/visual-regression*.test.ts'],
       use: { ...devices['Desktop Firefox'] }
     },
     // WebKit (Safari engine)
     {
       name: 'webkit',
       testMatch: '*.test.ts',
-      testIgnore: ['**/visual-regression.test.ts'],
+      testIgnore: ['**/visual-regression*.test.ts'],
       use: { ...devices['Desktop Safari'] }
     },
     // Visual regression testing - single browser for consistency
@@ -77,9 +85,9 @@ export default defineConfig({
 
   // Run local dev server before starting tests
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !isCI,
+    command: `pnpm dev --port ${port}`,
+    url: origin,
+    reuseExistingServer: !isCI && !customPort,
     timeout: 120 * 1000
   }
 })

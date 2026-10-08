@@ -19,14 +19,11 @@ import { waitForPageReady } from './helpers/test-utils'
 
 import type { Locator, Page } from '@playwright/test'
 
-const HELP_TRIGGER_SELECTOR =
-  'button:has-text("Help"), button:has-text("Shortcuts"), button:has-text("?"), [aria-label*="help" i], [aria-label*="shortcuts" i]'
-
 /**
  * Returns the locator for the keyboard shortcuts help trigger button.
  */
 function getHelpTrigger(page: Page): Locator {
-  return page.locator(HELP_TRIGGER_SELECTOR)
+  return page.getByRole('button', { name: /help|shortcuts|\?/i })
 }
 
 test.describe('Keyboard Shortcuts Reference', () => {
@@ -39,9 +36,7 @@ test.describe('Keyboard Shortcuts Reference', () => {
 
     // Wait for database initialization
     await waitForPageReady(page)
-  })
 
-  test.beforeEach(async ({ page }) => {
     if ((await getHelpTrigger(page).count()) === 0) {
       test.skip(
         true,

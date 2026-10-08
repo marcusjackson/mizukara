@@ -2,8 +2,8 @@
 /**
  * AppSettingsRoot
  *
- * Root component for the settings page. Orchestrates appearance
- * and database settings sections with back navigation.
+ * Root component for the settings page. Orchestrates appearance, database,
+ * tag suggestion and device sync sections with back navigation.
  */
 
 import { RouterLink } from 'vue-router'
@@ -13,6 +13,7 @@ import { ROUTES } from '@/router/routes'
 import AppSettingsSectionAppearance from './AppSettingsSectionAppearance.vue'
 import AppSettingsSectionDatabase from './AppSettingsSectionDatabase.vue'
 import AppSettingsSectionDeviceSync from './AppSettingsSectionDeviceSync.vue'
+import AppSettingsSectionLocalInference from './AppSettingsSectionLocalInference.vue'
 </script>
 
 <template>
@@ -31,6 +32,7 @@ import AppSettingsSectionDeviceSync from './AppSettingsSectionDeviceSync.vue'
     <div class="app-settings-sections">
       <AppSettingsSectionAppearance />
       <AppSettingsSectionDatabase />
+      <AppSettingsSectionLocalInference />
       <AppSettingsSectionDeviceSync />
     </div>
   </main>
@@ -39,7 +41,7 @@ import AppSettingsSectionDeviceSync from './AppSettingsSectionDeviceSync.vue'
 <style scoped>
 .app-settings-root {
   width: 100%;
-  max-width: 800px;
+  max-width: var(--layout-max-width-narrow);
   margin: 0 auto;
   padding: var(--spacing-lg);
 }

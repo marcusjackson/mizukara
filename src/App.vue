@@ -44,7 +44,7 @@ onMounted(async () => {
   <SharedUpdatePrompt />
 </template>
 
-<style>
+<style scoped>
 .app-error {
   display: flex;
   flex-direction: column;

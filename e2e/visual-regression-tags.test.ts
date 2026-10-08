@@ -23,7 +23,11 @@
 import { expect, test } from '@playwright/test'
 
 import { VIEWPORTS } from './helpers/test-constants'
-import { createEntry, saveEntryEdit } from './helpers/test-utils'
+import {
+  createEntry,
+  disableAnimations,
+  saveEntryEdit
+} from './helpers/test-utils'
 
 import type { Page } from '@playwright/test'
 
@@ -35,22 +39,6 @@ const TEST_DATE = '2026-02-14'
 // =============================================================================
 // Shared helpers
 // =============================================================================
-
-/**
- * Disable CSS animations and transitions to prevent flaky screenshots.
- */
-async function disableAnimations(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        animation-duration: 0s !important;
-        animation-delay: 0s !important;
-        transition-duration: 0s !important;
-        transition-delay: 0s !important;
-      }
-    `
-  })
-}
 
 /**
  * Navigate to /tags and wait until the page heading is visible.
@@ -102,6 +90,9 @@ async function createEntryWithTag(
   tagName: string
 ): Promise<void> {
   const entry = await createEntry(page, content)
+  // The clock is frozen, so move it on: an entry only counts as edited when
+  // its update time is later than its creation time
+  await page.clock.setFixedTime(new Date(FIXED_NOW.getTime() + 60_000))
   await entry
     .getByRole('button', { name: /edit entry/i })
     .click({ force: true })
@@ -114,7 +105,16 @@ async function createEntryWithTag(
 // Setup
 // =============================================================================
 
+/**
+ * Fixed wall-clock time (local) for the page under test.
+ *
+ * A mask covers an element's box, and the box is as wide as the timestamp text it holds,
+ * so masking alone leaves a screenshot dependent on the time the suite runs.
+ */
+const FIXED_NOW = new Date(2026, 1, 14, 9, 30)
+
 test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW)
   await disableAnimations(page)
 })
 
@@ -128,7 +128,7 @@ test.describe('Visual Regression: TagsSectionBrowse', () => {
     // Fresh context → no tags exist → browse shows empty state
     await prepareTagsPageForVRT(page)
 
-    const browse = page.locator('.tags-section-browse')
+    const browse = page.getByRole('region', { name: 'Tags', exact: true })
     await expect(browse).toHaveScreenshot('tags-browse-empty-desktop.png', {
       threshold: 0.01,
       maxDiffPixels: 50
@@ -139,7 +139,7 @@ test.describe('Visual Regression: TagsSectionBrowse', () => {
     await page.setViewportSize(VIEWPORTS.mobile)
     await prepareTagsPageForVRT(page)
 
-    const browse = page.locator('.tags-section-browse')
+    const browse = page.getByRole('region', { name: 'Tags', exact: true })
     await expect(browse).toHaveScreenshot('tags-browse-empty-mobile.png', {
       threshold: 0.01,
       maxDiffPixels: 50
@@ -152,7 +152,7 @@ test.describe('Visual Regression: TagsSectionBrowse', () => {
     await createEntryWithTag(page, 'VRT browse entry', 'VrtBrowseTag')
     await prepareTagsPageForVRT(page)
 
-    const browse = page.locator('.tags-section-browse')
+    const browse = page.getByRole('region', { name: 'Tags', exact: true })
     await expect(browse).toHaveScreenshot('tags-browse-with-tags-desktop.png', {
       threshold: 0.01,
       maxDiffPixels: 50
@@ -171,7 +171,7 @@ test.describe('Visual Regression: TagsSectionBrowse', () => {
     await saveEntryEdit(page)
     await prepareTagsPageForVRT(page)
 
-    const browse = page.locator('.tags-section-browse')
+    const browse = page.getByRole('region', { name: 'Tags', exact: true })
     await expect(browse).toHaveScreenshot('tags-browse-with-tags-mobile.png', {
       threshold: 0.01,
       maxDiffPixels: 50
@@ -187,7 +187,7 @@ test.describe('Visual Regression: TagsSectionBrowse', () => {
     // Click the tag toggle to highlight it as active
     await page.getByRole('button', { name: 'Select VrtActiveTag' }).click()
 
-    const browse = page.locator('.tags-section-browse')
+    const browse = page.getByRole('region', { name: 'Tags', exact: true })
     await expect(browse).toHaveScreenshot(
       'tags-browse-active-tag-desktop.png',
       { threshold: 0.01, maxDiffPixels: 50 }
@@ -204,7 +204,7 @@ test.describe('Visual Regression: TagsSectionEntries', () => {
     await page.setViewportSize(VIEWPORTS.desktop)
     await prepareTagsPageForVRT(page)
 
-    const entries = page.locator('.tags-section-entries')
+    const entries = page.getByRole('region', { name: 'Filtered entries' })
     await expect(entries).toHaveScreenshot('tags-entries-no-filter.png', {
       threshold: 0.01,
       maxDiffPixels: 50
@@ -220,7 +220,7 @@ test.describe('Visual Regression: TagsSectionEntries', () => {
     await page.getByRole('button', { name: 'Select VrtFilterTag' }).click()
     await expect(page.getByTestId('entry-card')).toBeVisible()
 
-    const entries = page.locator('.tags-section-entries')
+    const entries = page.getByRole('region', { name: 'Filtered entries' })
     await expect(entries).toHaveScreenshot(
       'tags-entries-with-results-desktop.png',
       {
@@ -246,7 +246,7 @@ test.describe('Visual Regression: TagsSectionEntries', () => {
     await page.getByRole('button', { name: 'Select VrtNoResultTagY' }).click()
     await expect(page.getByTestId('empty-no-results')).toBeVisible()
 
-    const entries = page.locator('.tags-section-entries')
+    const entries = page.getByRole('region', { name: 'Filtered entries' })
     await expect(entries).toHaveScreenshot(
       'tags-entries-no-results-desktop.png',
       { threshold: 0.01, maxDiffPixels: 50 }

@@ -27,6 +27,11 @@ describe('TIMEOUTS', () => {
     expect(TIMEOUTS.FORM_SUBMIT_DEBOUNCE).toBeGreaterThan(0)
   })
 
+  it('defines an inference idle teardown delay', () => {
+    expect(typeof TIMEOUTS.INFERENCE_IDLE_TEARDOWN).toBe('number')
+    expect(TIMEOUTS.INFERENCE_IDLE_TEARDOWN).toBeGreaterThan(0)
+  })
+
   it('toast duration is 2000ms', () => {
     expect(TIMEOUTS.TOAST_DURATION).toBe(2000)
   })

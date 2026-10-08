@@ -1,5 +1,3 @@
-import { watch } from 'vue'
-
 import { toTypedSchema } from '@vee-validate/zod'
 import { useField, useForm } from 'vee-validate'
 
@@ -32,6 +30,8 @@ export interface UseEntryEditorReturn {
   handleKeyDown: (event: KeyboardEvent) => void
   /** Update the assigned day value programmatically */
   updateAssignedDay: (value: string) => void
+  /** Validate the form, then save; field errors show and nothing is saved if invalid */
+  validatedSave: (e?: Event) => Promise<void>
 }
 
 /**
@@ -72,15 +72,6 @@ export function useEntryEditor(
   const { errorMessage: assignedDayError, value: assignedDayValue } =
     useField<string>('assignedDay')
 
-  // Watch for prop changes to update form
-  watch(
-    () => entry,
-    (newEntry) => {
-      setFieldValue('content', newEntry.content)
-      setFieldValue('assignedDay', newEntry.assignedDay)
-    }
-  )
-
   const validatedSave = handleSubmit(() => {
     onSave?.()
   })
@@ -111,7 +102,8 @@ export function useEntryEditor(
     meta,
     handleBeforeUnload,
     handleKeyDown,
-    updateAssignedDay
+    updateAssignedDay,
+    validatedSave
   }
 }
 

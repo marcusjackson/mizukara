@@ -21,7 +21,7 @@
  *   listRef.value?.focusCreateForm()
  */
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import SharedEntryCard from '@/shared/components/SharedEntryCard.vue'
 
@@ -39,8 +39,6 @@ interface Props {
   items: Entry[]
   /** Current date (for default assigned day in create form) */
   currentDate: string
-  /** Callback to refetch entries after mutations */
-  onRefetch: () => Promise<void>
   /** All available tag options; passed to editor for inline tag assignment */
   allTags?: TagInputOption[]
   /** Map of entry ID → tags; used to render chips on each card */
@@ -48,6 +46,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  /** Entries changed; the parent should refetch them */
+  refetch: []
+}>()
 
 // Template refs
 const createFormRef = ref<InstanceType<typeof EntryDayViewCreateForm> | null>(
@@ -62,6 +65,16 @@ const currentMode = ref<ListMode>('view')
 // Edit mode state
 const editingItemId = ref<string | null>(null)
 
+// A day change ends any edit and leaves reorder mode: the editor and the reorder
+// controls belong to the day they were opened on
+watch(
+  () => props.currentDate,
+  () => {
+    editingItemId.value = null
+    currentMode.value = 'view'
+  }
+)
+
 // Handlers composable
 const {
   handleEntryCreated,
@@ -70,8 +83,26 @@ const {
   handleSaveRequested: handleSaveRequestedBase,
   isReordering
 } = useEntrySectionHandlers({
-  onRefetch: props.onRefetch
+  onRefetch: () => {
+    emit('refetch')
+    return Promise.resolve()
+  }
 })
+
+// Empty the create box only once the entry was saved; a failed save keeps the text
+let isCreating = false
+const onEntryCreated = async (data: {
+  content: string
+  assignedDay: string
+}): Promise<void> => {
+  if (isCreating) return
+  isCreating = true
+  try {
+    if (await handleEntryCreated(data)) createFormRef.value?.reset()
+  } finally {
+    isCreating = false
+  }
+}
 
 // Computed
 const isReorderMode = computed(() => currentMode.value === 'reorder')
@@ -85,8 +116,8 @@ const handleSaveRequested = async (
   entryId: string,
   data: { content: string; assignedDay: string }
 ): Promise<void> => {
-  await handleSaveRequestedBase(entryId, data)
-  editingItemId.value = null
+  const saved = await handleSaveRequestedBase(entryId, data)
+  if (saved) editingItemId.value = null
 }
 
 /**
@@ -150,7 +181,7 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
     <EntryDayViewCreateForm
       ref="createFormRef"
       :default-assigned-day="currentDate"
-      @entry-created="handleEntryCreated"
+      @entry-created="onEntryCreated"
     />
 
     <!-- Reorder controls and reorder mode list -->

@@ -29,20 +29,6 @@ describe('CONTENT_VALIDATION', () => {
 })
 
 describe('DATE_VALIDATION', () => {
-  it('matches valid ISO date format YYYY-MM-DD', () => {
-    expect(DATE_VALIDATION.PATTERN.test('2026-02-18')).toBe(true)
-    expect(DATE_VALIDATION.PATTERN.test('2000-01-01')).toBe(true)
-    expect(DATE_VALIDATION.PATTERN.test('9999-12-31')).toBe(true)
-  })
-
-  it('rejects invalid date formats', () => {
-    expect(DATE_VALIDATION.PATTERN.test('2026-2-18')).toBe(false)
-    expect(DATE_VALIDATION.PATTERN.test('26-02-18')).toBe(false)
-    expect(DATE_VALIDATION.PATTERN.test('2026/02/18')).toBe(false)
-    expect(DATE_VALIDATION.PATTERN.test('not-a-date')).toBe(false)
-    expect(DATE_VALIDATION.PATTERN.test('')).toBe(false)
-  })
-
   it('has an invalid message', () => {
     expect(DATE_VALIDATION.messages.invalid).toBe(
       'Must be a valid date (YYYY-MM-DD)'

@@ -1,0 +1,1954 @@
+{
+ "e01": {
+  "primary": [
+   "doctor visit",
+   "health"
+  ],
+  "acceptable": [
+   "errands"
+  ],
+  "wrong": [
+   "work",
+   "coffee",
+   "fitness",
+   "pets"
+  ]
+ },
+ "e02": {
+  "primary": [
+   "finance"
+  ],
+  "acceptable": [
+   "groceries",
+   "debt"
+  ],
+  "wrong": [
+   "shopping",
+   "investing",
+   "taxes",
+   "home"
+  ]
+ },
+ "e03": {
+  "primary": [
+   "pets",
+   "neighbors"
+  ],
+  "acceptable": [
+   "outdoors",
+   "home"
+  ],
+  "wrong": [
+   "garden",
+   "hiking",
+   "weather",
+   "friends"
+  ]
+ },
+ "e04": {
+  "primary": [
+   "crafts",
+   "hobbies"
+  ],
+  "acceptable": [
+   "wins"
+  ],
+  "wrong": [
+   "shopping",
+   "art",
+   "diy",
+   "work"
+  ]
+ },
+ "e05": {
+  "primary": [
+   "family",
+   "loneliness"
+  ],
+  "acceptable": [
+   "travel",
+   "sadness"
+  ],
+  "wrong": [
+   "commute",
+   "home",
+   "friends",
+   "grief"
+  ]
+ },
+ "e06": {
+  "primary": [
+   "commute"
+  ],
+  "acceptable": [
+   "challenges",
+   "coffee"
+  ],
+  "wrong": [
+   "travel",
+   "work",
+   "cooking",
+   "car"
+  ]
+ },
+ "e07": {
+  "primary": [
+   "family"
+  ],
+  "acceptable": [
+   "happiness"
+  ],
+  "wrong": [
+   "parenting",
+   "home",
+   "garden",
+   "chores"
+  ]
+ },
+ "e08": {
+  "primary": [
+   "sleep",
+   "stress"
+  ],
+  "acceptable": [
+   "health",
+   "mental health"
+  ],
+  "wrong": [
+   "fitness",
+   "doctor visit",
+   "illness",
+   "meditation"
+  ]
+ },
+ "e09": {
+  "primary": [
+   "outdoors",
+   "memories"
+  ],
+  "acceptable": [
+   "hobbies",
+   "happiness"
+  ],
+  "wrong": [
+   "hiking",
+   "home",
+   "decluttering",
+   "art"
+  ]
+ },
+ "e10": {
+  "primary": [
+   "work",
+   "career"
+  ],
+  "acceptable": [
+   "coworkers",
+   "decisions"
+  ],
+  "wrong": [
+   "finance",
+   "job search",
+   "meetings",
+   "projects"
+  ]
+ },
+ "e11": {
+  "primary": [
+   "volunteering",
+   "social"
+  ],
+  "acceptable": [
+   "happiness",
+   "gratitude",
+   "technology",
+   "friends"
+  ],
+  "wrong": [
+   "family",
+   "coworkers",
+   "cooking",
+   "eating out"
+  ]
+ },
+ "e12": {
+  "primary": [
+   "diy",
+   "home"
+  ],
+  "acceptable": [
+   "wins",
+   "shopping",
+   "chores"
+  ],
+  "wrong": [
+   "errands",
+   "cooking",
+   "finance",
+   "car"
+  ]
+ },
+ "e13": {
+  "primary": [
+   "parenting",
+   "family"
+  ],
+  "acceptable": [
+   "school",
+   "cooking"
+  ],
+  "wrong": [
+   "tv",
+   "conflict",
+   "anger",
+   "eating out"
+  ]
+ },
+ "e14": {
+  "primary": [
+   "business",
+   "work"
+  ],
+  "acceptable": [
+   "projects",
+   "finance"
+  ],
+  "wrong": [
+   "diy",
+   "shopping",
+   "home",
+   "job search"
+  ]
+ },
+ "e15": {
+  "primary": [
+   "school",
+   "learning"
+  ],
+  "acceptable": [
+   "friends",
+   "stress"
+  ],
+  "wrong": [
+   "work",
+   "social media",
+   "reading",
+   "goals"
+  ]
+ },
+ "e16": {
+  "primary": [
+   "neighbors",
+   "music"
+  ],
+  "acceptable": [
+   "happiness",
+   "home"
+  ],
+  "wrong": [
+   "live events",
+   "hobbies",
+   "anger",
+   "art"
+  ]
+ },
+ "e17": {
+  "primary": [
+   "hiking",
+   "outdoors",
+   "friends"
+  ],
+  "acceptable": [
+   "fitness",
+   "weather"
+  ],
+  "wrong": [
+   "running",
+   "travel",
+   "eating out",
+   "injury"
+  ]
+ },
+ "e18": {
+  "primary": [
+   "taxes",
+   "finance"
+  ],
+  "acceptable": [
+   "home",
+   "habits",
+   "productivity"
+  ],
+  "wrong": [
+   "investing",
+   "debt",
+   "shopping",
+   "work"
+  ]
+ },
+ "e19": {
+  "primary": [
+   "cooking",
+   "wins"
+  ],
+  "acceptable": [
+   "neighbors",
+   "hobbies",
+   "gratitude",
+   "family"
+  ],
+  "wrong": [
+   "groceries",
+   "eating out",
+   "nutrition",
+   "garden"
+  ]
+ },
+ "e20": {
+  "primary": [
+   "family",
+   "decisions"
+  ],
+  "acceptable": [
+   "doctor visit",
+   "work",
+   "challenges"
+  ],
+  "wrong": [
+   "illness",
+   "commute",
+   "partner",
+   "parenting"
+  ]
+ },
+ "e21": {
+  "primary": [
+   "business",
+   "finance"
+  ],
+  "acceptable": [
+   "work",
+   "art",
+   "challenges"
+  ],
+  "wrong": [
+   "career",
+   "coworkers",
+   "meetings",
+   "shopping"
+  ]
+ },
+ "e22": {
+  "primary": [
+   "hobbies",
+   "fitness"
+  ],
+  "acceptable": [
+   "happiness",
+   "shopping",
+   "outdoors"
+  ],
+  "wrong": [
+   "car",
+   "commute",
+   "sports",
+   "finance"
+  ]
+ },
+ "e23": {
+  "primary": [
+   "memories"
+  ],
+  "acceptable": [
+   "school",
+   "reflection",
+   "sadness"
+  ],
+  "wrong": [
+   "friends",
+   "learning",
+   "parenting",
+   "music"
+  ]
+ },
+ "e24": {
+  "primary": [
+   "work",
+   "challenges"
+  ],
+  "acceptable": [
+   "coworkers",
+   "cooking",
+   "sleep"
+  ],
+  "wrong": [
+   "eating out",
+   "home",
+   "friends",
+   "conflict"
+  ]
+ },
+ "e25": {
+  "primary": [
+   "doctor visit",
+   "finance"
+  ],
+  "acceptable": [
+   "health",
+   "stress"
+  ],
+  "wrong": [
+   "illness",
+   "injury",
+   "nutrition",
+   "car"
+  ]
+ },
+ "e26": {
+  "primary": [
+   "art",
+   "hobbies"
+  ],
+  "acceptable": [
+   "reflection",
+   "motivation"
+  ],
+  "wrong": [
+   "crafts",
+   "photography",
+   "home",
+   "chores"
+  ]
+ },
+ "e27": {
+  "primary": [
+   "finance",
+   "family"
+  ],
+  "acceptable": [
+   "travel",
+   "outdoors",
+   "decisions"
+  ],
+  "wrong": [
+   "hiking",
+   "shopping",
+   "holidays",
+   "sadness"
+  ]
+ },
+ "e28": {
+  "primary": [
+   "technology",
+   "challenges"
+  ],
+  "acceptable": [
+   "work",
+   "errands"
+  ],
+  "wrong": [
+   "social media",
+   "home",
+   "commute",
+   "tv"
+  ]
+ },
+ "e29": {
+  "primary": [
+   "music",
+   "sports"
+  ],
+  "acceptable": [
+   "hobbies",
+   "school",
+   "live events"
+  ],
+  "wrong": [
+   "nutrition",
+   "injury",
+   "health",
+   "podcasts"
+  ]
+ },
+ "e30": {
+  "primary": [
+   "health",
+   "gratitude"
+  ],
+  "acceptable": [
+   "doctor visit",
+   "stress",
+   "sadness"
+  ],
+  "wrong": [
+   "illness",
+   "nutrition",
+   "grief",
+   "injury"
+  ]
+ },
+ "e31": {
+  "primary": [
+   "garden"
+  ],
+  "acceptable": [
+   "groceries",
+   "outdoors"
+  ],
+  "wrong": [
+   "cooking",
+   "hiking",
+   "weather",
+   "neighbors"
+  ]
+ },
+ "e32": {
+  "primary": [
+   "moving",
+   "decisions"
+  ],
+  "acceptable": [
+   "home",
+   "finance"
+  ],
+  "wrong": [
+   "commute",
+   "travel",
+   "car",
+   "neighbors"
+  ]
+ },
+ "e33": {
+  "primary": [
+   "parenting",
+   "family"
+  ],
+  "acceptable": [
+   "music",
+   "live events"
+  ],
+  "wrong": [
+   "school",
+   "art",
+   "eating out"
+  ]
+ },
+ "e34": {
+  "primary": [
+   "work"
+  ],
+  "acceptable": [
+   "injury",
+   "coworkers",
+   "challenges"
+  ],
+  "wrong": [
+   "health",
+   "car",
+   "fitness",
+   "commute"
+  ]
+ },
+ "e35": {
+  "primary": [
+   "finance",
+   "home"
+  ],
+  "acceptable": [
+   "decisions",
+   "neighbors"
+  ],
+  "wrong": [
+   "investing",
+   "taxes",
+   "weather",
+   "shopping"
+  ]
+ },
+ "e36": {
+  "primary": [
+   "parenting",
+   "stress"
+  ],
+  "acceptable": [
+   "work",
+   "family",
+   "chores"
+  ],
+  "wrong": [
+   "commute",
+   "cooking",
+   "tv",
+   "friends",
+   "pets"
+  ]
+ },
+ "e37": {
+  "primary": [
+   "reflection",
+   "friends"
+  ],
+  "acceptable": [
+   "volunteering",
+   "finance",
+   "home"
+  ],
+  "wrong": [
+   "hiking",
+   "pets",
+   "career",
+   "grief"
+  ]
+ },
+ "e38": {
+  "primary": [
+   "parenting",
+   "doctor visit"
+  ],
+  "acceptable": [
+   "injury",
+   "groceries",
+   "neighbors",
+   "chores"
+  ],
+  "wrong": [
+   "sports",
+   "games",
+   "cooking",
+   "travel"
+  ]
+ },
+ "e39": {
+  "primary": [
+   "work",
+   "business"
+  ],
+  "acceptable": [
+   "car",
+   "finance",
+   "family"
+  ],
+  "wrong": [
+   "injury",
+   "health",
+   "sports",
+   "errands"
+  ]
+ },
+ "e40": {
+  "primary": [
+   "family",
+   "memories"
+  ],
+  "acceptable": [
+   "travel",
+   "eating out"
+  ],
+  "wrong": [
+   "car",
+   "commute",
+   "hiking",
+   "music"
+  ]
+ },
+ "e41": {
+  "primary": [
+   "sports",
+   "sadness"
+  ],
+  "acceptable": [
+   "family",
+   "school"
+  ],
+  "wrong": [
+   "fitness",
+   "injury",
+   "weather",
+   "social media"
+  ]
+ },
+ "e42": {
+  "primary": [
+   "career",
+   "decisions"
+  ],
+  "acceptable": [
+   "work",
+   "finance",
+   "stress"
+  ],
+  "wrong": [
+   "job search",
+   "coworkers",
+   "meetings",
+   "burnout"
+  ]
+ },
+ "e43": {
+  "primary": [
+   "family",
+   "parenting"
+  ],
+  "acceptable": [
+   "chores",
+   "happiness",
+   "diy"
+  ],
+  "wrong": [
+   "finance",
+   "cooking",
+   "travel",
+   "career"
+  ]
+ },
+ "e44": {
+  "primary": [
+   "crafts",
+   "diy"
+  ],
+  "acceptable": [
+   "home",
+   "shopping",
+   "coffee"
+  ],
+  "wrong": [
+   "errands",
+   "family",
+   "art",
+   "photography"
+  ]
+ },
+ "e45": {
+  "primary": [
+   "garden",
+   "reflection"
+  ],
+  "acceptable": [
+   "memories",
+   "eating out",
+   "weather"
+  ],
+  "wrong": [
+   "pets",
+   "hiking",
+   "chores",
+   "cooking"
+  ]
+ },
+ "e46": {
+  "primary": [
+   "job search",
+   "career"
+  ],
+  "acceptable": [
+   "stress",
+   "finance"
+  ],
+  "wrong": [
+   "work",
+   "meetings",
+   "cooking",
+   "coworkers"
+  ]
+ },
+ "e47": {
+  "primary": [
+   "home",
+   "challenges"
+  ],
+  "acceptable": [
+   "family",
+   "groceries"
+  ],
+  "wrong": [
+   "cooking",
+   "weather",
+   "eating out",
+   "shopping"
+  ]
+ },
+ "e48": {
+  "primary": [
+   "reflection",
+   "chores"
+  ],
+  "acceptable": [
+   "social",
+   "cooking",
+   "family"
+  ],
+  "wrong": [
+   "outdoors",
+   "pets",
+   "tv",
+   "finance",
+   "art"
+  ]
+ },
+ "e49": {
+  "primary": [
+   "running",
+   "fitness"
+  ],
+  "acceptable": [
+   "goals",
+   "health"
+  ],
+  "wrong": [
+   "work",
+   "nutrition",
+   "sports",
+   "pets"
+  ]
+ },
+ "e50": {
+  "primary": [
+   "home",
+   "challenges"
+  ],
+  "acceptable": [
+   "neighbors",
+   "family",
+   "weather",
+   "finance"
+  ],
+  "wrong": [
+   "diy",
+   "moving",
+   "travel",
+   "sleep",
+   "outdoors"
+  ]
+ },
+ "e51": {
+  "primary": [
+   "commute",
+   "reflection"
+  ],
+  "acceptable": [
+   "social",
+   "health"
+  ],
+  "wrong": [
+   "travel",
+   "news",
+   "technology",
+   "doctor visit"
+  ]
+ },
+ "e52": {
+  "primary": [
+   "work",
+   "projects"
+  ],
+  "acceptable": [
+   "meetings",
+   "coworkers",
+   "productivity"
+  ],
+  "wrong": [
+   "coffee",
+   "cooking",
+   "goals",
+   "career"
+  ]
+ },
+ "e53": {
+  "primary": [
+   "family",
+   "celebration"
+  ],
+  "acceptable": [
+   "eating out",
+   "memories"
+  ],
+  "wrong": [
+   "wedding",
+   "holidays",
+   "travel",
+   "parenting"
+  ]
+ },
+ "e54": {
+  "primary": [
+   "outdoors",
+   "hobbies"
+  ],
+  "acceptable": [
+   "reflection",
+   "home"
+  ],
+  "wrong": [
+   "garden",
+   "pets",
+   "weather",
+   "diy"
+  ]
+ },
+ "e55": {
+  "primary": [
+   "chores",
+   "errands"
+  ],
+  "acceptable": [
+   "reading",
+   "decluttering"
+  ],
+  "wrong": [
+   "groceries",
+   "tv",
+   "movies",
+   "cooking"
+  ]
+ },
+ "e56": {
+  "primary": [
+   "music",
+   "live events"
+  ],
+  "acceptable": [
+   "friends",
+   "hobbies",
+   "wins"
+  ],
+  "wrong": [
+   "fitness",
+   "injury",
+   "business",
+   "career"
+  ]
+ },
+ "e57": {
+  "primary": [
+   "legal",
+   "travel"
+  ],
+  "acceptable": [
+   "moving",
+   "finance",
+   "challenges"
+  ],
+  "wrong": [
+   "home",
+   "job search",
+   "school",
+   "language learning"
+  ]
+ },
+ "e58": {
+  "primary": [
+   "health",
+   "doctor visit"
+  ],
+  "acceptable": [
+   "nutrition",
+   "sleep",
+   "mental health"
+  ],
+  "wrong": [
+   "illness",
+   "fitness",
+   "self-care",
+   "shopping"
+  ]
+ },
+ "e59": {
+  "primary": [
+   "moving",
+   "home"
+  ],
+  "acceptable": [
+   "wins",
+   "music"
+  ],
+  "wrong": [
+   "cooking",
+   "decluttering",
+   "diy",
+   "travel",
+   "chores"
+  ]
+ },
+ "e60": {
+  "primary": [
+   "learning",
+   "hobbies"
+  ],
+  "acceptable": [
+   "partner",
+   "reflection"
+  ],
+  "wrong": [
+   "technology",
+   "tv",
+   "sleep",
+   "movies"
+  ]
+ },
+ "e61": {
+  "primary": [
+   "illness",
+   "sleep"
+  ],
+  "acceptable": [
+   "family",
+   "tv",
+   "health"
+  ],
+  "wrong": [
+   "doctor visit",
+   "cooking",
+   "fitness",
+   "mental health"
+  ]
+ },
+ "e62": {
+  "primary": [
+   "coworkers",
+   "work"
+  ],
+  "acceptable": [
+   "meetings",
+   "confidence",
+   "conflict"
+  ],
+  "wrong": [
+   "coffee",
+   "projects",
+   "career",
+   "business"
+  ]
+ },
+ "e63": {
+  "primary": [
+   "decluttering"
+  ],
+  "acceptable": [
+   "memories",
+   "home",
+   "chores",
+   "grief"
+  ],
+  "wrong": [
+   "shopping",
+   "volunteering",
+   "family",
+   "moving"
+  ]
+ },
+ "e64": {
+  "primary": [
+   "injury"
+  ],
+  "acceptable": [
+   "health"
+  ],
+  "wrong": [
+   "running",
+   "fitness",
+   "eating out",
+   "doctor visit",
+   "sports"
+  ]
+ },
+ "e65": {
+  "primary": [
+   "business",
+   "wins"
+  ],
+  "acceptable": [
+   "finance",
+   "family",
+   "crafts"
+  ],
+  "wrong": [
+   "shopping",
+   "job search",
+   "investing",
+   "career"
+  ]
+ },
+ "e66": {
+  "primary": [
+   "hiking",
+   "outdoors"
+  ],
+  "acceptable": [
+   "weather",
+   "fitness"
+  ],
+  "wrong": [
+   "travel",
+   "cooking",
+   "running",
+   "garden"
+  ]
+ },
+ "e67": {
+  "primary": [
+   "doctor visit",
+   "health"
+  ],
+  "acceptable": [
+   "stress",
+   "errands"
+  ],
+  "wrong": [
+   "illness",
+   "injury",
+   "fitness",
+   "meetings"
+  ]
+ },
+ "e68": {
+  "primary": [
+   "language learning"
+  ],
+  "acceptable": [
+   "habits",
+   "social",
+   "confidence"
+  ],
+  "wrong": [
+   "school",
+   "eating out",
+   "reading",
+   "groceries"
+  ]
+ },
+ "e69": {
+  "primary": [
+   "groceries"
+  ],
+  "acceptable": [
+   "habits",
+   "finance"
+  ],
+  "wrong": [
+   "cooking",
+   "shopping",
+   "nutrition",
+   "errands"
+  ]
+ },
+ "e70": {
+  "primary": [
+   "yoga"
+  ],
+  "acceptable": [
+   "motivation",
+   "self-care",
+   "fitness"
+  ],
+  "wrong": [
+   "injury",
+   "running",
+   "meditation",
+   "sports"
+  ]
+ },
+ "e71": {
+  "primary": [
+   "debt",
+   "finance"
+  ],
+  "acceptable": [
+   "stress"
+  ],
+  "wrong": [
+   "shopping",
+   "investing",
+   "taxes",
+   "business"
+  ]
+ },
+ "e72": {
+  "primary": [
+   "family",
+   "cooking"
+  ],
+  "acceptable": [
+   "holidays",
+   "stress",
+   "groceries"
+  ],
+  "wrong": [
+   "travel",
+   "eating out",
+   "celebration",
+   "wedding"
+  ]
+ },
+ "e73": {
+  "primary": [
+   "burnout",
+   "work"
+  ],
+  "acceptable": [
+   "stress",
+   "mental health"
+  ],
+  "wrong": [
+   "technology",
+   "productivity",
+   "coding",
+   "meetings"
+  ]
+ },
+ "e74": {
+  "primary": [
+   "pregnancy"
+  ],
+  "acceptable": [
+   "partner",
+   "mental health"
+  ],
+  "wrong": [
+   "illness",
+   "doctor visit",
+   "home",
+   "work"
+  ]
+ },
+ "e75": {
+  "primary": [
+   "social media"
+  ],
+  "acceptable": [
+   "mental health",
+   "habits",
+   "self-care"
+  ],
+  "wrong": [
+   "technology",
+   "travel",
+   "news",
+   "shopping"
+  ]
+ },
+ "e76": {
+  "primary": [
+   "grief",
+   "memories"
+  ],
+  "acceptable": [
+   "sadness",
+   "loneliness",
+   "home"
+  ],
+  "wrong": [
+   "decluttering",
+   "coffee",
+   "family",
+   "chores"
+  ]
+ },
+ "e77": {
+  "primary": [
+   "dating",
+   "coffee"
+  ],
+  "acceptable": [
+   "social",
+   "friends",
+   "pets"
+  ],
+  "wrong": [
+   "partner",
+   "eating out",
+   "conflict",
+   "family"
+  ]
+ },
+ "e78": {
+  "primary": [
+   "crafts"
+  ],
+  "acceptable": [
+   "hobbies",
+   "family",
+   "wins"
+  ],
+  "wrong": [
+   "shopping",
+   "art",
+   "diy",
+   "home"
+  ]
+ },
+ "e79": {
+  "primary": [
+   "loneliness"
+  ],
+  "acceptable": [
+   "sadness",
+   "groceries",
+   "social"
+  ],
+  "wrong": [
+   "friends",
+   "shopping",
+   "technology",
+   "errands"
+  ]
+ },
+ "e80": {
+  "primary": [
+   "family",
+   "conflict"
+  ],
+  "acceptable": [
+   "work",
+   "sadness",
+   "chores"
+  ],
+  "wrong": [
+   "anger",
+   "cooking",
+   "eating out",
+   "partner"
+  ]
+ },
+ "e81": {
+  "primary": [
+   "podcasts"
+  ],
+  "acceptable": [
+   "commute",
+   "friends",
+   "politics",
+   "learning"
+  ],
+  "wrong": [
+   "news",
+   "car",
+   "music",
+   "work"
+  ]
+ },
+ "e82": {
+  "primary": [
+   "running",
+   "habits"
+  ],
+  "acceptable": [
+   "motivation",
+   "fitness",
+   "goals"
+  ],
+  "wrong": [
+   "sleep",
+   "commute",
+   "outdoors",
+   "sports"
+  ]
+ },
+ "e83": {
+  "primary": [
+   "neighbors",
+   "anger"
+  ],
+  "acceptable": [
+   "conflict",
+   "sleep",
+   "home"
+  ],
+  "wrong": [
+   "diy",
+   "family",
+   "legal",
+   "friends"
+  ]
+ },
+ "e84": {
+  "primary": [
+   "live events",
+   "music"
+  ],
+  "acceptable": [
+   "happiness",
+   "finance"
+  ],
+  "wrong": [
+   "celebration",
+   "art",
+   "movies",
+   "sports"
+  ]
+ },
+ "e85": {
+  "primary": [
+   "wins",
+   "work"
+  ],
+  "acceptable": [
+   "confidence",
+   "coworkers",
+   "meetings"
+  ],
+  "wrong": [
+   "projects",
+   "school",
+   "career"
+  ]
+ },
+ "e86": {
+  "primary": [
+   "wedding"
+  ],
+  "acceptable": [
+   "stress",
+   "family"
+  ],
+  "wrong": [
+   "celebration",
+   "partner",
+   "shopping",
+   "dating"
+  ]
+ },
+ "e87": {
+  "primary": [
+   "politics"
+  ],
+  "acceptable": [
+   "news",
+   "family",
+   "tv"
+  ],
+  "wrong": [
+   "conflict",
+   "anger",
+   "social media",
+   "movies"
+  ]
+ },
+ "e88": {
+  "primary": [
+   "boredom"
+  ],
+  "acceptable": [
+   "weather",
+   "home"
+  ],
+  "wrong": [
+   "reading",
+   "decluttering",
+   "chores",
+   "hobbies"
+  ]
+ },
+ "e89": {
+  "primary": [
+   "eating out"
+  ],
+  "acceptable": [
+   "friends"
+  ],
+  "wrong": [
+   "cooking",
+   "groceries",
+   "nutrition",
+   "coffee",
+   "travel"
+  ]
+ },
+ "e90": {
+  "primary": [
+   "holidays",
+   "home"
+  ],
+  "acceptable": [
+   "family",
+   "neighbors",
+   "decisions"
+  ],
+  "wrong": [
+   "diy",
+   "travel",
+   "celebration",
+   "weather"
+  ]
+ },
+ "e91": {
+  "primary": [
+   "meditation"
+  ],
+  "acceptable": [
+   "habits"
+  ],
+  "wrong": [
+   "sleep",
+   "yoga",
+   "spirituality",
+   "cooking"
+  ]
+ },
+ "e92": {
+  "primary": [
+   "meetings",
+   "coworkers"
+  ],
+  "acceptable": [
+   "work",
+   "conflict",
+   "stress"
+  ],
+  "wrong": [
+   "car",
+   "commute",
+   "friends",
+   "career"
+  ]
+ },
+ "e93": {
+  "primary": [
+   "decluttering"
+  ],
+  "acceptable": [
+   "chores",
+   "memories",
+   "home"
+  ],
+  "wrong": [
+   "errands",
+   "moving",
+   "shopping",
+   "gratitude"
+  ]
+ },
+ "e94": {
+  "primary": [
+   "job search"
+  ],
+  "acceptable": [
+   "career",
+   "stress",
+   "technology"
+  ],
+  "wrong": [
+   "work",
+   "coding",
+   "writing",
+   "meetings"
+  ]
+ },
+ "e95": {
+  "primary": [
+   "language learning"
+  ],
+  "acceptable": [
+   "learning",
+   "confidence"
+  ],
+  "wrong": [
+   "school",
+   "reading",
+   "writing",
+   "travel"
+  ]
+ },
+ "e96": {
+  "primary": [
+   "sleep"
+  ],
+  "acceptable": [
+   "stress",
+   "reflection",
+   "meetings"
+  ],
+  "wrong": [
+   "nutrition",
+   "cooking",
+   "eating out",
+   "work"
+  ]
+ },
+ "e97": {
+  "primary": [
+   "job search",
+   "sadness"
+  ],
+  "acceptable": [
+   "career",
+   "challenges"
+  ],
+  "wrong": [
+   "eating out",
+   "groceries",
+   "cooking",
+   "work"
+  ]
+ },
+ "e98": {
+  "primary": [
+   "debt",
+   "finance"
+  ],
+  "acceptable": [
+   "habits"
+  ],
+  "wrong": [
+   "eating out",
+   "errands",
+   "shopping",
+   "taxes"
+  ]
+ },
+ "e99": {
+  "primary": [
+   "social media"
+  ],
+  "acceptable": [
+   "cooking",
+   "hobbies"
+  ],
+  "wrong": [
+   "dating",
+   "partner",
+   "photography",
+   "art"
+  ]
+ },
+ "e100": {
+  "primary": [
+   "illness",
+   "health"
+  ],
+  "acceptable": [
+   "self-care",
+   "fitness"
+  ],
+  "wrong": [
+   "running",
+   "doctor visit",
+   "injury",
+   "sleep"
+  ]
+ },
+ "e101": {
+  "primary": [
+   "pregnancy"
+  ],
+  "acceptable": [
+   "happiness",
+   "commute"
+  ],
+  "wrong": [
+   "parenting",
+   "travel",
+   "sadness",
+   "family"
+  ]
+ },
+ "e102": {
+  "primary": [
+   "chores",
+   "groceries"
+  ],
+  "acceptable": [
+   "home",
+   "weather"
+  ],
+  "wrong": [
+   "cooking",
+   "garden",
+   "decluttering",
+   "eating out"
+  ]
+ },
+ "e103": {
+  "primary": [
+   "injury"
+  ],
+  "acceptable": [
+   "health",
+   "moving"
+  ],
+  "wrong": [
+   "doctor visit",
+   "fitness",
+   "illness",
+   "home"
+  ]
+ },
+ "e104": {
+  "primary": [
+   "dating"
+  ],
+  "acceptable": [
+   "eating out",
+   "reflection"
+  ],
+  "wrong": [
+   "partner",
+   "commute",
+   "friends",
+   "conflict"
+  ]
+ },
+ "e105": {
+  "primary": [
+   "crafts",
+   "celebration"
+  ],
+  "acceptable": [
+   "diy",
+   "friends"
+  ],
+  "wrong": [
+   "injury",
+   "art",
+   "home",
+   "shopping"
+  ]
+ },
+ "e106": {
+  "primary": [
+   "cooking"
+  ],
+  "acceptable": [
+   "wins",
+   "friends",
+   "hobbies"
+  ],
+  "wrong": [
+   "nutrition",
+   "groceries",
+   "eating out",
+   "coffee"
+  ]
+ },
+ "e107": {
+  "primary": [
+   "neighbors"
+  ],
+  "acceptable": [
+   "decisions",
+   "garden",
+   "home"
+  ],
+  "wrong": [
+   "conflict",
+   "anger",
+   "diy",
+   "legal"
+  ]
+ },
+ "e108": {
+  "primary": [
+   "politics"
+  ],
+  "acceptable": [
+   "news",
+   "volunteering"
+  ],
+  "wrong": [
+   "meetings",
+   "commute",
+   "work",
+   "social"
+  ]
+ },
+ "e109": {
+  "primary": [
+   "grief",
+   "family"
+  ],
+  "acceptable": [
+   "cooking",
+   "memories"
+  ],
+  "wrong": [
+   "celebration",
+   "sadness",
+   "holidays",
+   "eating out"
+  ]
+ },
+ "e110": {
+  "primary": [
+   "business",
+   "decisions"
+  ],
+  "acceptable": [
+   "challenges",
+   "stress"
+  ],
+  "wrong": [
+   "sleep",
+   "finance",
+   "shopping",
+   "coworkers"
+  ]
+ },
+ "e111": {
+  "primary": [
+   "outdoors",
+   "friends"
+  ],
+  "acceptable": [
+   "happiness",
+   "commute",
+   "social"
+  ],
+  "wrong": [
+   "hiking",
+   "pets",
+   "travel",
+   "weather"
+  ]
+ },
+ "e112": {
+  "primary": [
+   "errands",
+   "wins"
+  ],
+  "acceptable": [
+   "garden",
+   "doctor visit",
+   "car"
+  ],
+  "wrong": [
+   "health",
+   "pets",
+   "chores",
+   "moving"
+  ]
+ },
+ "e113": {
+  "primary": [
+   "family",
+   "celebration"
+  ],
+  "acceptable": [
+   "eating out",
+   "wedding",
+   "social"
+  ],
+  "wrong": [
+   "finance",
+   "friends",
+   "dating",
+   "conflict"
+  ]
+ },
+ "e114": {
+  "primary": [
+   "podcasts"
+  ],
+  "acceptable": [
+   "career",
+   "cooking",
+   "groceries"
+  ],
+  "wrong": [
+   "travel",
+   "work",
+   "job search",
+   "tv"
+  ]
+ },
+ "e115": {
+  "primary": [
+   "social",
+   "loneliness"
+  ],
+  "acceptable": [
+   "confidence",
+   "reflection"
+  ],
+  "wrong": [
+   "friends",
+   "celebration",
+   "commute",
+   "car"
+  ]
+ },
+ "e116": {
+  "primary": [
+   "memories",
+   "family"
+  ],
+  "acceptable": [
+   "weather",
+   "reading",
+   "cooking",
+   "grief"
+  ],
+  "wrong": [
+   "home",
+   "legal",
+   "spirituality",
+   "writing"
+  ]
+ },
+ "e117": {
+  "primary": [
+   "live events",
+   "holidays"
+  ],
+  "acceptable": [
+   "family",
+   "parenting",
+   "celebration"
+  ],
+  "wrong": [
+   "sleep",
+   "car",
+   "commute",
+   "fitness"
+  ]
+ },
+ "e118": {
+  "primary": [
+   "burnout",
+   "stress"
+  ],
+  "acceptable": [
+   "mental health",
+   "coworkers",
+   "work"
+  ],
+  "wrong": [
+   "anger",
+   "fitness",
+   "travel",
+   "sleep"
+  ]
+ },
+ "e119": {
+  "primary": [
+   "sleep",
+   "outdoors"
+  ],
+  "acceptable": [
+   "happiness",
+   "mental health",
+   "reflection"
+  ],
+  "wrong": [
+   "fitness",
+   "hiking",
+   "travel",
+   "weather"
+  ]
+ },
+ "e120": {
+  "primary": [
+   "boredom",
+   "work"
+  ],
+  "acceptable": [
+   "sleep",
+   "errands",
+   "self-care"
+  ],
+  "wrong": [
+   "doctor visit",
+   "garden",
+   "illness",
+   "career"
+  ]
+ }
+}

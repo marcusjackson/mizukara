@@ -18,6 +18,7 @@ import { TEST_ENTRY_CONTENT } from './helpers/test-data'
 import {
   blurFocusedElement,
   createEntry,
+  getEditorTextarea,
   getEntryEditor,
   getTodayDate,
   getTomorrowDate,
@@ -159,7 +160,7 @@ test.describe('Keyboard Shortcuts', () => {
     await expect(editor).toBeVisible()
 
     // Modify content
-    const textarea = editor.locator('textarea').first()
+    const textarea = getEditorTextarea(page)
     await textarea.fill(TEST_ENTRY_CONTENT.UPDATED)
 
     // Save using Ctrl+S

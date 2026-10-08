@@ -15,7 +15,7 @@ Notes:
     - Source files: .vue, .ts, .js (excluding .test.ts, .d.ts)
     - Searches for import statements in all files (including test files)
     - Resolves @/, @test/ aliases and relative imports
-    - Skips directories: node_modules, .git, dist, build, playwright-report, test-results
+    - Skips directories: node_modules, .git, dist, build, playwright-report, test-results, coverage
     - Ignores: config files, entry points, barrel exports
     - This helps identify dead code and unused files
 """
@@ -36,7 +36,22 @@ SOURCE_EXTENSIONS = (".vue", ".ts", ".js")
 RESOLVE_EXTENSIONS = (".ts", ".vue", ".js")
 
 # Directories to never walk into.
-SKIP_DIRS = frozenset({"node_modules", ".git", "dist", "build", "playwright-report", "test-results"})
+# _local/ holds throwaway spike archives kept outside the repository's history.
+# .claude/ holds agent worktrees, which are whole checkouts of this repo; walking
+# into one reports every file in it a second time.
+SKIP_DIRS = frozenset(
+    {
+        "node_modules",
+        ".git",
+        ".claude",
+        "dist",
+        "build",
+        "playwright-report",
+        "test-results",
+        "coverage",
+        "_local",
+    }
+)
 
 # Directories whose source files are excluded from the unused-file check.
 # (They may still be *searched* for imports of other files.)
@@ -44,8 +59,13 @@ IGNORED_SOURCE_DIRS = frozenset({"scripts", "ignore"})
 
 # Files excluded from the unused-file check (relative paths from project root).
 IGNORED_SOURCE_FILES = frozenset({
+    # Referenced only as new Worker(new URL(...)), which this regex-based
+    # resolver cannot see, the same way test/mocks/pwa-register.ts is reached
+    # only through a Vitest alias.
+    "src/modules/local-inference/inference-worker.ts",
     "eslint.config.ts",
     "playwright.config.ts",
+    "playwright.production.config.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "stylelint.config.mjs",
@@ -57,16 +77,11 @@ IGNORED_SOURCE_FILES = frozenset({
     # Barrel/re-export index files — referenced only through their barrel
     "src/shared/components/index.ts",
     "src/shared/composables/index.ts",
-    "src/shared/validation/index.ts",
     "src/base/components/index.ts",
     "src/base/composables/index.ts",
     # api/index.ts is a barrel — its internal modules are excluded from the check
     # because they're only accessible through the barrel itself.
     "src/api/types.ts",
-    "src/api/persistence.ts",
-    # BaseRepository is an abstract base class exported for future use.
-    # No concrete repository extends it yet, but it is part of the public API.
-    "src/api/base-repository.ts",
     # Vitest module-alias mock: mapped as virtual:pwa-register/vue in vitest.config.ts,
     # so it is never imported via a file path — invisible to static analysis.
     "test/mocks/pwa-register.ts",
@@ -392,8 +407,14 @@ def find_entry_points(root_dir: Path) -> Set[Path]:
 
 
 def _has_source_file(filenames: List[str], base_name: str) -> bool:
-    """Return True if any source variant of base_name exists in the directory."""
-    return any(base_name + ext in filenames for ext in SOURCE_EXTENSIONS)
+    """Return True if any source variant of base_name exists in the directory.
+
+    A JSON data asset counts: a test named for the asset it checks
+    (tag-head.test.ts for tag-head.json) is not orphaned.
+    """
+    return any(
+        base_name + ext in filenames for ext in (*SOURCE_EXTENSIONS, ".json")
+    )
 
 
 def _should_skip_orphan_dir(rel_dir: str) -> bool:
@@ -401,7 +422,7 @@ def _should_skip_orphan_dir(rel_dir: str) -> bool:
     # e2e/  — Playwright tests; no .ts source counterpart expected
     # src/db/migrations/ — test file names don't match source file names
     #   (e.g. 001-create-entries.test.ts tests index.ts, not 001-create-entries.ts)
-    skip = IGNORED_SOURCE_DIRS | frozenset({"e2e", "src/db/migrations"})
+    skip = IGNORED_SOURCE_DIRS | frozenset({"e2e", "e2e-production", "src/db/migrations"})
     return any(
         rel_dir == ignored or rel_dir.startswith(ignored + "/")
         for ignored in skip
