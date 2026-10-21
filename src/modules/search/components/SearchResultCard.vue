@@ -5,7 +5,7 @@
  * One search result: a truncated content snippet, not the full entry.
  * A new presentational treatment distinct from SharedEntryCard (which always
  * renders full content, with no truncation precedent elsewhere in the app).
- * Clicking navigates to the full entry.
+ * Clicking opens the entry's day page.
  */
 
 import { computed } from 'vue'
@@ -30,11 +30,7 @@ const entryRoute = computed(() => buildEntryDayRoute(props.entry.assignedDay))
 </script>
 
 <template>
-  <RouterLink
-    class="search-result-card"
-    data-testid="search-result-card"
-    :to="entryRoute"
-  >
+  <RouterLink class="search-result-card" data-testid="search-result-card" :to="entryRoute">
     <time
       class="search-result-card__day"
       data-testid="search-result-day"
@@ -42,10 +38,7 @@ const entryRoute = computed(() => buildEntryDayRoute(props.entry.assignedDay))
     >
       {{ formattedDay }}
     </time>
-    <p
-      class="search-result-card__snippet"
-      data-testid="search-result-snippet"
-    >
+    <p class="search-result-card__snippet" data-testid="search-result-snippet">
       {{ snippet }}
     </p>
   </RouterLink>

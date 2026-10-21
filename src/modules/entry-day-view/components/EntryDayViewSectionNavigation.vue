@@ -51,10 +51,7 @@ defineEmits<{
 </script>
 
 <template>
-  <section
-    aria-label="Day navigation"
-    class="entry-day-view-section-navigation"
-  >
+  <section class="entry-day-view-section-navigation">
     <EntryDayViewNavigator
       :current-date="currentDate"
       @next-day="$emit('next-day')"
@@ -63,30 +60,17 @@ defineEmits<{
     />
 
     <div class="entry-day-view-section-actions">
-      <BaseIconButton
-        v-if="!isToday"
-        aria-label="Jump to today"
-        @click="$emit('go-to-today')"
-      >
+      <BaseIconButton v-if="!isToday" aria-label="Jump to today" @click="$emit('go-to-today')">
         <BaseIcon name="today" />
       </BaseIconButton>
       <SharedKeyboardShortcutsHelp />
-      <BaseIconButton
-        aria-label="Search"
-        :to="ROUTES.SEARCH"
-      >
+      <BaseIconButton aria-label="Search" :to="ROUTES.SEARCH">
         <BaseIcon name="search" />
       </BaseIconButton>
-      <BaseIconButton
-        aria-label="Tags"
-        :to="ROUTES.TAGS"
-      >
+      <BaseIconButton aria-label="Tags" :to="ROUTES.TAGS">
         <BaseIcon name="tags" />
       </BaseIconButton>
-      <BaseIconButton
-        aria-label="Settings"
-        :to="ROUTES.SETTINGS"
-      >
+      <BaseIconButton aria-label="Settings" :to="ROUTES.SETTINGS">
         <BaseIcon name="settings" />
       </BaseIconButton>
     </div>

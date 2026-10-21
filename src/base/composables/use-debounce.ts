@@ -5,9 +5,9 @@
  * Useful for search inputs to reduce API calls/filtering frequency.
  */
 
-import { customRef } from 'vue'
+import { customRef } from 'vue';
 
-import type { Ref } from 'vue'
+import type { Ref } from 'vue';
 
 /**
  * Creates a debounced ref that delays updating its value.
@@ -23,22 +23,22 @@ import type { Ref } from 'vue'
  * ```
  */
 export function useDebounce<T>(initialValue: T, delay = 150): Ref<T> {
-  let timeout: ReturnType<typeof setTimeout> | null = null
-  let currentValue = initialValue
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let currentValue = initialValue;
 
   return customRef((track, trigger) => ({
     get() {
-      track()
-      return currentValue
+      track();
+      return currentValue;
     },
     set(newValue: T) {
       if (timeout) {
-        clearTimeout(timeout)
+        clearTimeout(timeout);
       }
       timeout = setTimeout(() => {
-        currentValue = newValue
-        trigger()
-      }, delay)
-    }
-  }))
+        currentValue = newValue;
+        trigger();
+      }, delay);
+    },
+  }));
 }

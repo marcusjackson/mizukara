@@ -17,13 +17,11 @@
  * @returns The vector, or an empty array if there is nothing usable.
  */
 export function readVector(output: unknown): number[] {
-  const data = (output as { data?: unknown } | null)?.data
+  const data = (output as { data?: unknown } | null)?.data;
   if (data instanceof Float32Array || data instanceof Float64Array) {
-    return Array.from(data)
+    return Array.from(data);
   }
-  return Array.isArray(data) && data.every((n) => typeof n === 'number')
-    ? data
-    : []
+  return Array.isArray(data) && data.every((n) => typeof n === 'number') ? data : [];
 }
 
 /**
@@ -36,7 +34,7 @@ export function describeFailure(error: unknown): string {
   if (error instanceof Error) {
     return error.name === 'QuotaExceededError'
       ? 'There is not enough free storage for this model. Free some space and try again.'
-      : error.message
+      : error.message;
   }
-  return 'The model failed for an unknown reason.'
+  return 'The model failed for an unknown reason.';
 }

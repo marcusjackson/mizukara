@@ -6,155 +6,175 @@ import {
   createTestDatabaseForEntries,
   seedEntry,
   seedEntryTag,
-  seedTag
-} from '@test/helpers/database'
-import { beforeEach, describe, expect, it } from 'vitest'
+  seedTag,
+} from '@test/helpers/database';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { dedupeActiveTags } from './device-sync-tag-dedupe'
+import { dedupeActiveTags } from './device-sync-tag-dedupe';
 
-import type { Database } from 'sql.js'
+import type { Database } from 'sql.js';
 
 /** Drop the migration-003 unique index so tests can seed a colliding pre-dedupe state directly. */
 function dropTagsNameUniqueIndex(db: Database): void {
-  db.run('DROP INDEX IF EXISTS idx_tags_name_active_unique')
+  db.run('DROP INDEX IF EXISTS idx_tags_name_active_unique');
 }
 
 function activeTagIds(db: Database): string[] {
-  const result = db.exec(
-    'SELECT id FROM tags WHERE is_deleted = 0 ORDER BY id ASC'
-  )
-  return (result[0]?.values ?? []).map((row) => row[0] as string)
+  const result = db.exec('SELECT id FROM tags WHERE is_deleted = 0 ORDER BY id ASC');
+  return (result[0]?.values ?? []).map((row) => row[0] as string);
 }
 
 function activeEntryTagPairs(db: Database): [string, string][] {
   const result = db.exec(
     'SELECT entry_id, tag_id FROM entry_tags WHERE is_deleted = 0 ORDER BY id ASC'
-  )
-  return (result[0]?.values ?? []).map(
-    (row) => [row[0], row[1]] as [string, string]
-  )
+  );
+  return (result[0]?.values ?? []).map((row) => [row[0], row[1]] as [string, string]);
 }
 
 describe('device-sync-tag-dedupe', () => {
-  let db: Database
+  let db: Database;
 
   beforeEach(async () => {
-    db = await createTestDatabaseForEntries()
-    dropTagsNameUniqueIndex(db)
-  })
+    db = await createTestDatabaseForEntries();
+    dropTagsNameUniqueIndex(db);
+  });
 
   it('does nothing when no active tag names collide', () => {
-    seedTag(db, { id: 'a', name: 'work' })
-    seedTag(db, { id: 'b', name: 'personal' })
+    seedTag(db, { id: 'a', name: 'work' });
+    seedTag(db, { id: 'b', name: 'personal' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    expect(activeTagIds(db)).toEqual(['a', 'b'])
-  })
+    expect(activeTagIds(db)).toEqual(['a', 'b']);
+  });
 
   it('keeps the lexicographically smallest id and soft-deletes the rest for a case-insensitive collision', () => {
-    seedTag(db, { id: 'bbbb', name: 'Work' })
-    seedTag(db, { id: 'aaaa', name: 'work' })
+    seedTag(db, { id: 'bbbb', name: 'Work' });
+    seedTag(db, { id: 'aaaa', name: 'work' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    expect(activeTagIds(db)).toEqual(['aaaa'])
+    expect(activeTagIds(db)).toEqual(['aaaa']);
 
-    const loser = db.exec('SELECT is_deleted FROM tags WHERE id = ?', ['bbbb'])
-    expect(loser[0]?.values[0]).toEqual([1])
-  })
+    const loser = db.exec('SELECT is_deleted FROM tags WHERE id = ?', ['bbbb']);
+    expect(loser[0]?.values[0]).toEqual([1]);
+  });
 
   it('treats names differing only by an accented capital as distinct, like the name rule', () => {
-    seedTag(db, { id: 'a', name: 'Élan' })
-    seedTag(db, { id: 'b', name: 'élan' })
+    seedTag(db, { id: 'a', name: 'Élan' });
+    seedTag(db, { id: 'b', name: 'élan' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    expect(activeTagIds(db)).toEqual(['a', 'b'])
-  })
+    expect(activeTagIds(db)).toEqual(['a', 'b']);
+  });
 
   it('resolves a three-way collision down to a single survivor', () => {
-    seedTag(db, { id: 'c', name: 'WORK' })
-    seedTag(db, { id: 'a', name: 'work' })
-    seedTag(db, { id: 'b', name: 'Work' })
+    seedTag(db, { id: 'c', name: 'WORK' });
+    seedTag(db, { id: 'a', name: 'work' });
+    seedTag(db, { id: 'b', name: 'Work' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    expect(activeTagIds(db)).toEqual(['a'])
-  })
+    expect(activeTagIds(db)).toEqual(['a']);
+  });
 
   it('does not touch already soft-deleted tags with a colliding name', () => {
-    seedTag(db, { id: 'a', name: 'work', isDeleted: true })
-    seedTag(db, { id: 'b', name: 'work' })
+    seedTag(db, { id: 'a', name: 'work', isDeleted: true });
+    seedTag(db, { id: 'b', name: 'work' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    expect(activeTagIds(db)).toEqual(['b'])
-  })
+    expect(activeTagIds(db)).toEqual(['b']);
+  });
 
   it('repoints entry_tags rows referencing a soft-deleted loser to the survivor', () => {
-    seedTag(db, { id: 'bbbb', name: 'Work' })
-    seedTag(db, { id: 'aaaa', name: 'work' })
-    const entryId = seedEntry(db).id
-    seedEntryTag(db, { entryId, tagId: 'bbbb' })
+    seedTag(db, { id: 'bbbb', name: 'Work' });
+    seedTag(db, { id: 'aaaa', name: 'work' });
+    const entryId = seedEntry(db).id;
+    seedEntryTag(db, { entryId, tagId: 'bbbb' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    expect(activeEntryTagPairs(db)).toEqual([[entryId, 'aaaa']])
-  })
+    expect(activeEntryTagPairs(db)).toEqual([[entryId, 'aaaa']]);
+  });
 
   it('soft-deletes the entry_tags duplicate that repointing produces, keeping the smallest id', () => {
-    seedTag(db, { id: 'bbbb', name: 'Work' })
-    seedTag(db, { id: 'aaaa', name: 'work' })
-    const entryId = seedEntry(db).id
+    seedTag(db, { id: 'bbbb', name: 'Work' });
+    seedTag(db, { id: 'aaaa', name: 'work' });
+    const entryId = seedEntry(db).id;
     // Entry already tagged with the eventual survivor...
-    seedEntryTag(db, { id: 'et-2', entryId, tagId: 'aaaa' })
+    seedEntryTag(db, { id: 'et-2', entryId, tagId: 'aaaa' });
     // ...and separately tagged with the eventual loser — repointing this
     // one onto 'aaaa' would duplicate the pair above.
-    seedEntryTag(db, { id: 'et-1', entryId, tagId: 'bbbb' })
+    seedEntryTag(db, { id: 'et-1', entryId, tagId: 'bbbb' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
-    const pairs = activeEntryTagPairs(db)
-    expect(pairs).toEqual([[entryId, 'aaaa']])
+    const pairs = activeEntryTagPairs(db);
+    expect(pairs).toEqual([[entryId, 'aaaa']]);
 
     // The smaller-id entry_tags row survives; the other is soft-deleted.
-    const survivor = db.exec('SELECT is_deleted FROM entry_tags WHERE id = ?', [
-      'et-1'
-    ])
-    expect(survivor[0]?.values[0]).toEqual([0])
-    const deduped = db.exec('SELECT is_deleted FROM entry_tags WHERE id = ?', [
-      'et-2'
-    ])
-    expect(deduped[0]?.values[0]).toEqual([1])
-  })
+    const survivor = db.exec('SELECT is_deleted FROM entry_tags WHERE id = ?', ['et-1']);
+    expect(survivor[0]?.values[0]).toEqual([0]);
+    const deduped = db.exec('SELECT is_deleted FROM entry_tags WHERE id = ?', ['et-2']);
+    expect(deduped[0]?.values[0]).toEqual([1]);
+  });
 
   it('never leaves an entry_tags row pointing at a soft-deleted tag', () => {
-    seedTag(db, { id: 'bbbb', name: 'Work' })
-    seedTag(db, { id: 'aaaa', name: 'work' })
-    const entryId1 = seedEntry(db, { assignedDay: '2022-01-01' }).id
-    const entryId2 = seedEntry(db, { assignedDay: '2022-01-02' }).id
-    seedEntryTag(db, { entryId: entryId1, tagId: 'bbbb' })
-    seedEntryTag(db, { entryId: entryId2, tagId: 'bbbb' })
+    seedTag(db, { id: 'bbbb', name: 'Work' });
+    seedTag(db, { id: 'aaaa', name: 'work' });
+    const entryId1 = seedEntry(db, { assignedDay: '2022-01-01' }).id;
+    const entryId2 = seedEntry(db, { assignedDay: '2022-01-02' }).id;
+    seedEntryTag(db, { entryId: entryId1, tagId: 'bbbb' });
+    seedEntryTag(db, { entryId: entryId2, tagId: 'bbbb' });
 
-    dedupeActiveTags(db)
+    dedupeActiveTags(db);
 
     const orphaned = db.exec(
       `SELECT entry_tags.id FROM entry_tags
        JOIN tags ON tags.id = entry_tags.tag_id
        WHERE entry_tags.is_deleted = 0 AND tags.is_deleted = 1`
-    )
-    expect(orphaned).toEqual([])
-  })
+    );
+    expect(orphaned).toEqual([]);
+  });
 
   it('is idempotent — running it again after resolving a collision changes nothing further', () => {
-    seedTag(db, { id: 'bbbb', name: 'Work' })
-    seedTag(db, { id: 'aaaa', name: 'work' })
+    seedTag(db, { id: 'bbbb', name: 'Work' });
+    seedTag(db, { id: 'aaaa', name: 'work' });
 
-    dedupeActiveTags(db)
-    const afterFirstRun = activeTagIds(db)
+    dedupeActiveTags(db);
+    const afterFirstRun = activeTagIds(db);
 
-    dedupeActiveTags(db)
-    expect(activeTagIds(db)).toEqual(afterFirstRun)
-  })
-})
+    dedupeActiveTags(db);
+    expect(activeTagIds(db)).toEqual(afterFirstRun);
+  });
+
+  it('stamps a deletion newer than the loser even when this device clock is behind', () => {
+    const ahead = Date.now() + 60_000;
+    seedTag(db, { id: 'aaaa', name: 'work' });
+    seedTag(db, { id: 'bbbb', name: 'Work', updatedAt: ahead });
+
+    dedupeActiveTags(db);
+
+    const loser = db.exec('SELECT updated_at FROM tags WHERE id = ?', ['bbbb']);
+    expect(loser[0]?.values[0]?.[0]).toBeGreaterThan(ahead);
+  });
+
+  it('stamps repointed and deduped entry_tags rows newer than their own stamps when the clock is behind', () => {
+    const ahead = Date.now() + 60_000;
+    seedTag(db, { id: 'bbbb', name: 'Work' });
+    seedTag(db, { id: 'aaaa', name: 'work' });
+    const entryId = seedEntry(db).id;
+    seedEntryTag(db, { id: 'et-2', entryId, tagId: 'aaaa', updatedAt: ahead });
+    seedEntryTag(db, { id: 'et-1', entryId, tagId: 'bbbb', updatedAt: ahead });
+
+    dedupeActiveTags(db);
+
+    const stamps = db.exec('SELECT id, updated_at FROM entry_tags ORDER BY id ASC');
+    for (const row of stamps[0]?.values ?? []) {
+      expect(row[1] as number).toBeGreaterThan(ahead);
+    }
+    expect(stamps[0]?.values).toHaveLength(2);
+  });
+});

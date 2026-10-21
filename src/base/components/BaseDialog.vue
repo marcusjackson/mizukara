@@ -27,36 +27,24 @@ const open = defineModel<boolean>('open', { default: false })
 </script>
 
 <template>
-  <DialogRoot
-    :open="open"
-    @update:open="(val) => (open = val)"
-  >
+  <DialogRoot :open="open" @update:open="(val) => (open = val)">
     <slot name="trigger" />
 
     <DialogPortal>
       <DialogOverlay class="base-dialog-overlay" />
 
       <DialogContent class="base-dialog-content">
-        <DialogTitle
-          v-if="title"
-          class="base-dialog-title"
-        >
+        <DialogTitle v-if="title" class="base-dialog-title">
           {{ title }}
         </DialogTitle>
 
-        <DialogDescription
-          v-if="description"
-          class="base-dialog-description"
-        >
+        <DialogDescription v-if="description" class="base-dialog-description">
           {{ description }}
         </DialogDescription>
 
         <slot />
 
-        <DialogClose
-          aria-label="Close"
-          class="base-dialog-close"
-        >
+        <DialogClose aria-label="Close" class="base-dialog-close">
           <svg
             aria-hidden="true"
             fill="none"

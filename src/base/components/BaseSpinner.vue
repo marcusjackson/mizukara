@@ -22,11 +22,7 @@ withDefaults(
 </script>
 
 <template>
-  <output
-    :aria-label="label"
-    class="base-spinner"
-    :class="`base-spinner-${size}`"
-  >
+  <output :aria-label="label" class="base-spinner" :class="`base-spinner-${size}`">
     <span class="base-spinner-circle" />
   </output>
 </template>

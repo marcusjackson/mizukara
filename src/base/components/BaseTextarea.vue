@@ -60,18 +60,9 @@ defineExpose({
 
 <template>
   <div class="base-textarea">
-    <label
-      v-if="label"
-      class="base-textarea-label"
-      :for="textareaId"
-    >
+    <label v-if="label" class="base-textarea-label" :for="textareaId">
       {{ label }}
-      <span
-        v-if="required"
-        aria-hidden="true"
-        class="base-textarea-required"
-        >*</span
-      >
+      <span v-if="required" aria-hidden="true" class="base-textarea-required">*</span>
     </label>
 
     <textarea
@@ -88,12 +79,7 @@ defineExpose({
       :rows="rows ?? 4"
     />
 
-    <p
-      v-if="error"
-      :id="`${textareaId}-error`"
-      class="base-textarea-error"
-      role="alert"
-    >
+    <p v-if="error" :id="`${textareaId}-error`" class="base-textarea-error" role="alert">
       {{ error }}
     </p>
   </div>

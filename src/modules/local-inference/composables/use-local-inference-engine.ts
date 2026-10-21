@@ -14,19 +14,19 @@
  * state, following the shape of `use-device-sync-session.ts`.
  */
 
-import { readonly } from 'vue'
+import { readonly } from 'vue';
 
-import { TIMEOUTS } from '@/shared/constants/timeouts'
+import { TIMEOUTS } from '@/shared/constants/timeouts';
 
-import { EMBEDDING_MODEL } from '../utils/embedding-model'
-import { probeInferenceSupport } from '../utils/inference-support'
-import { createInferenceWorkerClient } from '../utils/inference-worker-client'
+import { EMBEDDING_MODEL } from '../utils/embedding-model';
+import { probeInferenceSupport } from '../utils/inference-support';
+import { createInferenceWorkerClient } from '../utils/inference-worker-client';
 import {
   deleteModelFiles,
   readModelInstallState,
-  requestPersistentStorage
-} from '../utils/model-cache-storage'
-import { LOCAL_INFERENCE_MODEL } from '../utils/model-registry'
+  requestPersistentStorage,
+} from '../utils/model-cache-storage';
+import { LOCAL_INFERENCE_MODEL } from '../utils/model-registry';
 
 import {
   downloadProgress,
@@ -38,14 +38,14 @@ import {
   isStoragePersistent,
   restingState,
   state,
-  unsupportedReason
-} from './local-inference-engine-state'
+  unsupportedReason,
+} from './local-inference-engine-state';
 
-import type { UseLocalInferenceEngine } from '../local-inference-types'
+import type { UseLocalInferenceEngine } from '../local-inference-types';
 
-const client = createInferenceWorkerClient()
-let initPromise: Promise<void> | null = null
-let idleTimer: ReturnType<typeof setTimeout> | null = null
+const client = createInferenceWorkerClient();
+let initPromise: Promise<void> | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * Incremented by every teardown.
@@ -55,20 +55,20 @@ let idleTimer: ReturnType<typeof setTimeout> | null = null
  * way to tell "the worker was stopped on purpose" from "the worker failed",
  * cancelling a download reports the internal stop reason as an error.
  */
-let teardownCount = 0
+let teardownCount = 0;
 
 function clearIdleTimer(): void {
   if (idleTimer !== null) {
-    clearTimeout(idleTimer)
-    idleTimer = null
+    clearTimeout(idleTimer);
+    idleTimer = null;
   }
 }
 
 function startIdleTimer(): void {
-  clearIdleTimer()
+  clearIdleTimer();
   idleTimer = setTimeout(() => {
-    teardown()
-  }, TIMEOUTS.INFERENCE_IDLE_TEARDOWN)
+    teardown();
+  }, TIMEOUTS.INFERENCE_IDLE_TEARDOWN);
 }
 
 /**
@@ -78,18 +78,22 @@ function startIdleTimer(): void {
  * left waiting on a worker that no longer exists.
  */
 function teardown(): void {
-  teardownCount += 1
-  clearIdleTimer()
-  client.terminate('The model was unloaded.')
-  isLoaded.value = false
-  downloadProgress.value = null
+  teardownCount += 1;
+  clearIdleTimer();
+  client.terminate('The model was unloaded.');
+  isLoaded.value = false;
+  downloadProgress.value = null;
   if (state.value !== 'error') {
-    state.value = restingState()
+    state.value = restingState();
   }
 }
 
+/** A failed read counts as nothing installed, so no caller has to catch it. */
 async function refreshInstallState(): Promise<void> {
-  installState.value = await readModelInstallState()
+  installState.value = await readModelInstallState().catch(() => ({
+    hasAnyFiles: false,
+    isInstalled: false,
+  }));
 }
 
 /**
@@ -99,9 +103,9 @@ async function refreshInstallState(): Promise<void> {
  * would drop the busy guard mid-load.
  */
 async function resyncWithStorage(): Promise<void> {
-  await refreshInstallState()
+  await refreshInstallState();
   if (state.value !== 'error' && !isBusy()) {
-    state.value = restingState()
+    state.value = restingState();
   }
 }
 
@@ -111,24 +115,24 @@ async function resyncWithStorage(): Promise<void> {
  */
 function handleVisibilityChange(): void {
   if (document.visibilityState === 'visible' && !isBusy() && !isLoaded.value) {
-    void resyncWithStorage()
+    void resyncWithStorage();
   }
 }
 
 async function initialize(): Promise<void> {
   initPromise ??= (async () => {
-    const unsupported = probeInferenceSupport()
+    const unsupported = probeInferenceSupport();
     if (unsupported) {
-      unsupportedReason.value = unsupported
-      state.value = 'unsupported'
-      return
+      unsupportedReason.value = unsupported;
+      state.value = 'unsupported';
+      return;
     }
-    await refreshInstallState()
-    state.value = restingState()
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-  })()
+    await refreshInstallState();
+    state.value = restingState();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  })();
 
-  return initPromise
+  return initPromise;
 }
 
 /**
@@ -140,57 +144,57 @@ async function initialize(): Promise<void> {
  */
 async function loadModel(): Promise<boolean> {
   if (isLoaded.value) {
-    return true
+    return true;
   }
 
   // A model already loaded has a teardown timer running. Left alone, it can
   // fire part-way through this load and stop the worker mid-download.
-  clearIdleTimer()
+  clearIdleTimer();
 
-  const startedAt = teardownCount
-  const isInstalled = installState.value.isInstalled
+  const startedAt = teardownCount;
+  const isInstalled = installState.value.isInstalled;
 
   // Set before the first await, not after. The busy guard callers rely on is
   // this state value, and leaving it unset across an await lets a second
   // request slip past and start a second load of the same model.
-  state.value = isInstalled ? 'loading' : 'downloading'
+  state.value = isInstalled ? 'loading' : 'downloading';
 
   if (!isInstalled) {
-    downloadProgress.value = 0
-    isStoragePersistent.value = await requestPersistentStorage()
+    downloadProgress.value = 0;
+    isStoragePersistent.value = await requestPersistentStorage();
 
     // Asking the browser about storage is the first thing that yields, and a
     // cancel can land inside that window. Without this the download starts
     // anyway, after the person has already stopped it.
     if (teardownCount !== startedAt) {
-      return false
+      return false;
     }
   }
 
   try {
     await client.load(LOCAL_INFERENCE_MODEL, (percent) => {
-      downloadProgress.value = percent
-    })
+      downloadProgress.value = percent;
+    });
   } catch (err) {
     if (teardownCount !== startedAt) {
       // Stopped deliberately — cancelled, deleted, or timed out.
-      return false
+      return false;
     }
-    fail(err instanceof Error ? err.message : 'The model failed to load.')
+    fail(err instanceof Error ? err.message : 'The model failed to load.');
     // A failed load can leave a started worker behind with no idle timer.
-    teardown()
-    return false
+    teardown();
+    return false;
   }
 
   if (teardownCount !== startedAt) {
-    return false
+    return false;
   }
-  downloadProgress.value = null
-  isLoaded.value = true
-  await refreshInstallState()
-  state.value = 'ready'
-  startIdleTimer()
-  return true
+  downloadProgress.value = null;
+  isLoaded.value = true;
+  await refreshInstallState();
+  state.value = 'ready';
+  startIdleTimer();
+  return true;
 }
 
 /**
@@ -201,28 +205,23 @@ async function loadModel(): Promise<boolean> {
  */
 async function downloadModel(): Promise<void> {
   if (isBusy()) {
-    error.value =
-      'The model is busy with something else. Try again once it has finished.'
-    return
+    error.value = 'The model is busy with something else. Try again once it has finished.';
+    return;
   }
-  error.value = null
+  error.value = null;
   if (await loadModel()) {
-    teardown()
+    teardown();
   }
 }
 
 /** Stop a download in progress. Anything already written stays on disk. */
 function cancelDownload(): void {
   if (state.value !== 'downloading') {
-    return
+    return;
   }
-  teardown()
+  teardown();
   // The weights may have finished writing just before the cancel.
-  void refreshInstallState().then(() => {
-    if (state.value !== 'error' && !isBusy()) {
-      state.value = restingState()
-    }
-  })
+  void resyncWithStorage();
 }
 
 /**
@@ -232,9 +231,9 @@ function cancelDownload(): void {
  * memory and leaves the engine reporting a model it can no longer reload.
  */
 async function deleteModel(): Promise<void> {
-  teardown()
-  await deleteModelFiles()
-  await resyncWithStorage()
+  teardown();
+  await deleteModelFiles();
+  await resyncWithStorage();
 }
 
 /**
@@ -248,49 +247,51 @@ async function deleteModel(): Promise<void> {
  */
 async function embed(text: string): Promise<number[] | null> {
   if (isBusy()) {
-    error.value =
-      'The model is busy with something else. Try again once it has finished.'
-    return null
+    error.value = 'The model is busy with something else. Try again once it has finished.';
+    return null;
   }
-  error.value = null
+  error.value = null;
 
   if (!isLoaded.value) {
     if (!installState.value.isInstalled) {
-      error.value = 'The model has not been downloaded yet.'
-      return null
+      error.value = 'The model has not been downloaded yet.';
+      return null;
     }
     if (!(await loadModel())) {
-      return null
+      return null;
     }
   }
 
-  const startedAt = teardownCount
-  clearIdleTimer()
-  state.value = 'working'
+  const startedAt = teardownCount;
+  clearIdleTimer();
+  state.value = 'working';
   try {
-    const vector = await client.embed(text)
-    state.value = 'ready'
-    startIdleTimer()
+    const vector = await client.embed(text);
+    state.value = 'ready';
+    startIdleTimer();
     if (vector.length !== EMBEDDING_MODEL.dimensions) {
       // The head would throw on it, or worse, score the wrong thing.
-      error.value = 'The model returned an unusable result.'
-      return null
+      error.value = 'The model returned an unusable result.';
+      return null;
     }
-    return vector
+    return vector;
   } catch (err) {
     if (teardownCount !== startedAt) {
-      return null
+      return null;
     }
-    fail(err instanceof Error ? err.message : 'Embedding failed.')
+    fail(err instanceof Error ? err.message : 'Embedding failed.');
     // Otherwise the model stays resident with no idle timer to free it.
-    teardown()
-    return null
+    teardown();
+    return null;
   }
 }
 
 function dismissError(): void {
-  error.value = null
-  state.value = restingState()
+  error.value = null;
+  // Dismissing a stale error must not reset a download or load now running.
+  if (state.value === 'error') {
+    state.value = restingState();
+  }
 }
 
 /** The single engine, shared by every caller in this tab. */
@@ -308,6 +309,6 @@ export function useLocalInferenceEngine(): UseLocalInferenceEngine {
     isStoragePersistent: readonly(isStoragePersistent),
     state: readonly(state),
     teardown,
-    unsupportedReason: readonly(unsupportedReason)
-  }
+    unsupportedReason: readonly(unsupportedReason),
+  };
 }

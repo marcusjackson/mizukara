@@ -5,24 +5,23 @@
  * Handles creating, updating, and deleting entries.
  */
 
-import { EntityNotFoundError } from '@/api/types'
+import { EntityNotFoundError } from '@/api/types';
 
-import { generateUUID } from '@/shared/utils/uuid-utils'
+import { generateUUID } from '@/shared/utils/uuid-utils';
 
-import { schedulePersist } from '@/db/indexeddb'
+import { schedulePersist } from '@/db/indexeddb';
 
-import { buildColumnMap, rowToEntry } from './entry-helpers'
-import { validateEntryInput } from './entry-validation'
+import { buildColumnMap, rowToEntry } from './entry-helpers';
+import { validateEntryInput } from './entry-validation';
 
-import type {
-  CreateEntryInput,
-  Entry,
-  UpdateEntryInput
-} from '@/shared/types/entry-types'
-import type { Database, SqlValue } from 'sql.js'
+import type { CreateEntryInput, Entry, UpdateEntryInput } from '@/shared/types/entry-types';
+import type { Database, SqlValue } from 'sql.js';
 
 /**
  * Fetch entry by ID from database
+ *
+ * Unlike `findById` in the queries module, this returns soft-deleted rows too:
+ * `softDeleteEntry` must return the row it just deleted.
  *
  * @param db - SQLite database instance
  * @param id - Entry UUID to fetch
@@ -37,14 +36,26 @@ function fetchEntryById(db: Database, id: string): Entry {
     WHERE id = ?
   `,
     [id]
-  )
+  );
 
   if (!result[0]?.values[0]) {
-    throw new EntityNotFoundError('Entry', id)
+    throw new EntityNotFoundError('Entry', id);
   }
 
-  const cols = buildColumnMap(result[0].columns)
-  return rowToEntry(result[0].values[0], cols)
+  const cols = buildColumnMap(result[0].columns);
+  return rowToEntry(result[0].values[0], cols);
+}
+
+/**
+ * Throw if the last UPDATE touched no row: the id is unknown or the entry is soft-deleted.
+ * Mutations refuse deleted rows so a stale editor cannot revive text or bump
+ * `updated_at` past a synced delete.
+ */
+function assertRowUpdated(db: Database, id: string): void {
+  const changes = db.exec('SELECT changes()')[0]?.values[0]?.[0];
+  if (changes === 0) {
+    throw new EntityNotFoundError('Entry', id);
+  }
 }
 
 /**
@@ -69,13 +80,13 @@ function fetchEntryById(db: Database, id: string): Entry {
  * console.log(entry.orderPosition) // 0 (if first entry for this day)
  */
 export function createEntry(db: Database, input: CreateEntryInput): Entry {
-  const { assignedDay, content } = input
+  const { assignedDay, content } = input;
 
   // Validate input
-  validateEntryInput({ content, assignedDay })
+  validateEntryInput({ content, assignedDay });
 
-  const id = generateUUID()
-  const now = Date.now()
+  const id = generateUUID();
+  const now = Date.now();
 
   // Calculate order_position: max for the day + 1, or 0 if none
   const maxResult = db.exec(
@@ -85,11 +96,11 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
     WHERE assigned_day = ? AND is_deleted = 0
   `,
     [assignedDay]
-  )
+  );
 
-  const rawMax = maxResult[0]?.values[0]?.[0]
-  const maxPos = typeof rawMax === 'number' ? rawMax : null
-  const orderPosition = maxPos == null ? 0 : maxPos + 1
+  const rawMax = maxResult[0]?.values[0]?.[0];
+  const maxPos = typeof rawMax === 'number' ? rawMax : null;
+  const orderPosition = maxPos == null ? 0 : maxPos + 1;
 
   // Insert the entry
   db.run(
@@ -100,10 +111,10 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
     ) VALUES (?, ?, ?, ?, ?, ?, 0)
   `,
     [id, content, now, now, assignedDay, orderPosition]
-  )
+  );
 
-  schedulePersist()
-  return fetchEntryById(db, id)
+  schedulePersist();
+  return fetchEntryById(db, id);
 }
 
 /**
@@ -117,7 +128,7 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
  * @param input - Partial update data (content, assignedDay, and/or orderPosition)
  * @returns Updated entry with new values
  * @throws {EntryValidationError} If content is empty or assignedDay format is invalid
- * @throws {EntityNotFoundError} If entry with given ID does not exist
+ * @throws {EntityNotFoundError} If entry with given ID does not exist or is soft-deleted
  *
  * @example
  * // Update only content
@@ -133,92 +144,87 @@ export function createEntry(db: Database, input: CreateEntryInput): Entry {
  *   orderPosition: 5
  * })
  */
-export function updateEntry(
-  db: Database,
-  id: string,
-  input: UpdateEntryInput
-): Entry {
-  if (Object.keys(input).length === 0) return fetchEntryById(db, id)
+export function updateEntry(db: Database, id: string, input: UpdateEntryInput): Entry {
+  if (Object.keys(input).length === 0) {
+    const current = fetchEntryById(db, id);
+    if (current.isDeleted) throw new EntityNotFoundError('Entry', id);
+    return current;
+  }
 
   // Validate input
-  const validationInput: { content?: string; assignedDay?: string } = {}
-  if (input.content !== undefined) validationInput.content = input.content
-  if (input.assignedDay !== undefined)
-    validationInput.assignedDay = input.assignedDay
-  validateEntryInput(validationInput)
+  const validationInput: { content?: string; assignedDay?: string } = {};
+  if (input.content !== undefined) validationInput.content = input.content;
+  if (input.assignedDay !== undefined) validationInput.assignedDay = input.assignedDay;
+  validateEntryInput(validationInput);
 
-  const now = Date.now()
+  const now = Date.now();
 
   // Build dynamic update query
-  const updates: string[] = []
-  const valueList: SqlValue[] = []
+  const updates: string[] = [];
+  const valueList: SqlValue[] = [];
 
   if (input.content !== undefined) {
-    updates.push('content = ?')
-    valueList.push(input.content)
+    updates.push('content = ?');
+    valueList.push(input.content);
   }
 
   if (input.assignedDay !== undefined) {
-    updates.push('assigned_day = ?')
-    valueList.push(input.assignedDay)
+    updates.push('assigned_day = ?');
+    valueList.push(input.assignedDay);
   }
 
   if (input.orderPosition !== undefined) {
-    updates.push('order_position = ?')
-    valueList.push(input.orderPosition)
+    updates.push('order_position = ?');
+    valueList.push(input.orderPosition);
   }
 
-  updates.push('updated_at = ?')
-  valueList.push(now)
+  updates.push('updated_at = ?');
+  valueList.push(now);
 
-  const values = [...valueList, id]
+  const values = [...valueList, id];
 
   const sql = `
     UPDATE entries
     SET ${updates.join(', ')}
-    WHERE id = ?
-  `
+    WHERE id = ? AND is_deleted = 0
+  `;
 
-  db.run(sql, values)
+  db.run(sql, values);
+  assertRowUpdated(db, id);
 
-  schedulePersist()
-  return fetchEntryById(db, id)
+  schedulePersist();
+  return fetchEntryById(db, id);
 }
 
 /**
  * Update only the order position of an entry
  *
  * Used for reordering entries within a day. More efficient than updateEntry
- * when only the position needs to change.
+ * when only the position needs to change. The value is a sort key, not a
+ * dense index: callers swap two entries' values, and a day's values may have
+ * gaps or ties.
  *
  * @param db - SQLite database instance
  * @param id - Entry UUID to update
- * @param newOrderPosition - New order position value (0-based index)
+ * @param newOrderPosition - New sort-key value for the entry
  * @returns Updated entry with new order position
- * @throws {EntityNotFoundError} If entry with given ID does not exist
- *
- * @example
- * // Move entry to position 3 within its day
- * updateOrderPosition(db, entryId, 3)
+ * @throws {EntityNotFoundError} If entry with given ID does not exist or is soft-deleted
  */
-export function updateOrderPosition(
-  db: Database,
-  id: string,
-  newOrderPosition: number
-): Entry {
-  const now = Date.now()
+export function updateOrderPosition(db: Database, id: string, newOrderPosition: number): Entry {
+  const now = Date.now();
 
   db.run(
     `
     UPDATE entries
     SET order_position = ?, updated_at = ?
-    WHERE id = ?
+    WHERE id = ? AND is_deleted = 0
   `,
     [newOrderPosition, now, id]
-  )
+  );
+  assertRowUpdated(db, id);
 
-  schedulePersist()
-  return fetchEntryById(db, id)
+  schedulePersist();
+  return fetchEntryById(db, id);
 }
 
 /**
@@ -232,24 +238,25 @@ export function updateOrderPosition(
  * @param db - SQLite database instance
  * @param id - Entry UUID to delete
  * @returns Updated entry with isDeleted set to true
- * @throws {EntityNotFoundError} If entry with given ID does not exist
+ * @throws {EntityNotFoundError} If entry with given ID does not exist or is soft-deleted
  *
  * @example
  * const deleted = softDeleteEntry(db, entryId)
  * console.log(deleted.isDeleted) // true
  */
 export function softDeleteEntry(db: Database, id: string): Entry {
-  const now = Date.now()
+  const now = Date.now();
 
   db.run(
     `
     UPDATE entries
     SET is_deleted = 1, updated_at = ?
-    WHERE id = ?
+    WHERE id = ? AND is_deleted = 0
   `,
     [now, id]
-  )
+  );
+  assertRowUpdated(db, id);
 
-  schedulePersist()
-  return fetchEntryById(db, id)
+  schedulePersist();
+  return fetchEntryById(db, id);
 }

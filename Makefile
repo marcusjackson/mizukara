@@ -162,7 +162,7 @@ test-e2e-production: check-node
 # Combined Commands (lint = CI-style check)
 # =============================================================================
 
-# Full CI-style lint check (matches pnpm lint behavior)
+# Full CI-style lint check (a superset of pnpm lint: adds the CSS variable and doc link checks)
 # Runs: Prettier check + ESLint check + Stylelint check + Type check + CSS variable check + doc link check
 lint:
 	@echo "Running type check..."
@@ -257,23 +257,24 @@ ci:
 	$(call gate_do,find-untested,$(and $(not_docs),$(run_unit)),python3 find-untested-files.py,no unit-suite paths changed)
 	$(gate_summary)
 
-# Quick tier for the pre-push hook (.githooks/pre-push): lint plus the tests related to the pushed paths.
-# The coverage run, unused/untested scans and e2e stay in `ci`, the merge gate.
+# Quick tier for the pre-push hook (.githooks/pre-push): type-check and lint of the pushed paths, no tests. A push waits
+# on an open SSH connection and sessions push in parallel, so it stays short. Tests, coverage, the unused/untested
+# scans and e2e belong to the agent and `ci`, the merge gate.
 push_src = $(wildcard $(filter src/%.ts src/%.tsx src/%.vue src/%.js test/%.ts,$(gate_paths)))
 push_test = $(if $(filter vitest.config.ts tsconfig.test.json,$(gate_paths)),pnpm test,pnpm exec vitest related --run $(push_src))
 pre-push:
 	$(gate_begin)
 	$(if $(docs_only),$(call gate_step,check-docs,$(MAKE) check-docs))
-	$(call gate_do,lint,$(not_docs),$(MAKE) lint,only docs paths changed)
+	$(call gate_do,lint,$(not_docs),$(MAKE) lint FILES="$(wildcard $(gate_paths))",only docs paths changed)
 	$(call gate_do,check-e2e-map,$(and $(not_docs),$(run_e2e)),$(MAKE) check-e2e-map,no e2e-suite paths changed)
-	$(call gate_do,test-related,$(and $(not_docs),$(or $(push_src),$(filter vitest.config.ts tsconfig.test.json,$(gate_paths)))),$(MAKE) test-related,no source paths changed)
-	$(call gate_skip,merge-gate-only,pre-push skips coverage and the unused/untested scans; make ci runs them)
+	$(call gate_skip,merge-gate-only,pre-push runs no tests, coverage or scans; make ci runs them)
 	$(gate_summary)
 
-# fleet:begin docs-gate-target sha=cfca3865e0 | machine-written; edit the source, not this region
+# fleet:begin docs-gate-target sha=059f1d1f8a | machine-written; edit the source, not this region
 # What markdown can break. DOCS_EXTRA names further targets to run (a repo whose convention
 # text is inlined into .claude/rules/ sets DOCS_EXTRA = check-rules, since a convention .md
 # feeds that generated text).
+.PHONY: check-docs
 check-docs: check-node
 	@$(MAKE) format-check FILES="$(wildcard $(gate_paths))"
 	@$(MAKE) check-links
@@ -370,17 +371,19 @@ check-unused:
 check-untested:
 	python3 find-untested-files.py
 
-# fleet:begin hooks-target sha=197971d12b | machine-written; edit the source, not this region
+# fleet:begin hooks-target sha=e3f49de9e7 | machine-written; edit the source, not this region
 # Point git at the tracked hooks. core.hooksPath is local config, so each clone runs this once.
+.PHONY: install-hooks
 install-hooks:
 	git config core.hooksPath .githooks
 # fleet:end hooks-target
 
-# fleet:begin e2e-related-target sha=1a424bc223 | machine-written; edit the source, not this region
+# fleet:begin e2e-related-target sha=f997795ed9 | machine-written; edit the source, not this region
 # Targeted e2e and VRT: run only what the changed paths can break (map: e2e/targets.map).
 #   make e2e-related            run the specs and VRT files the changes map to
 #   make e2e-related UPDATE=1   same, regenerating the VRT baselines it ran
 #   make e2e-related DRY=1      print the playwright commands without running them
+.PHONY: e2e-related
 e2e-related: check-node
 	@node scripts/e2e-related.mjs run --base $(GATE_BASE) $(if $(UPDATE),--update) $(if $(DRY),--dry)
 

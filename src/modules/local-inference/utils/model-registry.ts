@@ -12,9 +12,9 @@
  * It changes whenever a model is requantised.
  */
 
-import { EMBEDDING_MODEL } from './embedding-model'
+import { EMBEDDING_MODEL } from './embedding-model';
 
-import type { LocalInferenceModel } from '../local-inference-types'
+import type { LocalInferenceModel } from '../local-inference-types';
 
 export const LOCAL_INFERENCE_MODEL: LocalInferenceModel = {
   // 34,014,426 bytes of `model_quantized.onnx`, read from the model host.
@@ -23,5 +23,5 @@ export const LOCAL_INFERENCE_MODEL: LocalInferenceModel = {
   name: 'Tag suggestion model',
   note: 'Reads your entry on this device and ranks your tags by meaning. Nothing leaves your device except this one download.',
   repoId: EMBEDDING_MODEL.repoId,
-  weightsFile: EMBEDDING_MODEL.file
-}
+  weightsFile: EMBEDDING_MODEL.file,
+};

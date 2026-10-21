@@ -7,4 +7,4 @@
  * than duplicating that factory.
  */
 
-export { createTestDatabaseForEntries as createTestDatabaseForSearch } from '../entries/seeders'
+export { createTestDatabaseForEntries as createTestDatabaseForSearch } from '../entries/seeders';

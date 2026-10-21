@@ -12,13 +12,13 @@
  * being an error.
  */
 
-import { LOCAL_INFERENCE_MODEL } from './model-registry'
+import { LOCAL_INFERENCE_MODEL } from './model-registry';
 
 import type {
   LocalInferenceModel,
   ModelInstallState,
-  StorageUsage
-} from '../local-inference-types'
+  StorageUsage,
+} from '../local-inference-types';
 
 /**
  * The bucket Transformers.js writes model files into.
@@ -26,7 +26,7 @@ import type {
  * This is a library implementation detail with no public API — confirm it in
  * DevTools before assuming a version change kept it.
  */
-const TRANSFORMERS_CACHE_NAME = 'transformers-cache'
+const TRANSFORMERS_CACHE_NAME = 'transformers-cache';
 
 /**
  * Read a browser API the type definitions describe as always present.
@@ -36,20 +36,18 @@ const TRANSFORMERS_CACHE_NAME = 'transformers-cache'
  * index keeps the runtime guards from being narrowed away as dead code.
  */
 function readStorageManager(): Partial<StorageManager> | undefined {
-  const candidate = (navigator as unknown as Record<string, unknown>)['storage']
-  return typeof candidate === 'object' && candidate !== null
-    ? candidate
-    : undefined
+  const candidate = (navigator as unknown as Record<string, unknown>)['storage'];
+  return typeof candidate === 'object' && candidate !== null ? candidate : undefined;
 }
 
 async function openTransformersCache(): Promise<Cache | null> {
   if (typeof caches === 'undefined') {
-    return null
+    return null;
   }
   try {
-    return await caches.open(TRANSFORMERS_CACHE_NAME)
+    return await caches.open(TRANSFORMERS_CACHE_NAME);
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -57,14 +55,14 @@ function matchesModel(url: string, model: LocalInferenceModel): boolean {
   // Anchored with a trailing slash: a bare substring test would let one
   // repository whose id is a prefix of another's claim — and delete — its
   // files.
-  return url.includes(`${model.repoId}/`)
+  return url.includes(`${model.repoId}/`);
 }
 
 function isWeightsFile(url: string, model: LocalInferenceModel): boolean {
   // The registry names the file outright. It is not derived from the dtype:
   // a quantised embedding build is `model_quantized.onnx`, which no
   // `model_<dtype>.onnx` pattern would ever match.
-  return url.endsWith(`/${model.weightsFile}`)
+  return url.endsWith(`/${model.weightsFile}`);
 }
 
 /**
@@ -74,19 +72,27 @@ function isWeightsFile(url: string, model: LocalInferenceModel): boolean {
  * occupies would mean reading tens of megabytes back out.
  */
 export async function readModelInstallState(): Promise<ModelInstallState> {
-  const cache = await openTransformersCache()
+  const cache = await openTransformersCache();
   if (!cache) {
-    return { hasAnyFiles: false, isInstalled: false }
+    return { hasAnyFiles: false, isInstalled: false };
   }
 
-  const urls = (await cache.keys())
+  let requests: readonly Request[];
+  try {
+    requests = await cache.keys();
+  } catch {
+    // An unreadable cache is reported as nothing installed.
+    return { hasAnyFiles: false, isInstalled: false };
+  }
+
+  const urls = requests
     .map((request) => request.url)
-    .filter((url) => matchesModel(url, LOCAL_INFERENCE_MODEL))
+    .filter((url) => matchesModel(url, LOCAL_INFERENCE_MODEL));
 
   return {
     hasAnyFiles: urls.length > 0,
-    isInstalled: urls.some((url) => isWeightsFile(url, LOCAL_INFERENCE_MODEL))
-  }
+    isInstalled: urls.some((url) => isWeightsFile(url, LOCAL_INFERENCE_MODEL)),
+  };
 }
 
 /**
@@ -97,17 +103,21 @@ export async function readModelInstallState(): Promise<ModelInstallState> {
  * can no longer reload.
  */
 export async function deleteModelFiles(): Promise<void> {
-  const cache = await openTransformersCache()
+  const cache = await openTransformersCache();
   if (!cache) {
-    return
+    return;
   }
 
-  const keys = await cache.keys()
-  await Promise.all(
-    keys
-      .filter((request) => matchesModel(request.url, LOCAL_INFERENCE_MODEL))
-      .map(async (request) => cache.delete(request))
-  )
+  try {
+    const keys = await cache.keys();
+    await Promise.all(
+      keys
+        .filter((request) => matchesModel(request.url, LOCAL_INFERENCE_MODEL))
+        .map(async (request) => cache.delete(request))
+    );
+  } catch {
+    // Nothing more can be done; the caller re-reads what is left on disk.
+  }
 }
 
 /**
@@ -117,20 +127,20 @@ export async function deleteModelFiles(): Promise<void> {
  * browser will not break it down, and neither will this.
  */
 export async function readStorageUsage(): Promise<StorageUsage | null> {
-  const storage = readStorageManager()
+  const storage = readStorageManager();
   if (!storage?.estimate) {
-    return null
+    return null;
   }
 
   try {
-    const { quota, usage } = await storage.estimate()
+    const { quota, usage } = await storage.estimate();
     return {
       isPersistent: (await storage.persisted?.()) ?? false,
       quotaBytes: quota ?? 0,
-      usageBytes: usage ?? 0
-    }
+      usageBytes: usage ?? 0,
+    };
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -144,17 +154,17 @@ export async function readStorageUsage(): Promise<StorageUsage | null> {
  * @returns Whether storage is persistent afterwards.
  */
 export async function requestPersistentStorage(): Promise<boolean> {
-  const storage = readStorageManager()
+  const storage = readStorageManager();
   if (!storage?.persist) {
-    return false
+    return false;
   }
 
   try {
     if (await storage.persisted?.()) {
-      return true
+      return true;
     }
-    return await storage.persist()
+    return await storage.persist();
   } catch {
-    return false
+    return false;
   }
 }

@@ -97,10 +97,7 @@ function cancelDelete(): void {
 </script>
 
 <template>
-  <li
-    :class="['tag-row', { 'tag-row--active': isActive }]"
-    :data-testid="`tag-row-${tag.id}`"
-  >
+  <li :class="['tag-row', { 'tag-row--active': isActive }]" :data-testid="`tag-row-${tag.id}`">
     <!-- Toggle button (tag name + count) -->
     <button
       :aria-label="`Select ${tag.name}`"
@@ -110,17 +107,10 @@ function cancelDelete(): void {
       type="button"
       @click="emit('toggle')"
     >
-      <span
-        v-if="!isRenaming"
-        class="tag-row__name"
-        :data-testid="`tag-name-${tag.id}`"
-      >
+      <span v-if="!isRenaming" class="tag-row__name" :data-testid="`tag-name-${tag.id}`">
         {{ tag.name }}
       </span>
-      <span
-        class="tag-row__count"
-        :title="`${tag.entryCount} entries`"
-      >
+      <span class="tag-row__count" :title="`${tag.entryCount} entries`">
         {{ tag.entryCount }}
       </span>
     </button>

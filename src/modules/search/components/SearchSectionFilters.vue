@@ -50,10 +50,7 @@ function handleQueryKeydown(event: KeyboardEvent): void {
 </script>
 
 <template>
-  <section
-    aria-label="Search filters"
-    class="search-section-filters"
-  >
+  <section aria-label="Search filters" class="search-section-filters">
     <BaseInput
       v-model="query"
       label="Search text"
@@ -69,24 +66,13 @@ function handleQueryKeydown(event: KeyboardEvent): void {
       placeholder="Filter by tags..."
     />
 
-    <BaseSwitch
-      v-model="showAll"
-      class="search-section-filters__toggle"
-      label="Show all results"
-    />
+    <BaseSwitch v-model="showAll" class="search-section-filters__toggle" label="Show all results" />
 
-    <BaseButton
-      class="search-section-filters__submit"
-      type="button"
-      @click="emit('submit')"
-    >
+    <BaseButton class="search-section-filters__submit" type="button" @click="emit('submit')">
       Search
     </BaseButton>
 
-    <div
-      aria-label="Result view"
-      class="search-section-filters__view-toggle"
-    >
+    <div aria-label="Result view" class="search-section-filters__view-toggle">
       <button
         :aria-pressed="view === 'list'"
         class="search-section-filters__view-button"
@@ -138,6 +124,7 @@ function handleQueryKeydown(event: KeyboardEvent): void {
 
 .search-section-filters__view-button {
   flex: 1;
+  min-height: 44px;
   padding: var(--spacing-xs) var(--spacing-sm);
   border: none;
   border-radius: var(--radius-sm);

@@ -75,11 +75,7 @@ function handleOpenChange(open: boolean, id: string): void {
             viewBox="0 0 24 24"
             width="20"
           >
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-            />
+            <circle cx="12" cy="12" r="10" />
             <path d="m15 9-6 6M9 9l6 6" />
           </svg>
           <!-- Warning icon -->
@@ -112,20 +108,13 @@ function handleOpenChange(open: boolean, id: string): void {
             viewBox="0 0 24 24"
             width="20"
           >
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-            />
+            <circle cx="12" cy="12" r="10" />
             <path d="M12 16v-4M12 8h.01" />
           </svg>
         </div>
 
         <div class="base-toast-text">
-          <ToastTitle
-            v-if="toast.title"
-            class="base-toast-title"
-          >
+          <ToastTitle v-if="toast.title" class="base-toast-title">
             {{ toast.title }}
           </ToastTitle>
           <ToastDescription class="base-toast-description">
@@ -134,10 +123,7 @@ function handleOpenChange(open: boolean, id: string): void {
         </div>
       </div>
 
-      <ToastClose
-        aria-label="Close"
-        class="base-toast-close"
-      >
+      <ToastClose aria-label="Close" class="base-toast-close">
         <svg
           aria-hidden="true"
           fill="none"

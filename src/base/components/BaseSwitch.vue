@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
 const checked = defineModel<boolean>({ default: false })
 
 const switchId = useId()
+const errorId = `${switchId}-error`
 const hasError = computed(() => Boolean(props.error))
 </script>
 
@@ -40,6 +41,8 @@ const hasError = computed(() => Boolean(props.error))
       <SwitchRoot
         :id="switchId"
         v-model="checked"
+        :aria-describedby="hasError ? errorId : undefined"
+        :aria-invalid="hasError || undefined"
         :aria-label="ariaLabel || label || undefined"
         v-bind="disabled ? { disabled: true } : {}"
         class="base-switch-root"
@@ -50,20 +53,11 @@ const hasError = computed(() => Boolean(props.error))
       >
         <SwitchThumb class="base-switch-thumb" />
       </SwitchRoot>
-      <label
-        v-if="label || $slots['default']"
-        class="base-switch-label"
-        :for="switchId"
-      >
+      <label v-if="label || $slots['default']" class="base-switch-label" :for="switchId">
         <slot>{{ label }}</slot>
       </label>
     </div>
-    <p
-      v-if="hasError"
-      aria-live="polite"
-      class="base-switch-error-message"
-      role="alert"
-    >
+    <p v-if="hasError" :id="errorId" class="base-switch-error-message" role="alert">
       {{ error }}
     </p>
   </div>
@@ -139,7 +133,7 @@ const hasError = computed(() => Boolean(props.error))
   transition:
     transform var(--transition-fast),
     background-color var(--transition-fast);
-  transform: translateX(var(--switch-thumb-offset));
+  transform: translateX(0);
 }
 
 .base-switch-root[data-state='checked'] .base-switch-thumb {

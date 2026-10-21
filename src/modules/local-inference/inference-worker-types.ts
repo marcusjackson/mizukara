@@ -12,10 +12,10 @@
 /** Work the main thread asks the worker to do. */
 export type InferenceWorkerRequest =
   | {
-      kind: 'load'
-      requestId: string
-      repoId: string
-      dtype: string
+      kind: 'load';
+      requestId: string;
+      repoId: string;
+      dtype: string;
       /**
        * Total bytes of the model's weights, used as the progress denominator.
        *
@@ -23,14 +23,14 @@ export type InferenceWorkerRequest =
        * file starts downloading, so a sum over them grows as the download
        * proceeds and the reported percentage would go backwards.
        */
-      totalBytes: number
+      totalBytes: number;
     }
   | {
-      kind: 'embed'
-      requestId: string
+      kind: 'embed';
+      requestId: string;
       /** The text exactly as it is to be embedded, prefix included. */
-      text: string
-    }
+      text: string;
+    };
 
 /**
  * What the worker sends back.
@@ -43,7 +43,7 @@ export type InferenceWorkerResponse =
   | { kind: 'progress'; requestId: string; percent: number }
   | { kind: 'loaded'; requestId: string }
   | { kind: 'embedded'; requestId: string; vector: number[] }
-  | { kind: 'failed'; requestId: string; message: string }
+  | { kind: 'failed'; requestId: string; message: string };
 
 /**
  * The parts of the worker's global scope this worker actually uses.
@@ -53,9 +53,9 @@ export type InferenceWorkerResponse =
  * which costs another type-check pass in lint and build for one file.
  */
 export interface InferenceWorkerScope {
-  postMessage: (message: InferenceWorkerResponse) => void
+  postMessage: (message: InferenceWorkerResponse) => void;
   addEventListener: (
     type: 'message',
     listener: (event: { data: InferenceWorkerRequest }) => void
-  ) => void
+  ) => void;
 }

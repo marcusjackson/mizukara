@@ -1,18 +1,18 @@
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { updateOrderPosition } from '@/api/entries/entry-mutations'
+import { updateOrderPosition } from '@/api/entries/entry-mutations';
 
-import { useDatabase } from '@/shared/composables/use-database'
+import { useDatabase } from '@/shared/composables/use-database';
 
-import type { UseDatabase } from '@/shared/composables/use-database'
-import type { Entry } from '@/shared/types/entry-types'
-import type { Ref } from 'vue'
+import type { UseDatabase } from '@/shared/composables/use-database';
+import type { Entry } from '@/shared/types/entry-types';
+import type { Ref } from 'vue';
 
 /**
  * Result of a successful reorder operation
  */
 export interface ReorderSuccess {
-  success: true
+  success: true;
 }
 
 /**
@@ -23,19 +23,19 @@ export type ReorderFailure =
   | { success: false; reason: 'no-database' }
   | { success: false; reason: 'not-found' }
   | { success: false; reason: 'at-boundary' }
-  | { success: false; reason: 'error'; error: Error }
+  | { success: false; reason: 'error'; error: Error };
 
 /**
  * Result of a reorder operation
  */
-export type ReorderResult = ReorderSuccess | ReorderFailure
+export type ReorderResult = ReorderSuccess | ReorderFailure;
 
 /**
  * Options for useEntryReorder composable
  */
 export interface UseEntryReorderOptions {
   /** Callback invoked after successful reorder operation */
-  onRefetch: () => void | Promise<void>
+  onRefetch: () => void | Promise<void>;
 }
 
 /**
@@ -43,22 +43,22 @@ export interface UseEntryReorderOptions {
  */
 export interface UseEntryReorderReturn {
   /** Move entry up by one position */
-  moveEntryUp: (entryId: string, entries: Entry[]) => ReorderResult
+  moveEntryUp: (entryId: string, entries: Entry[]) => ReorderResult;
   /** Move entry down by one position */
-  moveEntryDown: (entryId: string, entries: Entry[]) => ReorderResult
+  moveEntryDown: (entryId: string, entries: Entry[]) => ReorderResult;
   /** Check if entry can be moved up */
-  canMoveUp: (entryId: string, entries: Entry[]) => boolean
+  canMoveUp: (entryId: string, entries: Entry[]) => boolean;
   /** Check if entry can be moved down */
-  canMoveDown: (entryId: string, entries: Entry[]) => boolean
+  canMoveDown: (entryId: string, entries: Entry[]) => boolean;
   /** Whether a reorder operation is currently in progress */
-  isReordering: Ref<boolean>
+  isReordering: Ref<boolean>;
 }
 
 /**
  * Find the index of an entry in the entries array by ID
  */
 function findEntryIndex(entryId: string, entries: Entry[]): number {
-  return entries.findIndex((entry) => entry.id === entryId)
+  return entries.findIndex((entry) => entry.id === entryId);
 }
 
 /**
@@ -69,8 +69,8 @@ function findEntryIndex(entryId: string, entries: Entry[]): number {
  * @returns True if entry can be moved up
  */
 function canMoveUp(entryId: string, entries: Entry[]): boolean {
-  const index = findEntryIndex(entryId, entries)
-  return index > 0
+  const index = findEntryIndex(entryId, entries);
+  return index > 0;
 }
 
 /**
@@ -81,8 +81,8 @@ function canMoveUp(entryId: string, entries: Entry[]): boolean {
  * @returns True if entry can be moved down
  */
 function canMoveDown(entryId: string, entries: Entry[]): boolean {
-  const index = findEntryIndex(entryId, entries)
-  return index >= 0 && index < entries.length - 1
+  const index = findEntryIndex(entryId, entries);
+  return index >= 0 && index < entries.length - 1;
 }
 
 /**
@@ -91,11 +91,11 @@ function canMoveDown(entryId: string, entries: Entry[]): boolean {
  * already succeeded; the next navigation will reload fresh data.
  */
 function scheduleRefetch(onRefetch: () => void | Promise<void>): void {
-  const result = onRefetch()
+  const result = onRefetch();
   if (result instanceof Promise) {
     result.catch(() => {
       // Intentionally silent — refetch failure is non-critical
-    })
+    });
   }
 }
 
@@ -103,18 +103,18 @@ function scheduleRefetch(onRefetch: () => void | Promise<void>): void {
  * Dependencies required by swapEntryPositions
  */
 interface SwapContext {
-  database: UseDatabase['database']
-  isReordering: Ref<boolean>
-  onRefetch: () => void | Promise<void>
+  database: UseDatabase['database'];
+  isReordering: Ref<boolean>;
+  onRefetch: () => void | Promise<void>;
 }
 
 /**
  * Validated swap inputs with resolved entry references
  */
 interface ValidSwapInputs {
-  database: NonNullable<SwapContext['database']['value']>
-  currentEntry: Entry
-  targetEntry: Entry
+  database: NonNullable<SwapContext['database']['value']>;
+  currentEntry: Entry;
+  targetEntry: Entry;
 }
 
 /**
@@ -127,19 +127,23 @@ function validateSwapInputs(
   direction: 'up' | 'down',
   ctx: SwapContext
 ): ReorderFailure | ValidSwapInputs {
-  if (ctx.isReordering.value) return { success: false, reason: 'in-progress' }
-  if (!ctx.database.value) return { success: false, reason: 'no-database' }
-  const currentIndex = findEntryIndex(entryId, entries)
-  if (currentIndex < 0) return { success: false, reason: 'not-found' }
-  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+  if (ctx.isReordering.value) return { success: false, reason: 'in-progress' };
+  if (!ctx.database.value) return { success: false, reason: 'no-database' };
+  const currentIndex = findEntryIndex(entryId, entries);
+  if (currentIndex < 0) return { success: false, reason: 'not-found' };
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
   if (targetIndex < 0 || targetIndex >= entries.length) {
-    return { success: false, reason: 'at-boundary' }
+    return { success: false, reason: 'at-boundary' };
   }
-  const currentEntry = entries[currentIndex]
-  const targetEntry = entries[targetIndex]
-  if (!currentEntry || !targetEntry)
-    return { success: false, reason: 'not-found' }
-  return { database: ctx.database.value, currentEntry, targetEntry }
+  const currentEntry = entries[currentIndex];
+  const targetEntry = entries[targetIndex];
+  if (!currentEntry || !targetEntry) return { success: false, reason: 'not-found' };
+  return { database: ctx.database.value, currentEntry, targetEntry };
+}
+
+/** Whether any two of the day's entries hold the same order position. */
+function hasTiedPositions(entries: Entry[]): boolean {
+  return new Set(entries.map((entry) => entry.orderPosition)).size !== entries.length;
 }
 
 /**
@@ -157,43 +161,44 @@ function swapEntryPositions(
   direction: 'up' | 'down',
   ctx: SwapContext
 ): ReorderResult {
-  const validated = validateSwapInputs(entryId, entries, direction, ctx)
-  if ('reason' in validated) return validated
-  const { currentEntry, database, targetEntry } = validated
-  ctx.isReordering.value = true
-  database.run('BEGIN TRANSACTION')
+  const validated = validateSwapInputs(entryId, entries, direction, ctx);
+  if ('reason' in validated) return validated;
+  const { currentEntry, database, targetEntry } = validated;
+  ctx.isReordering.value = true;
+  database.run('BEGIN TRANSACTION');
   try {
-    if (currentEntry.orderPosition === targetEntry.orderPosition) {
-      // Two entries holding the same position (one was moved here from another
-      // day) would swap to no visible change, so renumber the whole day from the
-      // swapped order instead.
-      const reordered = [...entries]
-      const currentIndex = reordered.indexOf(currentEntry)
-      const targetIndex = reordered.indexOf(targetEntry)
-      reordered[currentIndex] = targetEntry
-      reordered[targetIndex] = currentEntry
+    if (hasTiedPositions(entries)) {
+      // Entries sharing a position (one was moved here from another day) make a
+      // plain value swap wrong: it either changes nothing or jumps past the
+      // neighbour that ties with it. Renumber the whole day from the swapped
+      // order instead.
+      const reordered = [...entries];
+      const currentIndex = reordered.indexOf(currentEntry);
+      const targetIndex = reordered.indexOf(targetEntry);
+      reordered[currentIndex] = targetEntry;
+      reordered[targetIndex] = currentEntry;
       reordered.forEach((entry, position) => {
         if (entry.orderPosition !== position) {
-          updateOrderPosition(database, entry.id, position)
+          updateOrderPosition(database, entry.id, position);
         }
-      })
+      });
     } else {
-      updateOrderPosition(database, currentEntry.id, targetEntry.orderPosition)
-      updateOrderPosition(database, targetEntry.id, currentEntry.orderPosition)
+      updateOrderPosition(database, currentEntry.id, targetEntry.orderPosition);
+      updateOrderPosition(database, targetEntry.id, currentEntry.orderPosition);
     }
-    database.run('COMMIT')
-    scheduleRefetch(ctx.onRefetch)
-    return { success: true }
+    database.run('COMMIT');
+    scheduleRefetch(ctx.onRefetch);
+    return { success: true };
   } catch (error) {
-    database.run('ROLLBACK')
-    scheduleRefetch(ctx.onRefetch)
+    database.run('ROLLBACK');
+    scheduleRefetch(ctx.onRefetch);
     return {
       success: false,
       reason: 'error',
-      error: error instanceof Error ? error : new Error(String(error))
-    }
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
   } finally {
-    ctx.isReordering.value = false
+    ctx.isReordering.value = false;
   }
 }
 
@@ -211,25 +216,23 @@ function swapEntryPositions(
  *   onRefetch: () => fetchEntries()
  * })
  */
-export function useEntryReorder(
-  options: UseEntryReorderOptions
-): UseEntryReorderReturn {
-  const { onRefetch } = options
-  const db = useDatabase()
-  const isReordering = ref(false)
+export function useEntryReorder(options: UseEntryReorderOptions): UseEntryReorderReturn {
+  const { onRefetch } = options;
+  const db = useDatabase();
+  const isReordering = ref(false);
   const ctx: SwapContext = {
     database: db.database,
     isReordering,
-    onRefetch
-  }
+    onRefetch,
+  };
 
   function moveEntryUp(entryId: string, entries: Entry[]): ReorderResult {
-    return swapEntryPositions(entryId, entries, 'up', ctx)
+    return swapEntryPositions(entryId, entries, 'up', ctx);
   }
 
   function moveEntryDown(entryId: string, entries: Entry[]): ReorderResult {
-    return swapEntryPositions(entryId, entries, 'down', ctx)
+    return swapEntryPositions(entryId, entries, 'down', ctx);
   }
 
-  return { moveEntryUp, moveEntryDown, canMoveUp, canMoveDown, isReordering }
+  return { moveEntryUp, moveEntryDown, canMoveUp, canMoveDown, isReordering };
 }

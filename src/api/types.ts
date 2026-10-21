@@ -8,16 +8,16 @@
  * Base error for repository operations
  */
 export class RepositoryError extends Error {
-  public override readonly cause?: unknown
+  public override readonly cause?: unknown;
   constructor(
     message: string,
     public readonly operation: string,
     public readonly entity: string,
     cause?: unknown
   ) {
-    super(message)
-    this.name = 'RepositoryError'
-    this.cause = cause
+    super(message);
+    this.name = 'RepositoryError';
+    this.cause = cause;
   }
 }
 
@@ -26,7 +26,7 @@ export class RepositoryError extends Error {
  */
 export class EntityNotFoundError extends RepositoryError {
   constructor(entity: string, id: string) {
-    super(`${entity} with id ${id} not found`, 'get', entity)
-    this.name = 'EntityNotFoundError'
+    super(`${entity} with id ${id} not found`, 'get', entity);
+    this.name = 'EntityNotFoundError';
   }
 }

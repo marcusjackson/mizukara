@@ -7,8 +7,8 @@
 
 import {
   ENTRY_CONTENT_MAX_LENGTH,
-  ENTRY_VALIDATION_ERRORS
-} from '@/shared/validation/validation-errors'
+  ENTRY_VALIDATION_ERRORS,
+} from '@/shared/validation/validation-errors';
 
 /**
  * Content validation constraints
@@ -23,15 +23,15 @@ export const CONTENT_VALIDATION = {
   MAX_LENGTH: ENTRY_CONTENT_MAX_LENGTH,
   messages: {
     required: ENTRY_VALIDATION_ERRORS.CONTENT_EMPTY,
-    maxLength: ENTRY_VALIDATION_ERRORS.CONTENT_TOO_LONG
-  }
-} as const
+    maxLength: ENTRY_VALIDATION_ERRORS.CONTENT_TOO_LONG,
+  },
+} as const;
 
 /**
  * Date validation messages for assigned day field
  */
 export const DATE_VALIDATION = {
   messages: {
-    invalid: 'Must be a valid date (YYYY-MM-DD)'
-  }
-} as const
+    invalid: 'Must be a valid date (YYYY-MM-DD)',
+  },
+} as const;

@@ -55,10 +55,7 @@ const hasRemovableFiles = computed(
         <span class="app-settings-model-size">{{ megabytes }} MB</span>
       </span>
       <span class="app-settings-model-note">{{ model.note }}</span>
-      <span
-        v-if="hasRemovableFiles && !isInstalled"
-        class="app-settings-model-warning"
-      >
+      <span v-if="hasRemovableFiles && !isInstalled" class="app-settings-model-warning">
         Partly downloaded. Delete it and start again.
       </span>
     </div>
@@ -69,20 +66,11 @@ const hasRemovableFiles = computed(
         :label="`Downloading ${model.name}`"
         :value="downloadProgress"
       />
-      <BaseButton
-        v-if="isDownloading"
-        variant="secondary"
-        @click="emit('cancel')"
-      >
+      <BaseButton v-if="isDownloading" variant="secondary" @click="emit('cancel')">
         Cancel
       </BaseButton>
       <template v-else>
-        <span
-          v-if="isInstalled"
-          class="app-settings-model-selected"
-        >
-          In use
-        </span>
+        <span v-if="isInstalled" class="app-settings-model-selected"> In use </span>
         <BaseButton
           v-if="hasRemovableFiles"
           :disabled="isBusy"
@@ -91,13 +79,7 @@ const hasRemovableFiles = computed(
         >
           Delete
         </BaseButton>
-        <BaseButton
-          v-else
-          :disabled="isBusy"
-          @click="emit('download')"
-        >
-          Download
-        </BaseButton>
+        <BaseButton v-else :disabled="isBusy" @click="emit('download')"> Download </BaseButton>
       </template>
     </div>
   </div>

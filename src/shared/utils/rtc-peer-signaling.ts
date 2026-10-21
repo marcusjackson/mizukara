@@ -8,7 +8,7 @@
  * instead of standing up a real (nonexistent) browser API.
  */
 
-const STUN_SERVER_URL = 'stun:stun.l.google.com:19302'
+const STUN_SERVER_URL = 'stun:stun.l.google.com:19302';
 
 /**
  * One public STUN server for connectivity discovery only — never carries
@@ -16,23 +16,16 @@ const STUN_SERVER_URL = 'stun:stun.l.google.com:19302'
  * relay is out of scope.
  */
 export function buildIceServers(): RTCIceServer[] {
-  return [{ urls: STUN_SERVER_URL }]
+  return [{ urls: STUN_SERVER_URL }];
 }
 
-type GatheringEventType =
-  'icegatheringstatechange' | 'connectionstatechange' | 'icecandidate'
+type GatheringEventType = 'icegatheringstatechange' | 'connectionstatechange' | 'icecandidate';
 
 export interface GatheringConnection {
-  readonly iceGatheringState: RTCIceGatheringState
-  readonly connectionState: RTCPeerConnectionState
-  addEventListener(
-    type: GatheringEventType,
-    listener: (event: Event) => void
-  ): void
-  removeEventListener(
-    type: GatheringEventType,
-    listener: (event: Event) => void
-  ): void
+  readonly iceGatheringState: RTCIceGatheringState;
+  readonly connectionState: RTCPeerConnectionState;
+  addEventListener(type: GatheringEventType, listener: (event: Event) => void): void;
+  removeEventListener(type: GatheringEventType, listener: (event: Event) => void): void;
 }
 
 /**
@@ -46,7 +39,7 @@ export interface GatheringConnection {
  * site that needs it instead.
  */
 function getCandidateField(event: Event): unknown {
-  return 'candidate' in event ? event.candidate : undefined
+  return 'candidate' in event ? event.candidate : undefined;
 }
 
 /**
@@ -74,8 +67,8 @@ function getCandidateField(event: Event): unknown {
  *   trickling in fast enough to keep resetting the quiet period above —
  *   caps the total wait in that case rather than letting it drag on.
  */
-const CANDIDATE_QUIET_PERIOD_MS = 1_000
-const CANDIDATE_COLLECTION_CAP_MS = 3_000
+const CANDIDATE_QUIET_PERIOD_MS = 1_000;
+const CANDIDATE_COLLECTION_CAP_MS = 3_000;
 
 /**
  * Absolute fallback if even a first candidate never arrives (which testing
@@ -84,7 +77,7 @@ const CANDIDATE_COLLECTION_CAP_MS = 3_000
  * of last resort so this can never hang indefinitely with no error and no
  * retry option, which is what happened before this existed.
  */
-const ICE_GATHERING_TIMEOUT_MS = 10_000
+const ICE_GATHERING_TIMEOUT_MS = 10_000;
 
 /**
  * Resolves once ICE gathering finishes, or the candidate-driven timing
@@ -96,62 +89,54 @@ const ICE_GATHERING_TIMEOUT_MS = 10_000
  * closes first (e.g. the owning component unmounts mid-gather) — otherwise
  * this promise, and the listeners it holds, would never resolve.
  */
-export function waitForIceGatheringComplete(
-  pc: GatheringConnection
-): Promise<void> {
-  if (pc.iceGatheringState === 'complete') return Promise.resolve()
+export function waitForIceGatheringComplete(pc: GatheringConnection): Promise<void> {
+  if (pc.iceGatheringState === 'complete') return Promise.resolve();
 
   return new Promise((resolve, reject) => {
-    let settled = false
-    let quietTimeoutId: ReturnType<typeof setTimeout> | null = null
-    let collectionCapTimeoutId: ReturnType<typeof setTimeout> | null = null
+    let settled = false;
+    let quietTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let collectionCapTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     function cleanup(): void {
-      pc.removeEventListener('icegatheringstatechange', handleGatheringChange)
-      pc.removeEventListener('connectionstatechange', handleConnectionChange)
-      pc.removeEventListener('icecandidate', handleIceCandidate)
-      clearTimeout(absoluteTimeoutId)
-      if (quietTimeoutId !== null) clearTimeout(quietTimeoutId)
-      if (collectionCapTimeoutId !== null) clearTimeout(collectionCapTimeoutId)
+      pc.removeEventListener('icegatheringstatechange', handleGatheringChange);
+      pc.removeEventListener('connectionstatechange', handleConnectionChange);
+      pc.removeEventListener('icecandidate', handleIceCandidate);
+      clearTimeout(absoluteTimeoutId);
+      if (quietTimeoutId !== null) clearTimeout(quietTimeoutId);
+      if (collectionCapTimeoutId !== null) clearTimeout(collectionCapTimeoutId);
     }
     function settleResolve(): void {
-      if (settled) return
-      settled = true
-      cleanup()
-      resolve()
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve();
     }
     function handleGatheringChange(): void {
-      if (pc.iceGatheringState !== 'complete') return
-      settleResolve()
+      if (pc.iceGatheringState !== 'complete') return;
+      settleResolve();
     }
     function handleConnectionChange(): void {
-      if (pc.connectionState !== 'closed' || settled) return
-      settled = true
-      cleanup()
-      reject(new Error('Connection closed before ICE gathering completed'))
+      if (pc.connectionState !== 'closed' || settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error('Connection closed before ICE gathering completed'));
     }
     function handleIceCandidate(event: Event): void {
-      if (!getCandidateField(event)) return
-      collectionCapTimeoutId ??= setTimeout(
-        settleResolve,
-        CANDIDATE_COLLECTION_CAP_MS
-      )
-      if (quietTimeoutId !== null) clearTimeout(quietTimeoutId)
-      quietTimeoutId = setTimeout(settleResolve, CANDIDATE_QUIET_PERIOD_MS)
+      if (!getCandidateField(event)) return;
+      collectionCapTimeoutId ??= setTimeout(settleResolve, CANDIDATE_COLLECTION_CAP_MS);
+      if (quietTimeoutId !== null) clearTimeout(quietTimeoutId);
+      quietTimeoutId = setTimeout(settleResolve, CANDIDATE_QUIET_PERIOD_MS);
     }
-    const absoluteTimeoutId = setTimeout(
-      settleResolve,
-      ICE_GATHERING_TIMEOUT_MS
-    )
-    pc.addEventListener('icegatheringstatechange', handleGatheringChange)
-    pc.addEventListener('connectionstatechange', handleConnectionChange)
-    pc.addEventListener('icecandidate', handleIceCandidate)
-  })
+    const absoluteTimeoutId = setTimeout(settleResolve, ICE_GATHERING_TIMEOUT_MS);
+    pc.addEventListener('icegatheringstatechange', handleGatheringChange);
+    pc.addEventListener('connectionstatechange', handleConnectionChange);
+    pc.addEventListener('icecandidate', handleIceCandidate);
+  });
 }
 
 export interface LocalSdpConnection extends GatheringConnection {
-  readonly localDescription: { sdp: string } | null
-  setLocalDescription(description: RTCSessionDescriptionInit): Promise<void>
+  readonly localDescription: { sdp: string } | null;
+  setLocalDescription(description: RTCSessionDescriptionInit): Promise<void>;
 }
 
 /**
@@ -163,14 +148,12 @@ export async function gatherLocalSdp(
   pc: LocalSdpConnection,
   description: RTCSessionDescriptionInit
 ): Promise<string> {
-  await pc.setLocalDescription(description)
-  await waitForIceGatheringComplete(pc)
+  await pc.setLocalDescription(description);
+  await waitForIceGatheringComplete(pc);
 
-  const { localDescription } = pc
+  const { localDescription } = pc;
   if (!localDescription) {
-    throw new Error(
-      'RTCPeerConnection has no local description after ICE gathering'
-    )
+    throw new Error('RTCPeerConnection has no local description after ICE gathering');
   }
-  return localDescription.sdp
+  return localDescription.sdp;
 }

@@ -37,10 +37,7 @@ async function handleAdd(names: readonly string[]): Promise<void> {
 </script>
 
 <template>
-  <section
-    aria-label="Starter tags"
-    class="tags-section-starter"
-  >
+  <section aria-label="Starter tags" class="tags-section-starter">
     <BaseButton
       aria-controls="tags-section-starter-groups"
       :aria-expanded="isOpen"
@@ -52,14 +49,10 @@ async function handleAdd(names: readonly string[]): Promise<void> {
       {{ isOpen ? 'Hide starter tags' : 'Add starter tags' }}
     </BaseButton>
 
-    <div
-      v-if="isOpen"
-      id="tags-section-starter-groups"
-      class="tags-section-starter__groups"
-    >
+    <div v-if="isOpen" id="tags-section-starter-groups" class="tags-section-starter__groups">
       <p class="tags-section-starter__hint">
-        Tags you add are yours to rename or delete. Tags with these names get
-        suggestions from the on-device model.
+        Tags you add are yours to rename or delete. Tags with these names get suggestions from the
+        on-device model.
       </p>
 
       <BaseButton
@@ -76,11 +69,7 @@ async function handleAdd(names: readonly string[]): Promise<void> {
         }}
       </BaseButton>
 
-      <div
-        v-for="group in groups"
-        :key="group.title"
-        class="tags-section-starter__group"
-      >
+      <div v-for="group in groups" :key="group.title" class="tags-section-starter__group">
         <div class="tags-section-starter__group-header">
           <h3 class="tags-section-starter__group-title">{{ group.title }}</h3>
           <!-- Kept (disabled) once the group is complete, so a keyboard user
@@ -104,10 +93,7 @@ async function handleAdd(names: readonly string[]): Promise<void> {
         </div>
 
         <ul class="tags-section-starter__list">
-          <li
-            v-for="tag in group.tags"
-            :key="tag.name"
-          >
+          <li v-for="tag in group.tags" :key="tag.name">
             <button
               :aria-disabled="tag.isAdded"
               class="tags-section-starter__chip"

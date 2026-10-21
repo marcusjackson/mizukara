@@ -2,13 +2,14 @@
  * Tests for EntryDayViewEntryEditor component
  */
 
-import userEvent from '@testing-library/user-event'
-import { render, screen, waitFor } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from '@testing-library/vue';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import EntryDayViewEntryEditor from './EntryDayViewEntryEditor.vue'
+import EntryDayViewEntryEditor from './EntryDayViewEntryEditor.vue';
 
-import type { Entry } from '@/shared/types/entry-types'
+import type { Entry } from '@/shared/types/entry-types';
+import type { MockInstance } from 'vitest';
 
 describe('EntryDayViewEntryEditor', () => {
   const mockEntry: Entry = {
@@ -18,219 +19,247 @@ describe('EntryDayViewEntryEditor', () => {
     updatedAt: Date.now() - 86400000,
     assignedDay: '2026-02-11',
     orderPosition: 0,
-    isDeleted: false
-  }
+    isDeleted: false,
+  };
 
   const renderComponent = (props?: { entry: Entry }) => {
     return render(EntryDayViewEntryEditor, {
-      props: props ?? { entry: mockEntry }
-    })
-  }
+      props: props ?? { entry: mockEntry },
+    });
+  };
+
+  describe('opening focus', () => {
+    // The component mounts detached in jsdom, so real focus never lands; observe the call.
+    let focusSpy: MockInstance;
+
+    beforeEach(() => {
+      focusSpy = vi.spyOn(HTMLTextAreaElement.prototype, 'focus');
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const stubPointer = (coarse: boolean) => {
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn((query: string) => ({
+          matches: coarse && query === '(pointer: coarse)',
+        }))
+      );
+    };
+
+    it('focuses the text box with a fine pointer', () => {
+      stubPointer(false);
+      renderComponent();
+
+      expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
+    it('leaves the text box unfocused on a touch device', () => {
+      stubPointer(true);
+      renderComponent();
+
+      expect(focusSpy).not.toHaveBeenCalled();
+    });
+  });
 
   it('textarea contains entry content', () => {
-    renderComponent()
+    renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    expect(textarea).toHaveValue('Original content')
-  })
+    const textarea = screen.getByLabelText('Content');
+    expect(textarea).toHaveValue('Original content');
+  });
 
   it('date input shows assigned day', () => {
-    renderComponent()
+    renderComponent();
 
-    const dateInput = screen.getByLabelText('Assigned Day')
-    expect(dateInput).toHaveValue('2026-02-11')
-  })
+    const dateInput = screen.getByLabelText('Assigned Day');
+    expect(dateInput).toHaveValue('2026-02-11');
+  });
 
   it('validation prevents empty content save', async () => {
-    const user = userEvent.setup()
-    renderComponent()
+    const user = userEvent.setup();
+    renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.clear(textarea)
+    const textarea = screen.getByLabelText('Content');
+    await user.clear(textarea);
 
-    const saveButton = screen.getByRole('button', { name: /save/i })
-    await user.click(saveButton)
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await user.click(saveButton);
 
     // Should show validation error
-    expect(
-      screen.getByText('Please enter some content for your entry')
-    ).toBeInTheDocument()
-  })
+    expect(screen.getByText('Please enter some content for your entry')).toBeInTheDocument();
+  });
 
   it('Save button emits save-requested event with correct data', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const saveButton = screen.getByRole('button', { name: /save/i })
-    await user.click(saveButton)
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await user.click(saveButton);
 
     // handleSubmit is async — wait for the emission
     await waitFor(() => {
-      expect(emitted()['save-requested']).toBeDefined()
-    })
+      expect(emitted()['save-requested']).toBeDefined();
+    });
     expect(emitted()['save-requested']![0]).toEqual([
       {
         content: 'Original content',
-        assignedDay: '2026-02-11'
-      }
-    ])
-  })
+        assignedDay: '2026-02-11',
+      },
+    ]);
+  });
 
   it('Save button emits save-requested with updated assignedDay', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
     // Change the assigned day
-    const dateInput = screen.getByLabelText('Assigned Day')
-    await user.clear(dateInput)
-    await user.type(dateInput, '2026-02-15')
+    const dateInput = screen.getByLabelText('Assigned Day');
+    await user.clear(dateInput);
+    await user.type(dateInput, '2026-02-15');
 
-    const saveButton = screen.getByRole('button', { name: /save/i })
-    await user.click(saveButton)
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await user.click(saveButton);
 
     // handleSubmit is async — wait for the emission
     await waitFor(() => {
-      expect(emitted()['save-requested']).toBeDefined()
-    })
+      expect(emitted()['save-requested']).toBeDefined();
+    });
     expect(emitted()['save-requested']![0]).toEqual([
       {
         content: 'Original content',
-        assignedDay: '2026-02-15'
-      }
-    ])
-  })
+        assignedDay: '2026-02-15',
+      },
+    ]);
+  });
 
   it('Ctrl+S shortcut emits save-requested with validated data', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.click(textarea)
-    await user.keyboard('{Control>}s{/Control}')
+    const textarea = screen.getByLabelText('Content');
+    await user.click(textarea);
+    await user.keyboard('{Control>}s{/Control}');
 
     await waitFor(() => {
-      expect(emitted()['save-requested']).toBeDefined()
-    })
+      expect(emitted()['save-requested']).toBeDefined();
+    });
     expect(emitted()['save-requested']![0]).toEqual([
       {
         content: 'Original content',
-        assignedDay: '2026-02-11'
-      }
-    ])
-  })
+        assignedDay: '2026-02-11',
+      },
+    ]);
+  });
 
   it('Ctrl+S shortcut does not emit when content is empty', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.clear(textarea)
-    await user.click(textarea)
-    await user.keyboard('{Control>}s{/Control}')
+    const textarea = screen.getByLabelText('Content');
+    await user.clear(textarea);
+    await user.click(textarea);
+    await user.keyboard('{Control>}s{/Control}');
 
     // Validation should block emission — error should appear instead
     await waitFor(() => {
-      expect(
-        screen.getByText('Please enter some content for your entry')
-      ).toBeInTheDocument()
-    })
-    expect(emitted()['save-requested']).toBeUndefined()
-  })
+      expect(screen.getByText('Please enter some content for your entry')).toBeInTheDocument();
+    });
+    expect(emitted()['save-requested']).toBeUndefined();
+  });
 
   it('Cancel button emits edit-cancelled event', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const cancelButton = screen.getByRole('button', { name: /cancel/i })
-    await user.click(cancelButton)
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    await user.click(cancelButton);
 
-    expect(emitted()['edit-cancelled']).toBeTruthy()
-  })
+    expect(emitted()['edit-cancelled']).toBeTruthy();
+  });
 
   it('prevents navigation with unsaved changes', async () => {
-    const user = userEvent.setup()
-    renderComponent()
+    const user = userEvent.setup();
+    renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.clear(textarea)
-    await user.type(textarea, 'Modified content')
+    const textarea = screen.getByLabelText('Content');
+    await user.clear(textarea);
+    await user.type(textarea, 'Modified content');
 
     // Simulate beforeunload event
-    const beforeUnloadEvent = new Event('beforeunload', { cancelable: true })
-    globalThis.dispatchEvent(beforeUnloadEvent)
+    const beforeUnloadEvent = new Event('beforeunload', { cancelable: true });
+    globalThis.dispatchEvent(beforeUnloadEvent);
 
-    expect(beforeUnloadEvent.defaultPrevented).toBe(true)
-  })
+    expect(beforeUnloadEvent.defaultPrevented).toBe(true);
+  });
 
   it('Escape key cancels editing', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.click(textarea)
-    await user.keyboard('{Escape}')
+    const textarea = screen.getByLabelText('Content');
+    await user.click(textarea);
+    await user.keyboard('{Escape}');
 
-    expect(emitted()['edit-cancelled']).toBeTruthy()
-  })
+    expect(emitted()['edit-cancelled']).toBeTruthy();
+  });
 
   it('Escape key with unsaved changes shows a confirm dialog before cancelling', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.type(textarea, ' more')
-    await user.keyboard('{Escape}')
+    const textarea = screen.getByLabelText('Content');
+    await user.type(textarea, ' more');
+    await user.keyboard('{Escape}');
 
-    expect(
-      await screen.findByRole('dialog', { name: /discard changes/i })
-    ).toBeInTheDocument()
-    expect(emitted()['edit-cancelled']).toBeUndefined()
-  })
+    expect(await screen.findByRole('dialog', { name: /discard changes/i })).toBeInTheDocument();
+    expect(emitted()['edit-cancelled']).toBeUndefined();
+  });
 
   it('Cancel button with unsaved changes shows a confirm dialog before cancelling', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.type(textarea, ' more')
+    const textarea = screen.getByLabelText('Content');
+    await user.type(textarea, ' more');
 
-    const cancelButton = screen.getByRole('button', { name: /^cancel$/i })
-    await user.click(cancelButton)
+    const cancelButton = screen.getByRole('button', { name: /^cancel$/i });
+    await user.click(cancelButton);
 
-    expect(
-      await screen.findByRole('dialog', { name: /discard changes/i })
-    ).toBeInTheDocument()
-    expect(emitted()['edit-cancelled']).toBeUndefined()
-  })
+    expect(await screen.findByRole('dialog', { name: /discard changes/i })).toBeInTheDocument();
+    expect(emitted()['edit-cancelled']).toBeUndefined();
+  });
 
   it('confirming the discard dialog emits edit-cancelled', async () => {
-    const user = userEvent.setup()
-    const { emitted } = renderComponent()
+    const user = userEvent.setup();
+    const { emitted } = renderComponent();
 
-    const textarea = screen.getByLabelText('Content')
-    await user.type(textarea, ' more')
-    await user.keyboard('{Escape}')
+    const textarea = screen.getByLabelText('Content');
+    await user.type(textarea, ' more');
+    await user.keyboard('{Escape}');
 
     const discardButton = await screen.findByRole('button', {
-      name: /^discard$/i
-    })
-    await user.click(discardButton)
+      name: /^discard$/i,
+    });
+    await user.click(discardButton);
 
-    expect(emitted()['edit-cancelled']).toBeTruthy()
-  })
+    expect(emitted()['edit-cancelled']).toBeTruthy();
+  });
 
   it('visual styling uses CSS variables', () => {
-    renderComponent()
+    renderComponent();
 
     // Check that the component renders with expected classes
-    const form = document.querySelector('form.entry-editor')
-    expect(form).toHaveClass('entry-editor')
-  })
+    const form = document.querySelector('form.entry-editor');
+    expect(form).toHaveClass('entry-editor');
+  });
 
   it('keyboard hint is visible', () => {
-    renderComponent()
+    renderComponent();
 
-    expect(screen.getByText(/esc/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText(/esc/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+  });
+});

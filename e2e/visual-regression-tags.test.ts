@@ -17,24 +17,20 @@
  * Each test gets a fresh Playwright browser context, so no explicit
  * database reset is required between tests.
  *
- * See .github/instructions/vrt-testing.instructions.md for complete guidelines
+ * See .claude/rules/vrt-testing.md for complete guidelines
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test';
 
-import { VIEWPORTS } from './helpers/test-constants'
-import {
-  createEntry,
-  disableAnimations,
-  saveEntryEdit
-} from './helpers/test-utils'
+import { VIEWPORTS } from './helpers/test-constants';
+import { createEntry, disableAnimations, saveEntryEdit } from './helpers/test-utils';
 
-import type { Page } from '@playwright/test'
+import type { Page } from '@playwright/test';
 
 /**
  * Fixed test date for consistency (avoids date-dependent failures).
  */
-const TEST_DATE = '2026-02-14'
+const TEST_DATE = '2026-02-14';
 
 // =============================================================================
 // Shared helpers
@@ -44,39 +40,36 @@ const TEST_DATE = '2026-02-14'
  * Navigate to /tags and wait until the page heading is visible.
  */
 async function prepareTagsPageForVRT(page: Page): Promise<void> {
-  await page.goto('/tags', { waitUntil: 'networkidle' })
-  await page.evaluate(() => document.fonts.ready)
-  await expect(
-    page.getByRole('heading', { name: 'Tags', level: 1 })
-  ).toBeVisible({ timeout: 15000 })
-  await page.mouse.move(0, 0)
+  await page.goto('/tags', { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByRole('heading', { name: 'Tags', level: 1 })).toBeVisible({
+    timeout: 15000,
+  });
+  await page.mouse.move(0, 0);
 }
 
 /**
  * Navigate to the fixed-date entries page and wait for it to be ready.
  */
 async function goToEntriesPage(page: Page): Promise<void> {
-  await page.goto(`/entries/${TEST_DATE}`, { waitUntil: 'networkidle' })
-  await page.evaluate(() => document.fonts.ready)
-  await expect(page.getByTestId('create-form')).toBeVisible({ timeout: 15000 })
-  await page.mouse.move(0, 0)
+  await page.goto(`/entries/${TEST_DATE}`, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByTestId('create-form')).toBeVisible({ timeout: 15000 });
+  await page.mouse.move(0, 0);
 }
 
 /**
  * Add a tag to the currently open entry editor via the combobox create flow.
  * Assumes the entry-editor is already visible.
  */
-async function addTagViaEditorForVRT(
-  page: Page,
-  tagName: string
-): Promise<void> {
-  const editor = page.getByTestId('entry-editor')
-  const combobox = editor.getByRole('combobox')
-  await combobox.click()
-  await combobox.pressSequentially(tagName)
-  await expect(page.getByText(`Create '${tagName}'`)).toBeVisible()
-  await page.getByText(`Create '${tagName}'`).click()
-  await expect(editor.getByTestId('tag-chips')).toContainText(tagName)
+async function addTagViaEditorForVRT(page: Page, tagName: string): Promise<void> {
+  const editor = page.getByTestId('entry-editor');
+  const combobox = editor.getByRole('combobox');
+  await combobox.click();
+  await combobox.pressSequentially(tagName);
+  await expect(page.getByText(`Create '${tagName}'`)).toBeVisible();
+  await page.getByText(`Create '${tagName}'`).click();
+  await expect(editor.getByTestId('tag-chips')).toContainText(tagName);
 }
 
 /**
@@ -84,21 +77,15 @@ async function addTagViaEditorForVRT(
  * Ends with the entry back in card form on the entries page.
  * Uses force:true to bypass the hover-reveal pattern on desktop.
  */
-async function createEntryWithTag(
-  page: Page,
-  content: string,
-  tagName: string
-): Promise<void> {
-  const entry = await createEntry(page, content)
+async function createEntryWithTag(page: Page, content: string, tagName: string): Promise<void> {
+  const entry = await createEntry(page, content);
   // The clock is frozen, so move it on: an entry only counts as edited when
   // its update time is later than its creation time
-  await page.clock.setFixedTime(new Date(FIXED_NOW.getTime() + 60_000))
-  await entry
-    .getByRole('button', { name: /edit entry/i })
-    .click({ force: true })
-  await expect(page.getByTestId('entry-editor')).toBeVisible()
-  await addTagViaEditorForVRT(page, tagName)
-  await saveEntryEdit(page)
+  await page.clock.setFixedTime(new Date(FIXED_NOW.getTime() + 60_000));
+  await entry.getByRole('button', { name: /edit entry/i }).click({ force: true });
+  await expect(page.getByTestId('entry-editor')).toBeVisible();
+  await addTagViaEditorForVRT(page, tagName);
+  await saveEntryEdit(page);
 }
 
 // =============================================================================
@@ -111,12 +98,12 @@ async function createEntryWithTag(
  * A mask covers an element's box, and the box is as wide as the timestamp text it holds,
  * so masking alone leaves a screenshot dependent on the time the suite runs.
  */
-const FIXED_NOW = new Date(2026, 1, 14, 9, 30)
+const FIXED_NOW = new Date(2026, 1, 14, 9, 30);
 
 test.beforeEach(async ({ page }) => {
-  await page.clock.setFixedTime(FIXED_NOW)
-  await disableAnimations(page)
-})
+  await page.clock.setFixedTime(FIXED_NOW);
+  await disableAnimations(page);
+});
 
 // =============================================================================
 // TagsSectionBrowse
@@ -124,76 +111,76 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('Visual Regression: TagsSectionBrowse', () => {
   test('empty state - no tags - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
+    await page.setViewportSize(VIEWPORTS.desktop);
     // Fresh context → no tags exist → browse shows empty state
-    await prepareTagsPageForVRT(page)
+    await prepareTagsPageForVRT(page);
 
-    const browse = page.getByRole('region', { name: 'Tags', exact: true })
+    const browse = page.getByRole('region', { name: 'Tags', exact: true });
     await expect(browse).toHaveScreenshot('tags-browse-empty-desktop.png', {
       threshold: 0.01,
-      maxDiffPixels: 50
-    })
-  })
+      maxDiffPixels: 50,
+    });
+  });
 
   test('empty state - no tags - mobile', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.mobile)
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.mobile);
+    await prepareTagsPageForVRT(page);
 
-    const browse = page.getByRole('region', { name: 'Tags', exact: true })
+    const browse = page.getByRole('region', { name: 'Tags', exact: true });
     await expect(browse).toHaveScreenshot('tags-browse-empty-mobile.png', {
       threshold: 0.01,
-      maxDiffPixels: 50
-    })
-  })
+      maxDiffPixels: 50,
+    });
+  });
 
   test('with tags - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntryWithTag(page, 'VRT browse entry', 'VrtBrowseTag')
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntryWithTag(page, 'VRT browse entry', 'VrtBrowseTag');
+    await prepareTagsPageForVRT(page);
 
-    const browse = page.getByRole('region', { name: 'Tags', exact: true })
+    const browse = page.getByRole('region', { name: 'Tags', exact: true });
     await expect(browse).toHaveScreenshot('tags-browse-with-tags-desktop.png', {
       threshold: 0.01,
-      maxDiffPixels: 50
-    })
-  })
+      maxDiffPixels: 50,
+    });
+  });
 
   test('with tags - mobile', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.mobile)
-    await goToEntriesPage(page)
+    await page.setViewportSize(VIEWPORTS.mobile);
+    await goToEntriesPage(page);
     // On mobile the edit button is always visible — no force needed
-    await createEntry(page, 'VRT mobile browse entry')
-    const entry = page.getByTestId('entry-card').first()
-    await entry.getByRole('button', { name: /edit entry/i }).click()
-    await expect(page.getByTestId('entry-editor')).toBeVisible()
-    await addTagViaEditorForVRT(page, 'VrtMobileBrowseTag')
-    await saveEntryEdit(page)
-    await prepareTagsPageForVRT(page)
+    await createEntry(page, 'VRT mobile browse entry');
+    const entry = page.getByTestId('entry-card').first();
+    await entry.getByRole('button', { name: /edit entry/i }).click();
+    await expect(page.getByTestId('entry-editor')).toBeVisible();
+    await addTagViaEditorForVRT(page, 'VrtMobileBrowseTag');
+    await saveEntryEdit(page);
+    await prepareTagsPageForVRT(page);
 
-    const browse = page.getByRole('region', { name: 'Tags', exact: true })
+    const browse = page.getByRole('region', { name: 'Tags', exact: true });
     await expect(browse).toHaveScreenshot('tags-browse-with-tags-mobile.png', {
       threshold: 0.01,
-      maxDiffPixels: 50
-    })
-  })
+      maxDiffPixels: 50,
+    });
+  });
 
   test('with active selected tag - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntryWithTag(page, 'VRT active tag entry', 'VrtActiveTag')
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntryWithTag(page, 'VRT active tag entry', 'VrtActiveTag');
+    await prepareTagsPageForVRT(page);
 
     // Click the tag toggle to highlight it as active
-    await page.getByRole('button', { name: 'Select VrtActiveTag' }).click()
+    await page.getByRole('button', { name: 'Select VrtActiveTag' }).click();
 
-    const browse = page.getByRole('region', { name: 'Tags', exact: true })
-    await expect(browse).toHaveScreenshot(
-      'tags-browse-active-tag-desktop.png',
-      { threshold: 0.01, maxDiffPixels: 50 }
-    )
-  })
-})
+    const browse = page.getByRole('region', { name: 'Tags', exact: true });
+    await expect(browse).toHaveScreenshot('tags-browse-active-tag-desktop.png', {
+      threshold: 0.01,
+      maxDiffPixels: 50,
+    });
+  });
+});
 
 // =============================================================================
 // TagsSectionEntries
@@ -201,58 +188,55 @@ test.describe('Visual Regression: TagsSectionBrowse', () => {
 
 test.describe('Visual Regression: TagsSectionEntries', () => {
   test('no active filter state', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await prepareTagsPageForVRT(page);
 
-    const entries = page.getByRole('region', { name: 'Filtered entries' })
+    const entries = page.getByRole('region', { name: 'Filtered entries' });
     await expect(entries).toHaveScreenshot('tags-entries-no-filter.png', {
       threshold: 0.01,
-      maxDiffPixels: 50
-    })
-  })
+      maxDiffPixels: 50,
+    });
+  });
 
   test('with filtered results - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntryWithTag(page, 'VRT filtered entry', 'VrtFilterTag')
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntryWithTag(page, 'VRT filtered entry', 'VrtFilterTag');
+    await prepareTagsPageForVRT(page);
 
-    await page.getByRole('button', { name: 'Select VrtFilterTag' }).click()
-    await expect(page.getByTestId('entry-card')).toBeVisible()
+    await page.getByRole('button', { name: 'Select VrtFilterTag' }).click();
+    await expect(page.getByTestId('entry-card')).toBeVisible();
 
-    const entries = page.getByRole('region', { name: 'Filtered entries' })
-    await expect(entries).toHaveScreenshot(
-      'tags-entries-with-results-desktop.png',
-      {
-        threshold: 0.01,
-        maxDiffPixels: 100,
-        mask: [page.getByTestId('created-at')]
-      }
-    )
-  })
+    const entries = page.getByRole('region', { name: 'Filtered entries' });
+    await expect(entries).toHaveScreenshot('tags-entries-with-results-desktop.png', {
+      threshold: 0.01,
+      maxDiffPixels: 100,
+      mask: [page.getByTestId('created-at')],
+    });
+  });
 
   test('active filter with no matching entries - desktop', async ({ page }) => {
     /**
      * Two entries, each with a distinct tag.
      * Selecting both tags → intersection is empty → empty-no-results state.
      */
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntryWithTag(page, 'VRT no-results entry A', 'VrtNoResultTagX')
-    await createEntryWithTag(page, 'VRT no-results entry B', 'VrtNoResultTagY')
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntryWithTag(page, 'VRT no-results entry A', 'VrtNoResultTagX');
+    await createEntryWithTag(page, 'VRT no-results entry B', 'VrtNoResultTagY');
+    await prepareTagsPageForVRT(page);
 
-    await page.getByRole('button', { name: 'Select VrtNoResultTagX' }).click()
-    await page.getByRole('button', { name: 'Select VrtNoResultTagY' }).click()
-    await expect(page.getByTestId('empty-no-results')).toBeVisible()
+    await page.getByRole('button', { name: 'Select VrtNoResultTagX' }).click();
+    await page.getByRole('button', { name: 'Select VrtNoResultTagY' }).click();
+    await expect(page.getByTestId('empty-no-results')).toBeVisible();
 
-    const entries = page.getByRole('region', { name: 'Filtered entries' })
-    await expect(entries).toHaveScreenshot(
-      'tags-entries-no-results-desktop.png',
-      { threshold: 0.01, maxDiffPixels: 50 }
-    )
-  })
-})
+    const entries = page.getByRole('region', { name: 'Filtered entries' });
+    await expect(entries).toHaveScreenshot('tags-entries-no-results-desktop.png', {
+      threshold: 0.01,
+      maxDiffPixels: 50,
+    });
+  });
+});
 
 // =============================================================================
 // SharedEntryCard with tag chips
@@ -260,23 +244,20 @@ test.describe('Visual Regression: TagsSectionEntries', () => {
 
 test.describe('Visual Regression: Entry card with tags', () => {
   test('entry card with tag chips - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntryWithTag(page, 'VRT card tag entry', 'VrtCardTag')
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntryWithTag(page, 'VRT card tag entry', 'VrtCardTag');
 
-    const entryCard = page.getByTestId('entry-card').first()
-    await expect(entryCard.getByTestId('entry-tags')).toBeVisible()
+    const entryCard = page.getByTestId('entry-card').first();
+    await expect(entryCard.getByTestId('entry-tags')).toBeVisible();
 
-    await expect(entryCard).toHaveScreenshot(
-      'entry-card-with-tags-desktop.png',
-      {
-        threshold: 0.01,
-        maxDiffPixels: 50,
-        mask: [entryCard.getByTestId('created-at')]
-      }
-    )
-  })
-})
+    await expect(entryCard).toHaveScreenshot('entry-card-with-tags-desktop.png', {
+      threshold: 0.01,
+      maxDiffPixels: 50,
+      mask: [entryCard.getByTestId('created-at')],
+    });
+  });
+});
 
 // =============================================================================
 // EntryDayViewEntryEditor — BaseTagInput states
@@ -284,56 +265,52 @@ test.describe('Visual Regression: Entry card with tags', () => {
 
 test.describe('Visual Regression: Entry editor tag input', () => {
   test('tag input - empty (no chips) - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntry(page, 'VRT editor tags empty')
-    const entry = page.getByTestId('entry-card').first()
-    await entry
-      .getByRole('button', { name: /edit entry/i })
-      .click({ force: true })
-    await expect(page.getByTestId('entry-editor')).toBeVisible()
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntry(page, 'VRT editor tags empty');
+    const entry = page.getByTestId('entry-card').first();
+    await entry.getByRole('button', { name: /edit entry/i }).click({ force: true });
+    await expect(page.getByTestId('entry-editor')).toBeVisible();
 
-    const editor = page.getByTestId('entry-editor')
-    await expect(editor).toHaveScreenshot(
-      'entry-editor-tag-input-empty-desktop.png',
-      { threshold: 0.01, maxDiffPixels: 50 }
-    )
-  })
+    const editor = page.getByTestId('entry-editor');
+    await expect(editor).toHaveScreenshot('entry-editor-tag-input-empty-desktop.png', {
+      threshold: 0.01,
+      maxDiffPixels: 50,
+    });
+  });
 
   test('tag input - with chips - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntry(page, 'VRT editor tags with chips')
-    const entry = page.getByTestId('entry-card').first()
-    await entry
-      .getByRole('button', { name: /edit entry/i })
-      .click({ force: true })
-    await expect(page.getByTestId('entry-editor')).toBeVisible()
-    await addTagViaEditorForVRT(page, 'VrtEditorChipTag')
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntry(page, 'VRT editor tags with chips');
+    const entry = page.getByTestId('entry-card').first();
+    await entry.getByRole('button', { name: /edit entry/i }).click({ force: true });
+    await expect(page.getByTestId('entry-editor')).toBeVisible();
+    await addTagViaEditorForVRT(page, 'VrtEditorChipTag');
 
-    const editor = page.getByTestId('entry-editor')
-    await expect(editor).toHaveScreenshot(
-      'entry-editor-tag-input-with-chip-desktop.png',
-      { threshold: 0.01, maxDiffPixels: 50 }
-    )
-  })
+    const editor = page.getByTestId('entry-editor');
+    await expect(editor).toHaveScreenshot('entry-editor-tag-input-with-chip-desktop.png', {
+      threshold: 0.01,
+      maxDiffPixels: 50,
+    });
+  });
 
   test('tag input - with chips - mobile', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.mobile)
-    await goToEntriesPage(page)
-    await createEntry(page, 'VRT editor mobile tags with chips')
-    const entry = page.getByTestId('entry-card').first()
-    await entry.getByRole('button', { name: /edit entry/i }).click()
-    await expect(page.getByTestId('entry-editor')).toBeVisible()
-    await addTagViaEditorForVRT(page, 'VrtMobileEditorTag')
+    await page.setViewportSize(VIEWPORTS.mobile);
+    await goToEntriesPage(page);
+    await createEntry(page, 'VRT editor mobile tags with chips');
+    const entry = page.getByTestId('entry-card').first();
+    await entry.getByRole('button', { name: /edit entry/i }).click();
+    await expect(page.getByTestId('entry-editor')).toBeVisible();
+    await addTagViaEditorForVRT(page, 'VrtMobileEditorTag');
 
-    const editor = page.getByTestId('entry-editor')
-    await expect(editor).toHaveScreenshot(
-      'entry-editor-tag-input-with-chip-mobile.png',
-      { threshold: 0.01, maxDiffPixels: 50 }
-    )
-  })
-})
+    const editor = page.getByTestId('entry-editor');
+    await expect(editor).toHaveScreenshot('entry-editor-tag-input-with-chip-mobile.png', {
+      threshold: 0.01,
+      maxDiffPixels: 50,
+    });
+  });
+});
 
 // =============================================================================
 // Tags page — full layout screenshots
@@ -341,33 +318,33 @@ test.describe('Visual Regression: Entry editor tag input', () => {
 
 test.describe('Visual Regression: Tags page layout', () => {
   test('tags page layout - desktop', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.desktop)
-    await goToEntriesPage(page)
-    await createEntryWithTag(page, 'VRT page layout entry', 'VrtPageLayoutTag')
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await goToEntriesPage(page);
+    await createEntryWithTag(page, 'VRT page layout entry', 'VrtPageLayoutTag');
+    await prepareTagsPageForVRT(page);
 
     await expect(page).toHaveScreenshot('tags-page-layout-desktop.png', {
       fullPage: true,
       threshold: 0.02,
-      maxDiffPixels: 500
-    })
-  })
+      maxDiffPixels: 500,
+    });
+  });
 
   test('tags page layout - mobile', async ({ page }) => {
-    await page.setViewportSize(VIEWPORTS.mobile)
-    await goToEntriesPage(page)
-    await createEntry(page, 'VRT mobile page layout entry')
-    const entry = page.getByTestId('entry-card').first()
-    await entry.getByRole('button', { name: /edit entry/i }).click()
-    await expect(page.getByTestId('entry-editor')).toBeVisible()
-    await addTagViaEditorForVRT(page, 'VrtMobilePageTag')
-    await saveEntryEdit(page)
-    await prepareTagsPageForVRT(page)
+    await page.setViewportSize(VIEWPORTS.mobile);
+    await goToEntriesPage(page);
+    await createEntry(page, 'VRT mobile page layout entry');
+    const entry = page.getByTestId('entry-card').first();
+    await entry.getByRole('button', { name: /edit entry/i }).click();
+    await expect(page.getByTestId('entry-editor')).toBeVisible();
+    await addTagViaEditorForVRT(page, 'VrtMobilePageTag');
+    await saveEntryEdit(page);
+    await prepareTagsPageForVRT(page);
 
     await expect(page).toHaveScreenshot('tags-page-layout-mobile.png', {
       fullPage: true,
       threshold: 0.02,
-      maxDiffPixels: 500
-    })
-  })
-})
+      maxDiffPixels: 500,
+    });
+  });
+});

@@ -2,31 +2,29 @@
  * Tests for use-entry-day-view-shortcuts composable
  */
 
-import { defineComponent } from 'vue'
+import { defineComponent } from 'vue';
 
-import { render } from '@testing-library/vue'
-import { describe, expect, it, vi } from 'vitest'
+import { render } from '@testing-library/vue';
+import { describe, expect, it, vi } from 'vitest';
 
-import { useEntryDayViewShortcuts } from './use-entry-day-view-shortcuts'
+import { useEntryDayViewShortcuts } from './use-entry-day-view-shortcuts';
 
 const { mockUseKeyboardShortcuts } = vi.hoisted(() => {
-  const mockUseKeyboardShortcuts = vi.fn()
-  return { mockUseKeyboardShortcuts }
-})
+  const mockUseKeyboardShortcuts = vi.fn();
+  return { mockUseKeyboardShortcuts };
+});
 
 vi.mock('@/shared/composables/use-keyboard-shortcuts', () => ({
-  useKeyboardShortcuts: mockUseKeyboardShortcuts
-}))
+  useKeyboardShortcuts: mockUseKeyboardShortcuts,
+}));
 
-function createTestComponent(
-  handlers: Parameters<typeof useEntryDayViewShortcuts>[0]
-) {
+function createTestComponent(handlers: Parameters<typeof useEntryDayViewShortcuts>[0]) {
   return defineComponent({
     setup() {
-      useEntryDayViewShortcuts(handlers)
+      useEntryDayViewShortcuts(handlers);
     },
-    template: '<div></div>'
-  })
+    template: '<div></div>',
+  });
 }
 
 describe('useEntryDayViewShortcuts', () => {
@@ -37,39 +35,39 @@ describe('useEntryDayViewShortcuts', () => {
       goToPrevDay: vi.fn(),
       handleOpenDatePicker: vi.fn(),
       handleSave: vi.fn(),
-      handleEscape: vi.fn()
-    }
+      handleEscape: vi.fn(),
+    };
 
-    render(createTestComponent(handlers))
+    render(createTestComponent(handlers));
 
     expect(mockUseKeyboardShortcuts).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({
           key: 'cmd+n',
-          handler: handlers.focusCreateForm
+          handler: handlers.focusCreateForm,
         }),
         expect.objectContaining({ key: 'j', handler: handlers.goToNextDay }),
         expect.objectContaining({ key: 'k', handler: handlers.goToPrevDay }),
         expect.objectContaining({
           key: 'arrowdown',
-          handler: handlers.goToNextDay
+          handler: handlers.goToNextDay,
         }),
         expect.objectContaining({
           key: 'arrowup',
-          handler: handlers.goToPrevDay
+          handler: handlers.goToPrevDay,
         }),
         expect.objectContaining({
           key: 'g',
-          handler: handlers.handleOpenDatePicker
+          handler: handlers.handleOpenDatePicker,
         }),
         expect.objectContaining({ key: 'cmd+s', handler: handlers.handleSave }),
         expect.objectContaining({
           key: 'escape',
-          handler: handlers.handleEscape
-        })
+          handler: handlers.handleEscape,
+        }),
       ])
-    )
-  })
+    );
+  });
 
   it('passes preventDefault: true for navigation shortcuts', () => {
     const handlers = {
@@ -78,18 +76,18 @@ describe('useEntryDayViewShortcuts', () => {
       goToPrevDay: vi.fn(),
       handleOpenDatePicker: vi.fn(),
       handleSave: vi.fn(),
-      handleEscape: vi.fn()
-    }
+      handleEscape: vi.fn(),
+    };
 
-    render(createTestComponent(handlers))
+    render(createTestComponent(handlers));
 
     const registeredShortcuts = mockUseKeyboardShortcuts.mock.calls[0]![0] as {
-      key: string
-      preventDefault: boolean
-    }[]
-    const escapeShortcut = registeredShortcuts.find((s) => s.key === 'escape')
+      key: string;
+      preventDefault: boolean;
+    }[];
+    const escapeShortcut = registeredShortcuts.find((s) => s.key === 'escape');
 
-    expect(escapeShortcut).toBeDefined()
-    expect(escapeShortcut!.preventDefault).toBe(false)
-  })
-})
+    expect(escapeShortcut).toBeDefined();
+    expect(escapeShortcut!.preventDefault).toBe(false);
+  });
+});

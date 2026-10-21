@@ -15,5 +15,5 @@ export const TEST_DATES = {
   /** Third test day: January 3, 2022 */
   THIRD_DAY: '2022-01-03',
   /** Previous day before default: December 31, 2021 */
-  PREV_DAY: '2021-12-31'
-} as const
+  PREV_DAY: '2021-12-31',
+} as const;

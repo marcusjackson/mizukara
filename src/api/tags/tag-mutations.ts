@@ -5,17 +5,17 @@
  * Handles creating, renaming, and soft-deleting tags.
  */
 
-import { softDeleteByTagId } from '@/api/entry-tags/entry-tag-mutations'
+import { softDeleteByTagId } from '@/api/entry-tags/entry-tag-mutations';
 
-import { generateUUID } from '@/shared/utils/uuid-utils'
+import { generateUUID } from '@/shared/utils/uuid-utils';
 
-import { schedulePersist } from '@/db/indexeddb'
+import { schedulePersist } from '@/db/indexeddb';
 
-import { rowToTag } from './tag-row-mappers'
-import { TagNotFoundError, TagValidationError } from './tag-validation'
+import { rowToTag } from './tag-row-mappers';
+import { TagNotFoundError, TagValidationError } from './tag-validation';
 
-import type { CreateTagInput, Tag } from '@/shared/types/tag-types'
-import type { Database } from 'sql.js'
+import type { CreateTagInput, Tag } from '@/shared/types/tag-types';
+import type { Database } from 'sql.js';
 
 /**
  * Fetch tag by ID from database (includes soft-deleted)
@@ -26,13 +26,13 @@ function fetchTagByIdRaw(db: Database, id: string): Tag {
   const result = db.exec(
     'SELECT id, name, created_at, updated_at, is_deleted FROM tags WHERE id = ?',
     [id]
-  )
+  );
 
   if (!result[0]?.values[0]) {
-    throw new TagNotFoundError(id)
+    throw new TagNotFoundError(id);
   }
 
-  return rowToTag(result[0].values[0])
+  return rowToTag(result[0].values[0]);
 }
 
 /**
@@ -42,7 +42,7 @@ function fetchTagByIdRaw(db: Database, id: string): Tag {
  */
 function assertNameNonEmpty(name: string): void {
   if (!name.trim()) {
-    throw new TagValidationError('Tag name must not be empty')
+    throw new TagValidationError('Tag name must not be empty');
   }
 }
 
@@ -52,12 +52,8 @@ function assertNameNonEmpty(name: string): void {
  * @param excludeId - Optional tag ID to exclude from the uniqueness check (used during rename)
  * @throws {TagValidationError} If a duplicate name exists
  */
-function assertNameUnique(
-  db: Database,
-  name: string,
-  excludeId?: string
-): void {
-  const trimmedName = name.trim()
+function assertNameUnique(db: Database, name: string, excludeId?: string): void {
+  const trimmedName = name.trim();
 
   const result = excludeId
     ? db.exec(
@@ -71,10 +67,10 @@ function assertNameUnique(
          WHERE LOWER(name) = LOWER(?) AND is_deleted = 0
          LIMIT 1`,
         [trimmedName]
-      )
+      );
 
   if (result[0]?.values[0]) {
-    throw new TagValidationError(`A tag named "${trimmedName}" already exists`)
+    throw new TagValidationError(`A tag named "${trimmedName}" already exists`);
   }
 }
 
@@ -94,23 +90,23 @@ function assertNameUnique(
  * console.log(tag.id) // '550e8400-...'
  */
 export function createTag(db: Database, input: CreateTagInput): Tag {
-  const { name } = input
+  const { name } = input;
 
-  assertNameNonEmpty(name)
-  assertNameUnique(db, name)
+  assertNameNonEmpty(name);
+  assertNameUnique(db, name);
 
-  const id = generateUUID()
-  const now = Date.now()
+  const id = generateUUID();
+  const now = Date.now();
 
   db.run(
     `INSERT INTO tags (id, name, created_at, updated_at, is_deleted)
      VALUES (?, ?, ?, ?, 0)`,
     [id, name.trim(), now, now]
-  )
+  );
 
-  schedulePersist()
+  schedulePersist();
 
-  return fetchTagByIdRaw(db, id)
+  return fetchTagByIdRaw(db, id);
 }
 
 /**
@@ -131,28 +127,21 @@ export function createTag(db: Database, input: CreateTagInput): Tag {
  */
 export function renameTag(db: Database, id: string, name: string): Tag {
   // Verify the tag exists and is not deleted
-  const existing = db.exec(
-    'SELECT id FROM tags WHERE id = ? AND is_deleted = 0 LIMIT 1',
-    [id]
-  )
+  const existing = db.exec('SELECT id FROM tags WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
   if (!existing[0]?.values[0]) {
-    throw new TagNotFoundError(id)
+    throw new TagNotFoundError(id);
   }
 
-  assertNameNonEmpty(name)
-  assertNameUnique(db, name, id)
+  assertNameNonEmpty(name);
+  assertNameUnique(db, name, id);
 
-  const now = Date.now()
+  const now = Date.now();
 
-  db.run('UPDATE tags SET name = ?, updated_at = ? WHERE id = ?', [
-    name.trim(),
-    now,
-    id
-  ])
+  db.run('UPDATE tags SET name = ?, updated_at = ? WHERE id = ?', [name.trim(), now, id]);
 
-  schedulePersist()
+  schedulePersist();
 
-  return fetchTagByIdRaw(db, id)
+  return fetchTagByIdRaw(db, id);
 }
 
 /**
@@ -170,30 +159,24 @@ export function renameTag(db: Database, id: string, name: string): Tag {
  * softDeleteTag(db, 'tag-uuid')
  */
 export function softDeleteTag(db: Database, id: string): void {
-  const existing = db.exec(
-    'SELECT id FROM tags WHERE id = ? AND is_deleted = 0 LIMIT 1',
-    [id]
-  )
+  const existing = db.exec('SELECT id FROM tags WHERE id = ? AND is_deleted = 0 LIMIT 1', [id]);
   if (!existing[0]?.values[0]) {
-    throw new TagNotFoundError(id)
+    throw new TagNotFoundError(id);
   }
 
-  const now = Date.now()
+  const now = Date.now();
 
-  db.run('BEGIN TRANSACTION')
+  db.run('BEGIN TRANSACTION');
   try {
-    db.run('UPDATE tags SET is_deleted = 1, updated_at = ? WHERE id = ?', [
-      now,
-      id
-    ])
+    db.run('UPDATE tags SET is_deleted = 1, updated_at = ? WHERE id = ?', [now, id]);
 
     // Cascade: soft-delete all active associations for this tag
-    softDeleteByTagId(db, id)
+    softDeleteByTagId(db, id);
 
-    db.run('COMMIT')
-    schedulePersist()
+    db.run('COMMIT');
+    schedulePersist();
   } catch (error) {
-    db.run('ROLLBACK')
-    throw error
+    db.run('ROLLBACK');
+    throw error;
   }
 }

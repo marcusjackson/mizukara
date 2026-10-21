@@ -19,7 +19,7 @@
  */
 export function generateUUID(): string {
   if (typeof crypto !== 'undefined') {
-    return crypto.randomUUID()
+    return crypto.randomUUID();
   }
-  throw new Error('crypto.randomUUID is not supported in this environment')
+  throw new Error('crypto.randomUUID is not supported in this environment');
 }

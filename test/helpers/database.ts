@@ -5,10 +5,10 @@
  */
 
 // Re-export entry helpers
-export * from './entries'
+export * from './entries';
 
 // Re-export tag helpers
-export * from './tags'
+export * from './tags';
 
 // Re-export search helpers
-export * from './search'
+export * from './search';

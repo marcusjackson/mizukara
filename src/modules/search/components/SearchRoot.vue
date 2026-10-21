@@ -202,10 +202,7 @@ watch(
 <template>
   <main class="search-root">
     <div class="search-root__header">
-      <BaseIconButton
-        aria-label="Back"
-        @click="handleBack"
-      >
+      <BaseIconButton aria-label="Back" @click="handleBack">
         <svg
           aria-hidden="true"
           fill="none"
@@ -218,22 +215,14 @@ watch(
           width="20"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <line
-            x1="19"
-            x2="5"
-            y1="12"
-            y2="12"
-          />
+          <line x1="19" x2="5" y1="12" y2="12" />
           <polyline points="12 19 5 12 12 5" />
         </svg>
       </BaseIconButton>
 
       <h1 class="search-root__title">Search</h1>
 
-      <BaseIconButton
-        aria-label="Tags"
-        :to="ROUTES.TAGS"
-      >
+      <BaseIconButton aria-label="Tags" :to="ROUTES.TAGS">
         <svg
           aria-hidden="true"
           fill="none"
@@ -249,13 +238,7 @@ watch(
           <path
             d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24L4 3a1 1 0 0 0-1 1l.24 5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"
           />
-          <circle
-            cx="7.5"
-            cy="7.5"
-            fill="currentColor"
-            r="1.5"
-            stroke="none"
-          />
+          <circle cx="7.5" cy="7.5" fill="currentColor" r="1.5" stroke="none" />
         </svg>
       </BaseIconButton>
     </div>

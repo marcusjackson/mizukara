@@ -89,6 +89,8 @@ function handleCancel(): void {
 }
 
 function handleOpenChange(value: boolean): void {
+  // Escape, an overlay click and the X must not close the dialog mid-action
+  if (!value && props.loading) return
   emit('update:open', value)
   if (!value) {
     emit('cancel')

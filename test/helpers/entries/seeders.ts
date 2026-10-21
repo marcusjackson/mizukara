@@ -2,14 +2,14 @@
  * Entry Seeding Functions for Test Helpers
  */
 
-import initSqlJs from 'sql.js'
+import initSqlJs from 'sql.js';
 
-import { buildColumnMap, rowToEntry } from '@/api/entries/entry-helpers'
+import { buildColumnMap, rowToEntry } from '@/api/entries/entry-helpers';
 
-import { runMigrations } from '@/db/migrations'
+import { runMigrations } from '@/db/migrations';
 
-import type { Entry, SeedEntryInput } from './schema'
-import type { Database } from 'sql.js'
+import type { Entry, SeedEntryInput } from './schema';
+import type { Database } from 'sql.js';
 
 /**
  * Create a fresh in-memory test database with the production schema applied.
@@ -18,10 +18,10 @@ import type { Database } from 'sql.js'
  * schemas stay automatically in sync — no manual duplication needed.
  */
 export async function createTestDatabaseForEntries(): Promise<Database> {
-  const SQL = await initSqlJs()
-  const db = new SQL.Database()
-  runMigrations(db)
-  return db
+  const SQL = await initSqlJs();
+  const db = new SQL.Database();
+  runMigrations(db);
+  return db;
 }
 
 /**
@@ -32,16 +32,14 @@ export async function createTestDatabaseForEntries(): Promise<Database> {
  * (e.g. 2022-02-30 → 2022-03-02) instead of returning NaN.
  */
 function isCalendarValidDate(dateStr: string): boolean {
-  const parts = dateStr.split('-').map(Number)
-  const year = parts[0] ?? 0
-  const month = parts[1] ?? 0
-  const day = parts[2] ?? 0
-  const date = new Date(Date.UTC(year, month - 1, day))
+  const parts = dateStr.split('-').map(Number);
+  const year = parts[0] ?? 0;
+  const month = parts[1] ?? 0;
+  const day = parts[2] ?? 0;
+  const date = new Date(Date.UTC(year, month - 1, day));
   return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() + 1 === month &&
-    date.getUTCDate() === day
-  )
+    date.getUTCFullYear() === year && date.getUTCMonth() + 1 === month && date.getUTCDate() === day
+  );
 }
 
 /**
@@ -59,14 +57,12 @@ export function seedEntry(db: Database, data: SeedEntryInput = {}): Entry {
     assignedDay = '2022-01-01',
     content = 'Test entry content',
     id = crypto.randomUUID(),
-    isDeleted = false
-  } = data
+    isDeleted = false,
+  } = data;
 
   // Minimal validation for test data quality
   if (!content.trim()) {
-    throw new Error(
-      `seedEntry: content cannot be empty (received: "${content}")`
-    )
+    throw new Error(`seedEntry: content cannot be empty (received: "${content}")`);
   }
   if (
     !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(assignedDay) ||
@@ -74,47 +70,39 @@ export function seedEntry(db: Database, data: SeedEntryInput = {}): Entry {
   ) {
     throw new Error(
       `seedEntry: assignedDay must be a valid YYYY-MM-DD date (received: "${assignedDay}")`
-    )
+    );
   }
 
-  const now = Date.now()
-  const createdAt = data.createdAt ?? now
-  const updatedAt = data.updatedAt ?? now
+  const now = Date.now();
+  const createdAt = data.createdAt ?? now;
+  const updatedAt = data.updatedAt ?? now;
 
   // Auto-increment orderPosition based on existing entries for the day,
   // unless explicitly provided
-  let orderPosition: number
+  let orderPosition: number;
   if (data.orderPosition === undefined) {
     const maxResult = db.exec(
       'SELECT COALESCE(MAX(order_position), -1) FROM entries WHERE assigned_day = ? AND is_deleted = 0',
       [assignedDay]
-    )
-    const maxPos = maxResult[0]?.values[0]?.[0]
-    orderPosition = (typeof maxPos === 'number' ? maxPos : -1) + 1
+    );
+    const maxPos = maxResult[0]?.values[0]?.[0];
+    orderPosition = (typeof maxPos === 'number' ? maxPos : -1) + 1;
   } else {
-    orderPosition = data.orderPosition
+    orderPosition = data.orderPosition;
   }
 
   db.run(
     `INSERT INTO entries (id, content, created_at, updated_at, assigned_day, order_position, is_deleted)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      content,
-      createdAt,
-      updatedAt,
-      assignedDay,
-      orderPosition,
-      isDeleted ? 1 : 0
-    ]
-  )
+    [id, content, createdAt, updatedAt, assignedDay, orderPosition, isDeleted ? 1 : 0]
+  );
 
-  const result = db.exec('SELECT * FROM entries WHERE id = ?', [id])
-  const resultSet = result[0]
+  const result = db.exec('SELECT * FROM entries WHERE id = ?', [id]);
+  const resultSet = result[0];
   if (!resultSet?.values[0]) {
-    throw new Error(`seedEntry: Failed to insert entry with id "${id}"`)
+    throw new Error(`seedEntry: Failed to insert entry with id "${id}"`);
   }
 
-  const cols = buildColumnMap(resultSet.columns)
-  return rowToEntry(resultSet.values[0], cols)
+  const cols = buildColumnMap(resultSet.columns);
+  return rowToEntry(resultSet.values[0], cols);
 }

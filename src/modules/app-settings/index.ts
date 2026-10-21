@@ -7,4 +7,4 @@
  * @module app-settings
  */
 
-export { default as AppSettingsRoot } from './components/AppSettingsRoot.vue'
+export { default as AppSettingsRoot } from './components/AppSettingsRoot.vue';

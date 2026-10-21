@@ -42,7 +42,7 @@ const route = useRoute()
 const router = useRouter()
 
 // =============================================================================
-// Active filter state — URL-synced via ?tags=id1,id2
+// Active filter state — URL-synced via repeated ?tags=<id> params
 // =============================================================================
 
 /**
@@ -143,10 +143,7 @@ watch(
 <template>
   <main class="tags-root">
     <div class="tags-root__header">
-      <BaseIconButton
-        aria-label="Back"
-        @click="handleBack"
-      >
+      <BaseIconButton aria-label="Back" @click="handleBack">
         <svg
           aria-hidden="true"
           fill="none"
@@ -159,22 +156,14 @@ watch(
           width="20"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <line
-            x1="19"
-            x2="5"
-            y1="12"
-            y2="12"
-          />
+          <line x1="19" x2="5" y1="12" y2="12" />
           <polyline points="12 19 5 12 12 5" />
         </svg>
       </BaseIconButton>
 
       <h1 class="tags-root__title">Tags</h1>
 
-      <BaseIconButton
-        aria-label="Search"
-        :to="ROUTES.SEARCH"
-      >
+      <BaseIconButton aria-label="Search" :to="ROUTES.SEARCH">
         <svg
           aria-hidden="true"
           fill="none"
@@ -187,31 +176,15 @@ watch(
           width="20"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <circle
-            cx="11"
-            cy="11"
-            r="8"
-          />
-          <line
-            x1="21"
-            x2="16.65"
-            y1="21"
-            y2="16.65"
-          />
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" x2="16.65" y1="21" y2="16.65" />
         </svg>
       </BaseIconButton>
     </div>
 
-    <TagsSectionStatus
-      v-if="isInitialLoad || loadError"
-      :error="loadError"
-      @retry="fetchTags"
-    />
+    <TagsSectionStatus v-if="isInitialLoad || loadError" :error="loadError" @retry="fetchTags" />
 
-    <div
-      v-else
-      class="tags-root__layout"
-    >
+    <div v-else class="tags-root__layout">
       <div class="tags-root__browse">
         <TagsSectionBrowse
           :active-tag-ids="activeTagIds"
@@ -220,10 +193,7 @@ watch(
           @delete-tag="handleDeleteTag"
           @toggle-tag="handleToggleTag"
         />
-        <TagsSectionStarter
-          :tags="tags"
-          @tags-added="fetchTags"
-        />
+        <TagsSectionStarter :tags="tags" @tags-added="fetchTags" />
       </div>
 
       <TagsSectionEntries

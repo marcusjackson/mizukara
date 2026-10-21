@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * EntryDayViewEntryEditor - Inline editor for journal entries.
- * Validates content/day, auto-focuses, warns on unsaved changes.
+ * Validates content/day, auto-focuses on devices with a fine pointer (not touch,
+ * where focus would raise the keyboard), warns on unsaved changes.
  *
  * @emits save-requested - Valid data submission
  * @emits edit-cancelled - Cancel/Escape action
@@ -79,7 +80,9 @@ const documentKeyDown = (event: KeyboardEvent) => {
 onMounted(() => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   document.addEventListener('keydown', documentKeyDown, true)
-  textareaRef.value?.focus()
+  if (!globalThis.matchMedia('(pointer: coarse)').matches) {
+    textareaRef.value?.focus()
+  }
 })
 
 onUnmounted(() => {
@@ -94,11 +97,7 @@ defineExpose({
 </script>
 
 <template>
-  <form
-    class="entry-editor"
-    data-testid="entry-editor"
-    @submit.prevent="validatedSave"
-  >
+  <form class="entry-editor" data-testid="entry-editor" @submit.prevent="validatedSave">
     <div class="entry-editor-content">
       <BaseTextarea
         ref="textareaRef"
@@ -129,20 +128,9 @@ defineExpose({
     <div class="entry-editor-actions">
       <span class="keyboard-hint"> <kbd>Esc</kbd> to cancel </span>
       <div class="button-group">
-        <BaseButton
-          type="button"
-          variant="secondary"
-          @click="onCancel"
-        >
-          Cancel
-        </BaseButton>
+        <BaseButton type="button" variant="secondary" @click="onCancel"> Cancel </BaseButton>
 
-        <BaseButton
-          type="submit"
-          variant="primary"
-        >
-          Save
-        </BaseButton>
+        <BaseButton type="submit" variant="primary"> Save </BaseButton>
       </div>
     </div>
   </form>

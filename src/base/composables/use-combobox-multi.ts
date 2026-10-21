@@ -4,31 +4,31 @@
  * Handles multi-select combobox logic: filtering, selection,
  * and chip management. Used by BaseComboboxMulti.
  */
-import { computed, ref } from 'vue'
+import { computed, ref } from 'vue';
 
-import { useFilter } from 'reka-ui'
+import { useFilter } from 'reka-ui';
 
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue';
 
 export interface ComboboxOption {
-  value: string | number
-  label: string
-  disabled?: boolean
+  value: string | number;
+  label: string;
+  disabled?: boolean;
 }
 
 interface ComboboxMultiConfig {
-  disabled: Ref<boolean | undefined>
-  name: Ref<string | undefined>
-  required: Ref<boolean | undefined>
+  disabled: Ref<boolean | undefined>;
+  name: Ref<string | undefined>;
+  required: Ref<boolean | undefined>;
 }
 
 /** Props passed to the ComboboxRoot element in multi-select mode */
 interface ComboboxMultiRootBindings {
-  disabled: boolean
-  ignoreFilter: true
-  multiple: true
-  required: boolean
-  name?: string
+  disabled: boolean;
+  ignoreFilter: true;
+  multiple: true;
+  required: boolean;
+  name?: string;
 }
 
 function buildMultiRootProps(
@@ -40,25 +40,25 @@ function buildMultiRootProps(
     disabled: disabled.value ?? false,
     ignoreFilter: true,
     multiple: true,
-    required: required.value ?? false
-  }
-  if (name.value) props.name = name.value
-  return props
+    required: required.value ?? false,
+  };
+  if (name.value) props.name = name.value;
+  return props;
 }
 
 export interface UseComboboxMultiReturn {
   /** Root props to spread onto ComboboxRoot */
-  comboboxRootProps: ComputedRef<ComboboxMultiRootBindings>
+  comboboxRootProps: ComputedRef<ComboboxMultiRootBindings>;
   /** Filtered list of options based on the current search term */
-  filteredOptions: ComputedRef<ComboboxOption[]>
+  filteredOptions: ComputedRef<ComboboxOption[]>;
   /** The current search term typed by the user */
-  searchTerm: Ref<string>
+  searchTerm: Ref<string>;
   /** The currently selected options */
-  selectedOptions: ComputedRef<ComboboxOption[]>
+  selectedOptions: ComputedRef<ComboboxOption[]>;
   /** Handle option list update from the combobox (replaces selection) */
-  handleModelUpdate: (newOptions: ComboboxOption[]) => void
+  handleModelUpdate: (newOptions: ComboboxOption[]) => void;
   /** Remove a single item from the selection by value */
-  removeItem: (value: string | number) => void
+  removeItem: (value: string | number) => void;
 }
 
 /**
@@ -74,30 +74,30 @@ export function useComboboxMulti(
   options: Ref<ComboboxOption[]>,
   config: ComboboxMultiConfig
 ): UseComboboxMultiReturn {
-  const { contains } = useFilter({ sensitivity: 'base' })
-  const searchTerm = ref('')
+  const { contains } = useFilter({ sensitivity: 'base' });
+  const searchTerm = ref('');
 
   const filteredOptions = computed(() =>
     searchTerm.value
       ? options.value.filter((opt) => contains(opt.label, searchTerm.value))
       : options.value
-  )
+  );
 
   const selectedOptions = computed(() =>
     options.value.filter((opt) => model.value.includes(opt.value))
-  )
+  );
 
   const comboboxRootProps = computed(() =>
     buildMultiRootProps(config.disabled, config.required, config.name)
-  )
+  );
 
   function handleModelUpdate(newOptions: ComboboxOption[]): void {
-    model.value = newOptions.map((opt) => opt.value)
-    searchTerm.value = ''
+    model.value = newOptions.map((opt) => opt.value);
+    searchTerm.value = '';
   }
 
   function removeItem(value: string | number): void {
-    model.value = model.value.filter((v) => v !== value)
+    model.value = model.value.filter((v) => v !== value);
   }
 
   return {
@@ -106,6 +106,6 @@ export function useComboboxMulti(
     searchTerm,
     selectedOptions,
     handleModelUpdate,
-    removeItem
-  }
+    removeItem,
+  };
 }

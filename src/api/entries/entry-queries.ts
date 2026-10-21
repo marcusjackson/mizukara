@@ -5,16 +5,12 @@
  * Handles finding entries by day and by ID with proper filtering.
  */
 
-import { isValidISODate } from '@/shared/utils/date-utils'
+import { isValidISODate } from '@/shared/utils/date-utils';
 
-import {
-  buildColumnMap,
-  queryResultToEntries,
-  rowToEntry
-} from './entry-helpers'
+import { buildColumnMap, queryResultToEntries, rowToEntry } from './entry-helpers';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { Database } from 'sql.js'
+import type { Entry } from '@/shared/types/entry-types';
+import type { Database } from 'sql.js';
 
 /**
  * Find all entries for a specific day, ordered by order_position then created_at
@@ -32,9 +28,7 @@ import type { Database } from 'sql.js'
  */
 export function findByDay(db: Database, assignedDay: string): Entry[] {
   if (!isValidISODate(assignedDay)) {
-    throw new TypeError(
-      `findByDay: invalid assignedDay format "${assignedDay}"`
-    )
+    throw new TypeError(`findByDay: invalid assignedDay format "${assignedDay}"`);
   }
 
   const result = db.exec(
@@ -45,11 +39,11 @@ export function findByDay(db: Database, assignedDay: string): Entry[] {
     ORDER BY order_position ASC, created_at ASC
   `,
     [assignedDay]
-  )
+  );
 
-  if (!result[0]) return []
+  if (!result[0]) return [];
 
-  return queryResultToEntries(result[0])
+  return queryResultToEntries(result[0]);
 }
 
 /**
@@ -77,10 +71,10 @@ export function findById(db: Database, id: string): Entry | null {
     LIMIT 1
   `,
     [id]
-  )
+  );
 
-  if (!result[0]?.values[0]) return null
+  if (!result[0]?.values[0]) return null;
 
-  const cols = buildColumnMap(result[0].columns)
-  return rowToEntry(result[0].values[0], cols)
+  const cols = buildColumnMap(result[0].columns);
+  return rowToEntry(result[0].values[0], cols);
 }

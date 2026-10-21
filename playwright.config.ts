@@ -1,13 +1,13 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
-const isCI = !!process.env['CI']
+const isCI = !!process.env['CI'];
 
 // Another project's dev server may already hold 5173, and reusing it would run
 // these specs against the wrong app. E2E_PORT=5199 starts this app's own server
 // on a free port instead.
-const customPort = process.env['E2E_PORT']
-const port = customPort ?? '5173'
-const origin = `http://localhost:${port}`
+const customPort = process.env['E2E_PORT'];
+const port = customPort ?? '5173';
+const origin = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: './e2e',
@@ -33,10 +33,7 @@ export default defineConfig({
   ...(isCI && { workers: 1 }),
 
   // Reporter to use
-  reporter: [
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['list']
-  ],
+  reporter: [['html', { open: 'never', outputFolder: 'playwright-report' }], ['list']],
 
   // Shared settings for all projects
   use: {
@@ -44,7 +41,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     actionTimeout: 10_000,
-    navigationTimeout: 15_000
+    navigationTimeout: 15_000,
   },
 
   // Configure projects for major browsers
@@ -54,21 +51,21 @@ export default defineConfig({
       name: 'chromium',
       testMatch: '*.test.ts',
       testIgnore: ['**/visual-regression*.test.ts'],
-      use: { ...devices['Desktop Chrome'] }
+      use: { ...devices['Desktop Chrome'] },
     },
     // Firefox
     {
       name: 'firefox',
       testMatch: '*.test.ts',
       testIgnore: ['**/visual-regression*.test.ts'],
-      use: { ...devices['Desktop Firefox'] }
+      use: { ...devices['Desktop Firefox'] },
     },
     // WebKit (Safari engine)
     {
       name: 'webkit',
       testMatch: '*.test.ts',
       testIgnore: ['**/visual-regression*.test.ts'],
-      use: { ...devices['Desktop Safari'] }
+      use: { ...devices['Desktop Safari'] },
     },
     // Visual regression testing - single browser for consistency
     {
@@ -78,9 +75,9 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Consistent viewport for visual regression
-        viewport: { width: 1280, height: 800 }
-      }
-    }
+        viewport: { width: 1280, height: 800 },
+      },
+    },
   ],
 
   // Run local dev server before starting tests
@@ -88,6 +85,6 @@ export default defineConfig({
     command: `pnpm dev --port ${port}`,
     url: origin,
     reuseExistingServer: !isCI && !customPort,
-    timeout: 120 * 1000
-  }
-})
+    timeout: 120 * 1000,
+  },
+});

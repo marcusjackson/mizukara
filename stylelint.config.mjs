@@ -98,52 +98,28 @@ export default {
       // Transitions & Animations
       'transition',
       'transform',
-      'animation'
+      'animation',
     ],
 
     // Enforce CSS variables for colors (disallow hardcoded colors)
     'color-no-hex': true,
     'color-named': 'never',
-    'function-disallowed-list': [
-      'rgb',
-      'rgba',
-      'hsl',
-      'hsla',
-      'oklch',
-      'lch',
-      'lab',
-      'color-mix'
-    ],
+    'function-disallowed-list': ['rgb', 'rgba', 'hsl', 'hsla', 'oklch', 'lch', 'lab', 'color-mix'],
 
     // Allow var() for colors, spacing, and typography
     'declaration-property-value-allowed-list': {
-      '/color$/': [
-        String.raw`/^var\(--/`,
-        'transparent',
-        'inherit',
-        'currentColor'
-      ],
-      '/background$/': [
-        String.raw`/^var\(--/`,
-        'transparent',
-        'inherit',
-        'none'
-      ],
+      '/color$/': [String.raw`/^var\(--/`, 'transparent', 'inherit', 'currentColor'],
+      '/background$/': [String.raw`/^var\(--/`, 'transparent', 'inherit', 'none'],
       'background-color': [String.raw`/^var\(--/`, 'transparent', 'inherit'],
-      'border-color': [
-        String.raw`/^var\(--/`,
-        'transparent',
-        'inherit',
-        'currentColor'
-      ],
+      'border-color': [String.raw`/^var\(--/`, 'transparent', 'inherit', 'currentColor'],
       'box-shadow': [String.raw`/^var\(--/`, 'none', 'inherit'],
       // Spacing: each token must be 0, -1px, auto, inherit, or a CSS variable.
       // The regex supports one-to-four space-separated shorthand tokens.
       padding: [
-        String.raw`/^(0|-1px|auto|inherit|var\(--[^)]*\))(\s+(0|-1px|auto|inherit|var\(--[^)]*\)))*$/`
+        String.raw`/^(0|-1px|auto|inherit|var\(--[^)]*\))(\s+(0|-1px|auto|inherit|var\(--[^)]*\)))*$/`,
       ],
       margin: [
-        String.raw`/^(0|-1px|auto|inherit|var\(--[^)]*\))(\s+(0|-1px|auto|inherit|var\(--[^)]*\)))*$/`
+        String.raw`/^(0|-1px|auto|inherit|var\(--[^)]*\))(\s+(0|-1px|auto|inherit|var\(--[^)]*\)))*$/`,
       ],
       // Typography: enforce design tokens for font properties (single-value)
       'font-size': [String.raw`/^var\(--/`, 'inherit', 'initial', 'unset'],
@@ -154,51 +130,45 @@ export default {
         'unset',
         'normal',
         'bolder',
-        'lighter'
+        'lighter',
       ],
-      'line-height': [
-        String.raw`/^var\(--/`,
-        'inherit',
-        'initial',
-        'normal',
-        'unset'
-      ]
+      'line-height': [String.raw`/^var\(--/`, 'inherit', 'initial', 'normal', 'unset'],
     },
 
     // Allow CSS custom properties (variables)
     'property-no-unknown': [
       true,
       {
-        ignoreProperties: ['/^--/']
-      }
+        ignoreProperties: ['/^--/'],
+      },
     ],
 
     // Selector naming (kebab-case with BEM support for classes)
     'selector-class-pattern': [
       '^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$',
       {
-        message: 'Class selectors should be kebab-case (BEM modifiers allowed)'
-      }
+        message: 'Class selectors should be kebab-case (BEM modifiers allowed)',
+      },
     ],
 
     // Vue-specific
     'selector-pseudo-class-no-unknown': [
       true,
       {
-        ignorePseudoClasses: ['deep', 'global', 'slotted']
-      }
+        ignorePseudoClasses: ['deep', 'global', 'slotted'],
+      },
     ],
     'selector-pseudo-element-no-unknown': [
       true,
       {
-        ignorePseudoElements: ['v-deep', 'v-global', 'v-slotted']
-      }
+        ignorePseudoElements: ['v-deep', 'v-global', 'v-slotted'],
+      },
     ],
 
     // Disable some rules that conflict with project conventions
     'no-empty-source': null,
     'no-descending-specificity': null,
-    'declaration-empty-line-before': null
+    'declaration-empty-line-before': null,
   },
   overrides: [
     {
@@ -207,8 +177,8 @@ export default {
         // Allow hardcoded values only in tokens file
         'color-no-hex': null,
         'function-disallowed-list': null,
-        'declaration-property-value-allowed-list': null
-      }
-    }
-  ]
-}
+        'declaration-property-value-allowed-list': null,
+      },
+    },
+  ],
+};

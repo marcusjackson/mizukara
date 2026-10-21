@@ -4,13 +4,13 @@
  * Validation logic for entry mutation operations.
  */
 
-import { RepositoryError } from '@/api/types'
+import { RepositoryError } from '@/api/types';
 
-import { isValidISODate } from '@/shared/utils/date-utils'
+import { isValidISODate } from '@/shared/utils/date-utils';
 import {
   ENTRY_CONTENT_MAX_LENGTH,
-  ENTRY_VALIDATION_ERRORS
-} from '@/shared/validation/validation-errors'
+  ENTRY_VALIDATION_ERRORS,
+} from '@/shared/validation/validation-errors';
 
 /**
  * Custom error for entry validation failures
@@ -25,8 +25,8 @@ export class EntryValidationError extends RepositoryError {
     public readonly field: string,
     message: string
   ) {
-    super(`${field}: ${message}`, 'validate', 'Entry')
-    this.name = 'EntryValidationError'
+    super(`${field}: ${message}`, 'validate', 'Entry');
+    this.name = 'EntryValidationError';
   }
 }
 
@@ -54,34 +54,22 @@ export class EntryValidationError extends RepositoryError {
  * validateEntryInput({ content: 'Valid', assignedDay: '2026-13-01' })
  * // throws EntryValidationError: assignedDay: Please enter a valid date in YYYY-MM-DD format
  */
-export function validateEntryInput(input: {
-  content?: string
-  assignedDay?: string
-}): void {
+export function validateEntryInput(input: { content?: string; assignedDay?: string }): void {
   if (input.content !== undefined) {
     if (typeof input.content !== 'string') {
-      throw new TypeError(ENTRY_VALIDATION_ERRORS.CONTENT_TYPE)
+      throw new TypeError(ENTRY_VALIDATION_ERRORS.CONTENT_TYPE);
     }
     if (input.content.trim().length === 0) {
-      throw new EntryValidationError(
-        'content',
-        ENTRY_VALIDATION_ERRORS.CONTENT_EMPTY
-      )
+      throw new EntryValidationError('content', ENTRY_VALIDATION_ERRORS.CONTENT_EMPTY);
     }
     if (input.content.length > ENTRY_CONTENT_MAX_LENGTH) {
-      throw new EntryValidationError(
-        'content',
-        ENTRY_VALIDATION_ERRORS.CONTENT_TOO_LONG
-      )
+      throw new EntryValidationError('content', ENTRY_VALIDATION_ERRORS.CONTENT_TOO_LONG);
     }
   }
 
   if (input.assignedDay !== undefined) {
     if (!isValidISODate(input.assignedDay)) {
-      throw new EntryValidationError(
-        'assignedDay',
-        ENTRY_VALIDATION_ERRORS.DATE_FORMAT
-      )
+      throw new EntryValidationError('assignedDay', ENTRY_VALIDATION_ERRORS.DATE_FORMAT);
     }
   }
 }

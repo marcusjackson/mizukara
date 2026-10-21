@@ -11,7 +11,6 @@ export const TEST_ENTRY_CONTENT = {
   LONG: 'A longer test entry with more detailed information about the day',
   TODAY: 'Entry for today',
   YESTERDAY: 'Yesterday entry unique',
-  TOMORROW: 'Tomorrow entry for testing',
   FIRST: 'First entry of the day',
   SECOND: 'Second entry with more details',
   THIRD: 'Third entry to test ordering',
@@ -28,5 +27,5 @@ export const TEST_ENTRY_CONTENT = {
   TAG_RENAME: 'Entry for rename test E2E',
   TAG_DELETE: 'Entry for delete test E2E',
   TAG_KEYBOARD_RENAME: 'Entry for keyboard rename T9',
-  TAG_ZERO_COUNT: 'Entry for zero-count tag T10'
-} as const
+  TAG_ZERO_COUNT: 'Entry for zero-count tag T10',
+} as const;

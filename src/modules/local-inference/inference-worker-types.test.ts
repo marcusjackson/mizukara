@@ -1,9 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 
-import type {
-  InferenceWorkerRequest,
-  InferenceWorkerResponse
-} from './inference-worker-types'
+import type { InferenceWorkerRequest, InferenceWorkerResponse } from './inference-worker-types';
 
 /**
  * The protocol is types only. What is worth pinning is that both unions stay
@@ -14,16 +11,16 @@ import type {
 function describeResponse(response: InferenceWorkerResponse): string {
   switch (response.kind) {
     case 'progress':
-      return `progress ${String(response.percent)}`
+      return `progress ${String(response.percent)}`;
     case 'loaded':
-      return 'loaded'
+      return 'loaded';
     case 'embedded':
-      return String(response.vector.length)
+      return String(response.vector.length);
     case 'failed':
-      return response.message
+      return response.message;
     default: {
-      const exhaustive: never = response
-      return exhaustive
+      const exhaustive: never = response;
+      return exhaustive;
     }
   }
 }
@@ -31,12 +28,12 @@ function describeResponse(response: InferenceWorkerResponse): string {
 function describeRequest(request: InferenceWorkerRequest): string {
   switch (request.kind) {
     case 'load':
-      return request.repoId
+      return request.repoId;
     case 'embed':
-      return request.text
+      return request.text;
     default: {
-      const exhaustive: never = request
-      return exhaustive
+      const exhaustive: never = request;
+      return exhaustive;
     }
   }
 }
@@ -47,16 +44,16 @@ describe('inference worker protocol', () => {
       { kind: 'progress', percent: 40, requestId: 'a' },
       { kind: 'loaded', requestId: 'a' },
       { kind: 'embedded', requestId: 'a', vector: [0.1, 0.2] },
-      { kind: 'failed', message: 'out of memory', requestId: 'a' }
-    ]
+      { kind: 'failed', message: 'out of memory', requestId: 'a' },
+    ];
 
     expect(responses.map(describeResponse)).toEqual([
       'progress 40',
       'loaded',
       '2',
-      'out of memory'
-    ])
-  })
+      'out of memory',
+    ]);
+  });
 
   it('should describe every request variant when switched over exhaustively', () => {
     const requests: InferenceWorkerRequest[] = [
@@ -65,15 +62,15 @@ describe('inference worker protocol', () => {
         kind: 'load',
         repoId: 'org/model',
         requestId: 'a',
-        totalBytes: 100
+        totalBytes: 100,
       },
       {
         kind: 'embed',
         requestId: 'b',
-        text: 'Entry'
-      }
-    ]
+        text: 'Entry',
+      },
+    ];
 
-    expect(requests.map(describeRequest)).toEqual(['org/model', 'Entry'])
-  })
-})
+    expect(requests.map(describeRequest)).toEqual(['org/model', 'Entry']);
+  });
+});

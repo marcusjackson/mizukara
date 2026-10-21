@@ -2,252 +2,247 @@
  * Tests for entry mutation functions
  */
 
-import { TEST_DATES } from '@test/constants/dates'
-import { createTestDatabaseForEntries, seedEntry } from '@test/helpers/database'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { TEST_DATES } from '@test/constants/dates';
+import { createTestDatabaseForEntries, seedEntry } from '@test/helpers/database';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EntityNotFoundError } from '@/api/types'
+import { EntityNotFoundError } from '@/api/types';
 
-import { schedulePersist } from '@/db/indexeddb'
+import { schedulePersist } from '@/db/indexeddb';
 
-import {
-  createEntry,
-  softDeleteEntry,
-  updateEntry,
-  updateOrderPosition
-} from './entry-mutations'
-import { EntryValidationError } from './entry-validation'
+import { createEntry, softDeleteEntry, updateEntry, updateOrderPosition } from './entry-mutations';
+import { EntryValidationError } from './entry-validation';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { Database } from 'sql.js'
+import type { Entry } from '@/shared/types/entry-types';
+import type { Database } from 'sql.js';
 
 vi.mock('@/db/indexeddb', () => ({
-  schedulePersist: vi.fn()
-}))
+  schedulePersist: vi.fn(),
+}));
 
 describe('entry-mutations', () => {
-  let db: Database
+  let db: Database;
 
   beforeEach(async () => {
-    db = await createTestDatabaseForEntries()
-  })
+    db = await createTestDatabaseForEntries();
+  });
 
   describe('createEntry', () => {
     it('generates valid UUID', () => {
       const entry = createEntry(db, {
         content: 'Test content',
-        assignedDay: TEST_DATES.DEFAULT
-      })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
 
-      expect(entry.id).toHaveLength(36)
-      expect(entry.id).toMatch(/^[0-9a-f-]+$/i)
-    })
+      expect(entry.id).toHaveLength(36);
+      expect(entry.id).toMatch(/^[0-9a-f-]+$/i);
+    });
 
     it('sets timestamps correctly', () => {
-      const before = Date.now()
+      const before = Date.now();
       const entry = createEntry(db, {
         content: 'Test content',
-        assignedDay: TEST_DATES.DEFAULT
-      })
-      const after = Date.now()
+        assignedDay: TEST_DATES.DEFAULT,
+      });
+      const after = Date.now();
 
-      expect(entry.createdAt).toBeGreaterThanOrEqual(before)
-      expect(entry.createdAt).toBeLessThanOrEqual(after)
-      expect(entry.updatedAt).toBe(entry.createdAt)
-    })
+      expect(entry.createdAt).toBeGreaterThanOrEqual(before);
+      expect(entry.createdAt).toBeLessThanOrEqual(after);
+      expect(entry.updatedAt).toBe(entry.createdAt);
+    });
 
     it('calculates order_position as 0 for first entry in day', () => {
       const entry = createEntry(db, {
         content: 'First entry',
-        assignedDay: TEST_DATES.DEFAULT
-      })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
 
-      expect(entry.orderPosition).toBe(0)
-    })
+      expect(entry.orderPosition).toBe(0);
+    });
 
     it('calculates order_position as max+1 for subsequent entries', () => {
       // First entry
       createEntry(db, {
         content: 'First entry',
-        assignedDay: TEST_DATES.DEFAULT
-      })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
 
       // Second entry
       const secondEntry = createEntry(db, {
         content: 'Second entry',
-        assignedDay: TEST_DATES.DEFAULT
-      })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
 
-      expect(secondEntry.orderPosition).toBe(1)
-    })
+      expect(secondEntry.orderPosition).toBe(1);
+    });
 
     it('calculates order_position independently per day', () => {
       // Entry in day 1
       createEntry(db, {
         content: 'Day 1 entry',
-        assignedDay: TEST_DATES.DEFAULT
-      })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
 
       // Entry in day 2
       const day2Entry = createEntry(db, {
         content: 'Day 2 entry',
-        assignedDay: TEST_DATES.NEXT_DAY
-      })
+        assignedDay: TEST_DATES.NEXT_DAY,
+      });
 
-      expect(day2Entry.orderPosition).toBe(0)
-    })
+      expect(day2Entry.orderPosition).toBe(0);
+    });
 
     it('calls schedulePersist', () => {
-      createEntry(db, { content: 'Test', assignedDay: TEST_DATES.DEFAULT })
+      createEntry(db, { content: 'Test', assignedDay: TEST_DATES.DEFAULT });
 
-      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
-    })
-  })
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled();
+    });
+  });
 
   describe('updateEntry', () => {
-    let existingEntry: Entry
+    let existingEntry: Entry;
 
     beforeEach(() => {
       existingEntry = seedEntry(db, {
         content: 'Original content',
-        assignedDay: TEST_DATES.DEFAULT
-      })
-    })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
+    });
 
     it('preserves created_at, updates updated_at', () => {
-      const originalCreatedAt = existingEntry.createdAt
-      const laterTimestamp = originalCreatedAt + 1000
+      const originalCreatedAt = existingEntry.createdAt;
+      const laterTimestamp = originalCreatedAt + 1000;
 
       // Ensure update timestamp is distinct from creation timestamp
-      const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(laterTimestamp)
+      const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(laterTimestamp);
 
       const updated = updateEntry(db, existingEntry.id, {
-        content: 'Updated content'
-      })
+        content: 'Updated content',
+      });
 
-      dateSpy.mockRestore()
+      dateSpy.mockRestore();
 
-      expect(updated.createdAt).toBe(originalCreatedAt)
-      expect(updated.updatedAt).toBe(laterTimestamp)
-      expect(updated.updatedAt).not.toBe(originalCreatedAt)
-    })
+      expect(updated.createdAt).toBe(originalCreatedAt);
+      expect(updated.updatedAt).toBe(laterTimestamp);
+      expect(updated.updatedAt).not.toBe(originalCreatedAt);
+    });
 
     it('returns original entry without update if input is empty', () => {
-      vi.clearAllMocks() // Clear schedulePersist mock
+      vi.clearAllMocks(); // Clear schedulePersist mock
 
-      const result = updateEntry(db, existingEntry.id, {})
+      const result = updateEntry(db, existingEntry.id, {});
 
-      expect(result).toEqual(existingEntry)
+      expect(result).toEqual(existingEntry);
       // Should NOT call persist
-      expect(vi.mocked(schedulePersist)).not.toHaveBeenCalled()
-    })
+      expect(vi.mocked(schedulePersist)).not.toHaveBeenCalled();
+    });
 
     it('accepts partial input', () => {
       const updated = updateEntry(db, existingEntry.id, {
-        content: 'Updated content'
-      })
+        content: 'Updated content',
+      });
 
-      expect(updated.content).toBe('Updated content')
-      expect(updated.assignedDay).toBe(TEST_DATES.DEFAULT) // unchanged
-    })
+      expect(updated.content).toBe('Updated content');
+      expect(updated.assignedDay).toBe(TEST_DATES.DEFAULT); // unchanged
+    });
 
     it('updates content when provided', () => {
       const updated = updateEntry(db, existingEntry.id, {
-        content: 'New content'
-      })
+        content: 'New content',
+      });
 
-      expect(updated.content).toBe('New content')
-    })
+      expect(updated.content).toBe('New content');
+    });
 
     it('updates assigned_day when provided', () => {
       const updated = updateEntry(db, existingEntry.id, {
-        assignedDay: TEST_DATES.NEXT_DAY
-      })
+        assignedDay: TEST_DATES.NEXT_DAY,
+      });
 
-      expect(updated.assignedDay).toBe(TEST_DATES.NEXT_DAY)
-    })
+      expect(updated.assignedDay).toBe(TEST_DATES.NEXT_DAY);
+    });
 
     it('updates order_position when provided', () => {
       const updated = updateEntry(db, existingEntry.id, {
-        orderPosition: 5
-      })
+        orderPosition: 5,
+      });
 
-      expect(updated.orderPosition).toBe(5)
-    })
+      expect(updated.orderPosition).toBe(5);
+    });
 
     it('calls schedulePersist', () => {
-      updateEntry(db, existingEntry.id, { content: 'Updated' })
+      updateEntry(db, existingEntry.id, { content: 'Updated' });
 
-      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
-    })
-  })
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled();
+    });
+  });
 
   describe('updateOrderPosition', () => {
-    let existingEntry: Entry
+    let existingEntry: Entry;
 
     beforeEach(() => {
       existingEntry = seedEntry(db, {
         content: 'Test entry',
-        assignedDay: TEST_DATES.DEFAULT
-      })
-    })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
+    });
 
     it('updates only order_position field', () => {
-      const original = existingEntry
-      const beforeUpdate = Date.now()
+      const original = existingEntry;
+      const beforeUpdate = Date.now();
 
-      const updated = updateOrderPosition(db, existingEntry.id, 10)
+      const updated = updateOrderPosition(db, existingEntry.id, 10);
 
-      expect(updated.id).toBe(original.id)
-      expect(updated.content).toBe(original.content)
-      expect(updated.assignedDay).toBe(original.assignedDay)
-      expect(updated.createdAt).toBe(original.createdAt)
-      expect(updated.orderPosition).toBe(10)
-      expect(updated.updatedAt).toBeGreaterThanOrEqual(beforeUpdate)
-    })
+      expect(updated.id).toBe(original.id);
+      expect(updated.content).toBe(original.content);
+      expect(updated.assignedDay).toBe(original.assignedDay);
+      expect(updated.createdAt).toBe(original.createdAt);
+      expect(updated.orderPosition).toBe(10);
+      expect(updated.updatedAt).toBeGreaterThanOrEqual(beforeUpdate);
+    });
 
     it('calls schedulePersist', () => {
-      updateOrderPosition(db, existingEntry.id, 10)
+      updateOrderPosition(db, existingEntry.id, 10);
 
-      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
-    })
-  })
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled();
+    });
+  });
 
   describe('softDeleteEntry', () => {
-    let existingEntry: Entry
+    let existingEntry: Entry;
 
     beforeEach(() => {
       existingEntry = seedEntry(db, {
         content: 'Test entry',
-        assignedDay: TEST_DATES.DEFAULT
-      })
-    })
+        assignedDay: TEST_DATES.DEFAULT,
+      });
+    });
 
     it('sets is_deleted flag and updated_at', () => {
-      const beforeDelete = Date.now()
+      const beforeDelete = Date.now();
 
-      const deleted = softDeleteEntry(db, existingEntry.id)
+      const deleted = softDeleteEntry(db, existingEntry.id);
 
-      expect(deleted.isDeleted).toBe(true)
-      expect(deleted.updatedAt).toBeGreaterThanOrEqual(beforeDelete)
-    })
+      expect(deleted.isDeleted).toBe(true);
+      expect(deleted.updatedAt).toBeGreaterThanOrEqual(beforeDelete);
+    });
 
     it('preserves other fields', () => {
-      const deleted = softDeleteEntry(db, existingEntry.id)
+      const deleted = softDeleteEntry(db, existingEntry.id);
 
-      expect(deleted.id).toBe(existingEntry.id)
-      expect(deleted.content).toBe(existingEntry.content)
-      expect(deleted.assignedDay).toBe(existingEntry.assignedDay)
-      expect(deleted.createdAt).toBe(existingEntry.createdAt)
-      expect(deleted.orderPosition).toBe(existingEntry.orderPosition)
-    })
+      expect(deleted.id).toBe(existingEntry.id);
+      expect(deleted.content).toBe(existingEntry.content);
+      expect(deleted.assignedDay).toBe(existingEntry.assignedDay);
+      expect(deleted.createdAt).toBe(existingEntry.createdAt);
+      expect(deleted.orderPosition).toBe(existingEntry.orderPosition);
+    });
 
     it('calls schedulePersist', () => {
-      softDeleteEntry(db, existingEntry.id)
+      softDeleteEntry(db, existingEntry.id);
 
-      expect(vi.mocked(schedulePersist)).toHaveBeenCalled()
-    })
-  })
+      expect(vi.mocked(schedulePersist)).toHaveBeenCalled();
+    });
+  });
 
   describe('input validation', () => {
     describe('createEntry', () => {
@@ -255,109 +250,153 @@ describe('entry-mutations', () => {
         expect(() => {
           createEntry(db, {
             content: '',
-            assignedDay: TEST_DATES.DEFAULT
-          })
-        }).toThrow(EntryValidationError)
+            assignedDay: TEST_DATES.DEFAULT,
+          });
+        }).toThrow(EntryValidationError);
         expect(() => {
           createEntry(db, {
             content: '',
-            assignedDay: TEST_DATES.DEFAULT
-          })
-        }).toThrow('content:')
-      })
+            assignedDay: TEST_DATES.DEFAULT,
+          });
+        }).toThrow('content:');
+      });
 
       it('throws error for whitespace-only content', () => {
         expect(() => {
           createEntry(db, {
             content: '   ',
-            assignedDay: TEST_DATES.DEFAULT
-          })
-        }).toThrow(EntryValidationError)
-      })
+            assignedDay: TEST_DATES.DEFAULT,
+          });
+        }).toThrow(EntryValidationError);
+      });
 
       it('throws error for invalid date format', () => {
         expect(() => {
           createEntry(db, {
             content: 'Valid content',
-            assignedDay: '2022-1-1'
-          })
-        }).toThrow(EntryValidationError)
-      })
+            assignedDay: '2022-1-1',
+          });
+        }).toThrow(EntryValidationError);
+      });
 
       it('throws error for invalid date (month)', () => {
         expect(() => {
           createEntry(db, {
             content: 'Valid content',
-            assignedDay: '2022-13-01'
-          })
-        }).toThrow(EntryValidationError)
-      })
+            assignedDay: '2022-13-01',
+          });
+        }).toThrow(EntryValidationError);
+      });
 
       it('throws error for invalid date (day)', () => {
         expect(() => {
           createEntry(db, {
             content: 'Valid content',
-            assignedDay: '2022-01-32'
-          })
-        }).toThrow(EntryValidationError)
-      })
-    })
+            assignedDay: '2022-01-32',
+          });
+        }).toThrow(EntryValidationError);
+      });
+    });
 
     describe('updateEntry', () => {
-      let existingEntry: Entry
+      let existingEntry: Entry;
 
       beforeEach(() => {
         existingEntry = seedEntry(db, {
           content: 'Original content',
-          assignedDay: '2022-01-01'
-        })
-      })
+          assignedDay: '2022-01-01',
+        });
+      });
 
       it('throws error for empty content update', () => {
         expect(() => {
           updateEntry(db, existingEntry.id, {
-            content: ''
-          })
-        }).toThrow(EntryValidationError)
-      })
+            content: '',
+          });
+        }).toThrow(EntryValidationError);
+      });
 
       it('throws error for invalid date format update', () => {
         expect(() => {
           updateEntry(db, existingEntry.id, {
-            assignedDay: '2022/01/01'
-          })
-        }).toThrow(EntryValidationError)
-      })
+            assignedDay: '2022/01/01',
+          });
+        }).toThrow(EntryValidationError);
+      });
 
       it('accepts valid partial updates', () => {
         const updated = updateEntry(db, existingEntry.id, {
-          content: 'New content'
-        })
+          content: 'New content',
+        });
 
-        expect(updated.content).toBe('New content')
-      })
-    })
-  })
+        expect(updated.content).toBe('New content');
+      });
+    });
+  });
 
   describe('not found errors', () => {
-    const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000'
+    const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000';
 
     it('updateEntry throws EntityNotFoundError for unknown id', () => {
       expect(() => {
-        updateEntry(db, NONEXISTENT_ID, { content: 'New content' })
-      }).toThrow(EntityNotFoundError)
-    })
+        updateEntry(db, NONEXISTENT_ID, { content: 'New content' });
+      }).toThrow(EntityNotFoundError);
+    });
 
     it('updateOrderPosition throws EntityNotFoundError for unknown id', () => {
       expect(() => {
-        updateOrderPosition(db, NONEXISTENT_ID, 0)
-      }).toThrow(EntityNotFoundError)
-    })
+        updateOrderPosition(db, NONEXISTENT_ID, 0);
+      }).toThrow(EntityNotFoundError);
+    });
 
     it('softDeleteEntry throws EntityNotFoundError for unknown id', () => {
       expect(() => {
-        softDeleteEntry(db, NONEXISTENT_ID)
-      }).toThrow(EntityNotFoundError)
-    })
-  })
-})
+        softDeleteEntry(db, NONEXISTENT_ID);
+      }).toThrow(EntityNotFoundError);
+    });
+  });
+
+  describe('soft-deleted entries', () => {
+    let deletedId: string;
+    let deletedUpdatedAt: number;
+
+    beforeEach(() => {
+      const entry = seedEntry(db, { content: 'Original', assignedDay: TEST_DATES.DEFAULT });
+      deletedId = entry.id;
+      deletedUpdatedAt = softDeleteEntry(db, deletedId).updatedAt;
+    });
+
+    function storedRow(): { content: string; updatedAt: number } {
+      const rows = db.exec('SELECT content, updated_at FROM entries WHERE id = ?', [deletedId]);
+      const [content, updatedAt] = rows[0]?.values[0] ?? [];
+      return { content: content as string, updatedAt: updatedAt as number };
+    }
+
+    it('updateEntry refuses a deleted entry and leaves it untouched', () => {
+      expect(() => {
+        updateEntry(db, deletedId, { content: 'Revived' });
+      }).toThrow(EntityNotFoundError);
+      expect(storedRow()).toEqual({ content: 'Original', updatedAt: deletedUpdatedAt });
+    });
+
+    it('updateEntry with no changes refuses a deleted entry', () => {
+      expect(() => {
+        updateEntry(db, deletedId, {});
+      }).toThrow(EntityNotFoundError);
+    });
+
+    it('updateOrderPosition refuses a deleted entry and leaves it untouched', () => {
+      expect(() => {
+        updateOrderPosition(db, deletedId, 9);
+      }).toThrow(EntityNotFoundError);
+      expect(storedRow().updatedAt).toBe(deletedUpdatedAt);
+    });
+
+    it('softDeleteEntry refuses an already-deleted entry and keeps its timestamp', () => {
+      expect(() => {
+        softDeleteEntry(db, deletedId);
+      }).toThrow(EntityNotFoundError);
+      expect(storedRow().updatedAt).toBe(deletedUpdatedAt);
+    });
+  });
+});

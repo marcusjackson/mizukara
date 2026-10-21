@@ -86,18 +86,9 @@ const {
 
 <template>
   <div class="base-combobox">
-    <label
-      v-if="label"
-      class="base-combobox-label"
-      :for="comboboxId"
-    >
+    <label v-if="label" class="base-combobox-label" :for="comboboxId">
       {{ label }}
-      <span
-        v-if="required"
-        aria-hidden="true"
-        class="base-combobox-required"
-        >*</span
-      >
+      <span v-if="required" aria-hidden="true" class="base-combobox-required">*</span>
     </label>
 
     <ComboboxRoot
@@ -122,10 +113,7 @@ const {
           :placeholder="placeholder ?? 'Search...'"
           @input="handleInputChange"
         />
-        <ComboboxTrigger
-          aria-label="Toggle options"
-          class="base-combobox-trigger"
-        >
+        <ComboboxTrigger aria-label="Toggle options" class="base-combobox-trigger">
           <svg
             aria-hidden="true"
             fill="none"
@@ -143,19 +131,10 @@ const {
       </ComboboxAnchor>
 
       <ComboboxPortal>
-        <ComboboxContent
-          class="base-combobox-content"
-          position="popper"
-          :side-offset="4"
-        >
+        <ComboboxContent class="base-combobox-content" position="popper" :side-offset="4">
           <ComboboxViewport class="base-combobox-viewport">
-            <slot
-              name="empty"
-              :search-term="searchTerm"
-            >
-              <ComboboxEmpty class="base-combobox-empty">
-                No results found
-              </ComboboxEmpty>
+            <slot name="empty" :search-term="searchTerm">
+              <ComboboxEmpty class="base-combobox-empty"> No results found </ComboboxEmpty>
             </slot>
 
             <ComboboxItem
@@ -180,11 +159,7 @@ const {
                 </svg>
               </ComboboxItemIndicator>
               <span class="base-combobox-item-text">
-                <slot
-                  name="option"
-                  :option="option"
-                  >{{ getOptionDisplayText(option) }}</slot
-                >
+                <slot name="option" :option="option">{{ getOptionDisplayText(option) }}</slot>
               </span>
             </ComboboxItem>
           </ComboboxViewport>
@@ -192,12 +167,7 @@ const {
       </ComboboxPortal>
     </ComboboxRoot>
 
-    <p
-      v-if="error"
-      :id="`${comboboxId}-error`"
-      class="base-combobox-error"
-      role="alert"
-    >
+    <p v-if="error" :id="`${comboboxId}-error`" class="base-combobox-error" role="alert">
       {{ error }}
     </p>
   </div>

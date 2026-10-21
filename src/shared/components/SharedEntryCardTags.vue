@@ -17,16 +17,8 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    class="entry-tags"
-    data-testid="entry-tags"
-  >
-    <BaseBadge
-      v-for="tag in tags"
-      :key="tag.id"
-      size="sm"
-      variant="secondary"
-    >
+  <div class="entry-tags" data-testid="entry-tags">
+    <BaseBadge v-for="tag in tags" :key="tag.id" size="sm" variant="secondary">
       {{ tag.name }}
     </BaseBadge>
   </div>

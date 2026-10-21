@@ -68,16 +68,10 @@ async function handleDelete(): Promise<void> {
 </script>
 
 <template>
-  <section
-    aria-label="Tag suggestion settings"
-    class="app-settings-section"
-  >
+  <section aria-label="Tag suggestion settings" class="app-settings-section">
     <h2 class="app-settings-section-title">Tag suggestions</h2>
 
-    <p
-      v-if="isUnsupported"
-      class="app-settings-unsupported"
-    >
+    <p v-if="isUnsupported" class="app-settings-unsupported">
       {{
         engine.unsupportedReason.value
           ? describeUnsupportedReason(engine.unsupportedReason.value)
@@ -87,17 +81,9 @@ async function handleDelete(): Promise<void> {
     </p>
 
     <template v-else>
-      <p
-        v-if="engine.error.value"
-        class="app-settings-error"
-        role="alert"
-      >
+      <p v-if="engine.error.value" class="app-settings-error" role="alert">
         {{ engine.error.value }}
-        <button
-          class="app-settings-dismiss"
-          type="button"
-          @click="engine.dismissError"
-        >
+        <button class="app-settings-dismiss" type="button" @click="engine.dismissError">
           Dismiss
         </button>
       </p>

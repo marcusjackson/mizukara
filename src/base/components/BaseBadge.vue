@@ -21,9 +21,7 @@ withDefaults(
 </script>
 
 <template>
-  <span
-    :class="['base-badge', `base-badge-${variant}`, `base-badge-size-${size}`]"
-  >
+  <span :class="['base-badge', `base-badge-${variant}`, `base-badge-size-${size}`]">
     <slot />
   </span>
 </template>

@@ -21,13 +21,13 @@
  * ```
  */
 
-import { nextTick, onMounted, type Ref, watch } from 'vue'
+import { nextTick, onMounted, type Ref, watch } from 'vue';
 
 interface AutoExpandOptions {
   /** Whether auto-expand behaviour is active */
-  enabled: Ref<boolean>
+  enabled: Ref<boolean>;
   /** Maximum number of rows before the textarea scrolls (undefined = unlimited) */
-  maxRows?: number
+  maxRows?: number;
 }
 
 export function useAutoExpandTextarea(
@@ -36,41 +36,38 @@ export function useAutoExpandTextarea(
   options: AutoExpandOptions
 ): void {
   const adjustHeight = (): void => {
-    if (!options.enabled.value) return
+    if (!options.enabled.value) return;
 
-    const el = textareaEl.value
-    if (!el) return
+    const el = textareaEl.value;
+    if (!el) return;
 
     // Collapse to recalculate scrollHeight correctly
-    el.style.height = 'auto'
+    el.style.height = 'auto';
 
     if (typeof options.maxRows === 'number') {
-      const lineHeight =
-        Number.parseFloat(getComputedStyle(el).lineHeight) || 20
-      const paddingTop = Number.parseFloat(getComputedStyle(el).paddingTop) || 0
-      const paddingBottom =
-        Number.parseFloat(getComputedStyle(el).paddingBottom) || 0
-      const maxHeight =
-        options.maxRows * lineHeight + paddingTop + paddingBottom
+      const lineHeight = Number.parseFloat(getComputedStyle(el).lineHeight) || 20;
+      const paddingTop = Number.parseFloat(getComputedStyle(el).paddingTop) || 0;
+      const paddingBottom = Number.parseFloat(getComputedStyle(el).paddingBottom) || 0;
+      const maxHeight = options.maxRows * lineHeight + paddingTop + paddingBottom;
 
       if (el.scrollHeight >= maxHeight) {
-        el.style.height = `${String(maxHeight)}px`
-        el.style.overflowY = 'auto'
+        el.style.height = `${String(maxHeight)}px`;
+        el.style.overflowY = 'auto';
       } else {
-        el.style.height = `${String(el.scrollHeight)}px`
-        el.style.overflowY = 'hidden'
+        el.style.height = `${String(el.scrollHeight)}px`;
+        el.style.overflowY = 'hidden';
       }
     } else {
-      el.style.height = `${String(el.scrollHeight)}px`
-      el.style.overflowY = 'hidden'
+      el.style.height = `${String(el.scrollHeight)}px`;
+      el.style.overflowY = 'hidden';
     }
-  }
+  };
 
   watch(value, async () => {
-    await nextTick(adjustHeight)
-  })
+    await nextTick(adjustHeight);
+  });
 
   onMounted(async () => {
-    await nextTick(adjustHeight)
-  })
+    await nextTick(adjustHeight);
+  });
 }

@@ -59,11 +59,7 @@ const classes = computed(() => [
     :type="type"
     @click="emit('click', $event)"
   >
-    <span
-      v-if="loading"
-      aria-hidden="true"
-      class="base-button-spinner"
-    />
+    <span v-if="loading" aria-hidden="true" class="base-button-spinner" />
     <span :class="{ 'base-button-content-hidden': loading }">
       <slot />
     </span>

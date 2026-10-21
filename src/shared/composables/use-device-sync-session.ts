@@ -23,32 +23,28 @@
  * ```
  */
 
-import { readonly, ref, shallowRef } from 'vue'
+import { effectScope, readonly, ref, shallowRef } from 'vue';
 
-import {
-  applySyncPayload,
-  parseSyncPayloadJSON,
-  serializeDatabaseToJSON
-} from '@/api/device-sync'
+import { applySyncPayload, parseSyncPayloadJSON, serializeDatabaseToJSON } from '@/api/device-sync';
 
-import { useChunkedTransport } from '@/shared/composables/use-chunked-transport'
-import { useDatabase } from '@/shared/composables/use-database'
+import { useChunkedTransport } from '@/shared/composables/use-chunked-transport';
+import { useDatabase } from '@/shared/composables/use-database';
 
-import { persistImmediately } from '@/db/indexeddb'
+import { persistImmediately } from '@/db/indexeddb';
 
-import type { UseChunkedTransport } from '@/shared/composables/use-chunked-transport'
-import type { SyncPayload } from '@/shared/types/device-sync-payload-types'
-import type { DeepReadonly, Ref } from 'vue'
+import type { UseChunkedTransport } from '@/shared/composables/use-chunked-transport';
+import type { SyncPayload } from '@/shared/types/device-sync-payload-types';
+import type { DeepReadonly, Ref } from 'vue';
 
-export type DeviceSyncSessionPhase = 'idle' | 'syncing' | 'complete' | 'error'
+export type DeviceSyncSessionPhase = 'idle' | 'syncing' | 'complete' | 'error';
 
 export interface UseDeviceSyncSession {
   /** Current step of the sync session */
-  phase: DeepReadonly<Ref<DeviceSyncSessionPhase>>
+  phase: DeepReadonly<Ref<DeviceSyncSessionPhase>>;
   /** Message from the last failure, if any */
-  error: DeepReadonly<Ref<string | null>>
+  error: DeepReadonly<Ref<string | null>>;
   /** Runs one full sync exchange over an already-paired data channel */
-  run: (dataChannel: RTCDataChannel) => Promise<void>
+  run: (dataChannel: RTCDataChannel) => Promise<void>;
 }
 
 /**
@@ -61,74 +57,96 @@ export interface UseDeviceSyncSession {
 function waitForPeerPayload(
   transport: UseChunkedTransport,
   channel: RTCDataChannel
-): Promise<SyncPayload> {
-  return new Promise((resolve, reject) => {
-    let settled = false
+): { promise: Promise<SyncPayload>; cancel: () => void } {
+  let cancel: () => void = () => undefined;
+  const promise = new Promise<SyncPayload>((resolve, reject) => {
+    let settled = false;
 
     function cleanup(): void {
-      unsubscribeMessage()
-      unsubscribeError()
-      channel.removeEventListener('close', handleClose)
+      unsubscribeMessage();
+      unsubscribeError();
+      channel.removeEventListener('close', handleClose);
     }
     function settleResolve(payload: SyncPayload): void {
-      if (settled) return
-      settled = true
-      cleanup()
-      resolve(payload)
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(payload);
     }
     function settleReject(reason: unknown): void {
-      if (settled) return
-      settled = true
-      cleanup()
-      reject(reason instanceof Error ? reason : new Error(String(reason)))
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(reason instanceof Error ? reason : new Error(String(reason)));
     }
     function handleClose(): void {
-      settleReject(new Error('Connection closed before sync finished'))
+      settleReject(new Error('Connection closed before sync finished'));
     }
 
     const unsubscribeMessage = transport.onMessage((bytes) => {
       try {
-        settleResolve(parseSyncPayloadJSON(new TextDecoder().decode(bytes)))
+        settleResolve(parseSyncPayloadJSON(new TextDecoder().decode(bytes)));
       } catch (err) {
-        settleReject(err)
+        settleReject(err);
       }
-    })
-    const unsubscribeError = transport.onError(settleReject)
-    channel.addEventListener('close', handleClose)
-  })
+    });
+    const unsubscribeError = transport.onError(settleReject);
+    channel.addEventListener('close', handleClose);
+    cancel = () => {
+      settleReject(new Error('Sync cancelled'));
+    };
+  });
+  return { promise, cancel };
 }
 
 export function useDeviceSyncSession(): UseDeviceSyncSession {
-  const { database } = useDatabase()
-  const phase = ref<DeviceSyncSessionPhase>('idle')
-  const error = ref<string | null>(null)
+  const { database } = useDatabase();
+  const phase = ref<DeviceSyncSessionPhase>('idle');
+  const error = ref<string | null>(null);
 
   async function run(dataChannel: RTCDataChannel): Promise<void> {
-    phase.value = 'syncing'
-    error.value = null
+    phase.value = 'syncing';
+    error.value = null;
 
     try {
-      const db = database.value
-      if (!db) throw new Error('Database not initialized')
+      const db = database.value;
+      if (!db) throw new Error('Database not initialized');
 
-      const transport = useChunkedTransport(
-        readonly(shallowRef<RTCDataChannel | null>(dataChannel))
-      )
-      const localPayload = serializeDatabaseToJSON(db)
-      const [peerPayload] = await Promise.all([
-        waitForPeerPayload(transport, dataChannel),
-        transport.send(new TextEncoder().encode(localPayload))
-      ])
+      // `run()` is called from an event handler with no active scope, so the
+      // transport's watcher and `onScopeDispose` need a scope of their own.
+      const scope = effectScope();
+      let peerPayload: SyncPayload;
+      try {
+        const transport = scope.run(() =>
+          useChunkedTransport(readonly(shallowRef<RTCDataChannel | null>(dataChannel)))
+        );
+        if (!transport) throw new Error('Sync transport unavailable');
+        const localPayload = serializeDatabaseToJSON(db);
+        const peer = waitForPeerPayload(transport, dataChannel);
+        try {
+          [peerPayload] = await Promise.all([
+            peer.promise,
+            transport.send(new TextEncoder().encode(localPayload)),
+          ]);
+        } catch (err) {
+          // A rejected send leaves the receive side waiting; drop its listeners.
+          peer.cancel();
+          peer.promise.catch(() => undefined);
+          throw err;
+        }
+      } finally {
+        scope.stop();
+      }
 
-      applySyncPayload(db, peerPayload)
-      await persistImmediately()
+      applySyncPayload(db, peerPayload);
+      await persistImmediately();
 
-      phase.value = 'complete'
+      phase.value = 'complete';
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Sync failed'
-      phase.value = 'error'
+      error.value = err instanceof Error ? err.message : 'Sync failed';
+      phase.value = 'error';
     }
   }
 
-  return { error: readonly(error), phase: readonly(phase), run }
+  return { error: readonly(error), phase: readonly(phase), run };
 }

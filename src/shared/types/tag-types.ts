@@ -8,15 +8,15 @@
  */
 export interface Tag {
   /** UUID v4 primary key */
-  id: string
+  id: string;
   /** Human-readable label; stored as entered; uniqueness checked case-insensitively */
-  name: string
+  name: string;
   /** Creation timestamp in Unix milliseconds */
-  createdAt: number
+  createdAt: number;
   /** Last update timestamp in Unix milliseconds; updated on every mutation */
-  updatedAt: number
+  updatedAt: number;
   /** Soft delete flag */
-  isDeleted: boolean
+  isDeleted: boolean;
 }
 
 /**
@@ -25,7 +25,7 @@ export interface Tag {
  */
 export interface TagWithCount extends Tag {
   /** Number of non-deleted entries associated with this tag */
-  entryCount: number
+  entryCount: number;
 }
 
 /**
@@ -34,17 +34,17 @@ export interface TagWithCount extends Tag {
  */
 export interface EntryTag {
   /** UUID v4 primary key for this association row */
-  id: string
+  id: string;
   /** FK → entries.id */
-  entryId: string
+  entryId: string;
   /** FK → tags.id */
-  tagId: string
+  tagId: string;
   /** Creation timestamp in Unix milliseconds */
-  createdAt: number
+  createdAt: number;
   /** Last update timestamp in Unix milliseconds */
-  updatedAt: number
+  updatedAt: number;
   /** Soft delete flag; removal is always a soft-delete, never hard-delete */
-  isDeleted: boolean
+  isDeleted: boolean;
 }
 
 /**
@@ -52,7 +52,7 @@ export interface EntryTag {
  */
 export interface CreateTagInput {
   /** Tag name; must be non-empty after trim; must be case-insensitively unique */
-  name: string
+  name: string;
 }
 
 /**
@@ -60,9 +60,9 @@ export interface CreateTagInput {
  */
 export interface AssignTagInput {
   /** UUID of the entry to tag */
-  entryId: string
+  entryId: string;
   /** UUID of the tag to assign */
-  tagId: string
+  tagId: string;
 }
 
 /**
@@ -71,7 +71,7 @@ export interface AssignTagInput {
  */
 export interface TagInputOption {
   /** Tag ID — used as the selected value in the combobox */
-  value: string
+  value: string;
   /** Tag name — displayed in the dropdown and as chip label */
-  label: string
+  label: string;
 }

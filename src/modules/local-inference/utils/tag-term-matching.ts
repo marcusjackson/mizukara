@@ -11,7 +11,7 @@
  * tag either. Inferring a tag from meaning is the classifier's job.
  */
 
-import { TAG_STOPWORDS } from './tag-stopwords'
+import { TAG_STOPWORDS } from './tag-stopwords';
 
 /**
  * Shortest word that may be matched.
@@ -19,10 +19,10 @@ import { TAG_STOPWORDS } from './tag-stopwords'
  * Two-letter tags match inside too many longer words to be worth it even with
  * boundary matching — "ai" in "again" is the example that made this a rule.
  */
-const MIN_MATCH_LENGTH = 3
+const MIN_MATCH_LENGTH = 3;
 
 /** Suffixes stripped to compare a word against a tag name. */
-const SUFFIXES = ['ies', 'ing', 'es', 'ed', 's'] as const
+const SUFFIXES = ['ies', 'ing', 'es', 'ed', 's'] as const;
 
 /**
  * Reduce a word to a crude stem.
@@ -30,23 +30,34 @@ const SUFFIXES = ['ies', 'ing', 'es', 'ed', 's'] as const
  * Deliberately not a real stemmer: this runs synchronously on every
  * suggestion, and a proper stemmer is a dependency this does not need.
  * "parties" and "party" are close enough after this to match; "ran" and "run" are not, and that is accepted.
+ *
+ * A final "e" is dropped from the result and a final "ie" becomes "y", so a
+ * word and its inflections agree whichever way they end: "game"/"games",
+ * "bake"/"baking", "movie"/"movies".
  */
 export function stemWord(word: string): string {
-  const lower = word.toLowerCase()
+  const lower = word.toLowerCase();
   for (const suffix of SUFFIXES) {
     if (lower.length > suffix.length + 2 && lower.endsWith(suffix)) {
-      const trimmed = lower.slice(0, -suffix.length)
-      return suffix === 'ies' ? `${trimmed}y` : trimmed
+      const trimmed = lower.slice(0, -suffix.length);
+      return normalizeEnding(suffix === 'ies' ? `${trimmed}y` : trimmed);
     }
   }
-  return lower
+  return normalizeEnding(lower);
+}
+
+function normalizeEnding(stem: string): string {
+  if (stem.length > 3 && stem.endsWith('ie')) return `${stem.slice(0, -2)}y`;
+  if (stem.length > 3 && stem.endsWith('e')) return stem.slice(0, -1);
+  return stem;
 }
 
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .split(/[^\p{L}\p{N}']+/u)
-    .filter((word) => word.length > 0)
+    .map((word) => word.replace(/'s?$/, ''))
+    .filter((word) => word.length > 0);
 }
 
 /**
@@ -69,22 +80,22 @@ function tokenize(text: string): string[] {
 function isTagPresent(tagName: string, entryStems: string[]): boolean {
   const tagWords = tokenize(tagName)
     .filter((word) => !TAG_STOPWORDS.has(word))
-    .map(stemWord)
+    .map(stemWord);
 
   if (tagWords.length === 0) {
-    return false
+    return false;
   }
   if (tagWords.some((word) => word.length < MIN_MATCH_LENGTH)) {
-    return false
+    return false;
   }
   if (tagWords.length === 1) {
-    return entryStems.includes(tagWords[0] ?? '')
+    return entryStems.includes(tagWords[0] ?? '');
   }
 
-  const phraseStems = entryStems.filter((word) => !TAG_STOPWORDS.has(word))
+  const phraseStems = entryStems.filter((word) => !TAG_STOPWORDS.has(word));
   return phraseStems.some((_, index) =>
     tagWords.every((word, offset) => phraseStems[index + offset] === word)
-  )
+  );
 }
 
 /**
@@ -95,14 +106,15 @@ function isTagPresent(tagName: string, entryStems: string[]): boolean {
  *   local scan, so vocabulary size costs nothing worth capping.
  * @returns The matching names, in the order they were given.
  */
-export function matchExistingTags(
-  entryText: string,
-  tagNames: readonly string[]
-): string[] {
-  const entryStems = tokenize(entryText).map(stemWord)
+export function matchExistingTags(entryText: string, tagNames: readonly string[]): string[] {
+  // Function words never match a tag word, even after stemming shortens a tag
+  // word onto one ("note" and "not" share a stem).
+  const entryStems = tokenize(entryText)
+    .filter((word) => !TAG_STOPWORDS.has(word))
+    .map(stemWord);
   if (entryStems.length === 0) {
-    return []
+    return [];
   }
 
-  return tagNames.filter((name) => isTagPresent(name, entryStems))
+  return tagNames.filter((name) => isTagPresent(name, entryStems));
 }

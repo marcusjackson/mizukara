@@ -5,10 +5,10 @@
  * All queries filter by is_deleted = 0 to return only active records.
  */
 
-import { rowToTag } from './tag-row-mappers'
+import { rowToTag } from './tag-row-mappers';
 
-import type { Tag, TagWithCount } from '@/shared/types/tag-types'
-import type { Database } from 'sql.js'
+import type { Tag, TagWithCount } from '@/shared/types/tag-types';
+import type { Database } from 'sql.js';
 
 /**
  * Find all non-deleted tags with their non-deleted association counts
@@ -38,14 +38,14 @@ export function findAllWithCount(db: Database): TagWithCount[] {
     WHERE t.is_deleted = 0
     GROUP BY t.id
     ORDER BY t.name ASC
-  `)
+  `);
 
-  if (!result[0]) return []
+  if (!result[0]) return [];
 
   return result[0].values.map((row) => ({
     ...rowToTag(row),
-    entryCount: row[5] as number
-  }))
+    entryCount: row[5] as number,
+  }));
 }
 
 /**
@@ -72,11 +72,11 @@ export function findById(db: Database, id: string): Tag | null {
     LIMIT 1
   `,
     [id]
-  )
+  );
 
-  if (!result[0]?.values[0]) return null
+  if (!result[0]?.values[0]) return null;
 
-  return rowToTag(result[0].values[0])
+  return rowToTag(result[0].values[0]);
 }
 
 /**
@@ -98,12 +98,12 @@ export function findAllNames(db: Database): Pick<Tag, 'id' | 'name'>[] {
     FROM tags
     WHERE is_deleted = 0
     ORDER BY name ASC
-  `)
+  `);
 
-  if (!result[0]) return []
+  if (!result[0]) return [];
 
   return result[0].values.map((row) => ({
     id: row[0] as string,
-    name: row[1] as string
-  }))
+    name: row[1] as string,
+  }));
 }

@@ -90,10 +90,7 @@ function handleDone(): void {
 </script>
 
 <template>
-  <section
-    aria-label="Device sync settings"
-    class="app-settings-section"
-  >
+  <section aria-label="Device sync settings" class="app-settings-section">
     <h2 class="app-settings-section-title">Sync devices</h2>
 
     <div class="app-settings-db-operation">
@@ -103,34 +100,19 @@ function handleDone(): void {
           Merge entries and tags with another device over the local network
         </span>
       </div>
-      <BaseButton
-        variant="secondary"
-        @click="handleOpenDialog"
-      >
-        Sync devices
-      </BaseButton>
+      <BaseButton variant="secondary" @click="handleOpenDialog"> Sync devices </BaseButton>
     </div>
 
-    <BaseDialog
-      :open="isOpen"
-      title="Sync devices"
-      @update:open="handleOpenChange"
-    >
+    <BaseDialog :open="isOpen" title="Sync devices" @update:open="handleOpenChange">
       <div class="app-settings-device-sync-body">
         <template v-if="step === 'role-select'">
           <p class="app-settings-device-sync-hint">
-            On one device, show a code. On the other, scan or paste it. Syncing
-            merges both devices in both directions; for an entry edited on both,
-            the newer edit wins on both.
+            On one device, show a code. On the other, scan or paste it. Syncing merges both devices
+            in both directions; for an entry edited on both, the newer edit wins on both.
           </p>
           <div class="app-settings-device-sync-role-buttons">
-            <BaseButton @click="selectRole('initiator')">
-              Show a code
-            </BaseButton>
-            <BaseButton
-              variant="secondary"
-              @click="selectRole('responder')"
-            >
+            <BaseButton @click="selectRole('initiator')"> Show a code </BaseButton>
+            <BaseButton variant="secondary" @click="selectRole('responder')">
               Scan or enter a code
             </BaseButton>
           </div>
@@ -154,23 +136,14 @@ function handleDone(): void {
             @paired="handlePaired"
           />
 
-          <BaseSpinner
-            v-if="step === 'syncing'"
-            label="Syncing…"
-          />
+          <BaseSpinner v-if="step === 'syncing'" label="Syncing…" />
 
-          <div
-            v-else-if="step === 'complete'"
-            class="app-settings-device-sync-result"
-          >
+          <div v-else-if="step === 'complete'" class="app-settings-device-sync-result">
             <p>Devices synced.</p>
             <BaseButton @click="handleDone">Done</BaseButton>
           </div>
 
-          <div
-            v-else-if="step === 'error'"
-            class="app-settings-device-sync-result"
-          >
+          <div v-else-if="step === 'error'" class="app-settings-device-sync-result">
             <p role="alert">{{ errorMessage }}</p>
             <p class="app-settings-device-sync-hint">
               If this keeps failing, use Export/Import above instead.

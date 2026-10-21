@@ -5,10 +5,10 @@
  * Contains pure transformation functions with no side effects.
  */
 
-import { assertNumber, assertString } from '@/api/row-assertions'
+import { assertNumber, assertString } from '@/api/row-assertions';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { QueryExecResult } from 'sql.js'
+import type { Entry } from '@/shared/types/entry-types';
+import type { QueryExecResult } from 'sql.js';
 
 /**
  * Build a column-name → index map from a sql.js QueryExecResult
@@ -21,7 +21,7 @@ import type { QueryExecResult } from 'sql.js'
  * @returns Map from column name to its array index
  */
 export function buildColumnMap(columns: string[]): Map<string, number> {
-  return new Map(columns.map((col, i) => [col, i]))
+  return new Map(columns.map((col, i) => [col, i]));
 }
 
 /**
@@ -40,28 +40,20 @@ export function buildColumnMap(columns: string[]): Map<string, number> {
  */
 export function rowToEntry(row: unknown[], cols: Map<string, number>): Entry {
   const idx = (name: string): number => {
-    const i = cols.get(name)
-    if (i === undefined) throw new Error(`rowToEntry: missing column "${name}"`)
-    return i
-  }
+    const i = cols.get(name);
+    if (i === undefined) throw new Error(`rowToEntry: missing column "${name}"`);
+    return i;
+  };
 
   return {
     id: assertString(row[idx('id')], 'id', 'rowToEntry'),
     content: assertString(row[idx('content')], 'content', 'rowToEntry'),
     createdAt: assertNumber(row[idx('created_at')], 'created_at', 'rowToEntry'),
     updatedAt: assertNumber(row[idx('updated_at')], 'updated_at', 'rowToEntry'),
-    assignedDay: assertString(
-      row[idx('assigned_day')],
-      'assigned_day',
-      'rowToEntry'
-    ),
-    orderPosition: assertNumber(
-      row[idx('order_position')],
-      'order_position',
-      'rowToEntry'
-    ),
-    isDeleted: Boolean(row[idx('is_deleted')])
-  }
+    assignedDay: assertString(row[idx('assigned_day')], 'assigned_day', 'rowToEntry'),
+    orderPosition: assertNumber(row[idx('order_position')], 'order_position', 'rowToEntry'),
+    isDeleted: Boolean(row[idx('is_deleted')]),
+  };
 }
 
 /**
@@ -73,6 +65,6 @@ export function rowToEntry(row: unknown[], cols: Map<string, number>): Entry {
  * @returns Array of Entry objects
  */
 export function queryResultToEntries(result: QueryExecResult): Entry[] {
-  const cols = buildColumnMap(result.columns)
-  return result.values.map((row) => rowToEntry(row, cols))
+  const cols = buildColumnMap(result.columns);
+  return result.values.map((row) => rowToEntry(row, cols));
 }

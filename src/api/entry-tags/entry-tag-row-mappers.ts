@@ -5,9 +5,9 @@
  * `@/api/tags/tag-row-mappers`.
  */
 
-import { assertNumber, assertString } from '@/api/row-assertions'
+import { assertNumber, assertString } from '@/api/row-assertions';
 
-import type { EntryTag } from '@/shared/types/tag-types'
+import type { EntryTag } from '@/shared/types/tag-types';
 
 /**
  * Convert SQLite query result row to EntryTag object
@@ -25,6 +25,6 @@ export function rowToEntryTag(row: unknown[]): EntryTag {
     tagId: assertString(row[2], 'tag_id', 'rowToEntryTag'),
     createdAt: assertNumber(row[3], 'created_at', 'rowToEntryTag'),
     updatedAt: assertNumber(row[4], 'updated_at', 'rowToEntryTag'),
-    isDeleted: Boolean(row[5])
-  }
+    isDeleted: Boolean(row[5]),
+  };
 }

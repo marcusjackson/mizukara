@@ -41,12 +41,7 @@ function handleClick(): void {
 </script>
 
 <template>
-  <RouterLink
-    v-if="to"
-    :aria-label="ariaLabel"
-    class="base-icon-button"
-    :to="to"
-  >
+  <RouterLink v-if="to" :aria-label="ariaLabel" class="base-icon-button" :to="to">
     <slot />
   </RouterLink>
   <button

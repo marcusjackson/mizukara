@@ -1,16 +1,16 @@
-import vue from '@vitejs/plugin-vue'
-import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue';
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vitest/config';
 
-import pkg from './package.json' with { type: 'json' }
+import pkg from './package.json' with { type: 'json' };
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   plugins: [vue()],
 
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version)
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
   resolve: {
@@ -18,8 +18,8 @@ export default defineConfig({
       '@test': `${__dirname}/test`,
       '@': `${__dirname}/src`,
       // Mock virtual module for PWA during tests
-      'virtual:pwa-register/vue': `${__dirname}/test/mocks/pwa-register.ts`
-    }
+      'virtual:pwa-register/vue': `${__dirname}/test/mocks/pwa-register.ts`,
+    },
   },
 
   test: {
@@ -39,18 +39,13 @@ export default defineConfig({
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'coverage',
       include: ['src/**/*.ts', 'src/**/*.vue'],
-      exclude: [
-        'src/**/*.test.ts',
-        'src/**/*.d.ts',
-        'src/main.ts',
-        'src/**/*.stories.ts'
-      ],
+      exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/main.ts', 'src/**/*.stories.ts'],
       thresholds: {
         statements: 85,
         branches: 75,
         functions: 85,
-        lines: 85
-      }
+        lines: 85,
+      },
     },
 
     // Pool configuration for better performance
@@ -62,8 +57,13 @@ export default defineConfig({
     testTimeout: 15_000,
     hookTimeout: 15_000,
 
-    // Clear mocks between tests
+    // Clear mocks between tests. restoreMocks only restores vi.spyOn spies to
+    // their original implementation — plain vi.fn() mocks keep whatever
+    // mockImplementation() a prior test set (e.g. one that simulates a thrown
+    // error), which leaks into later tests. mockReset additionally clears
+    // those implementations for every mock, vi.fn() included.
     clearMocks: true,
-    restoreMocks: true
-  }
-})
+    restoreMocks: true,
+    mockReset: true,
+  },
+});

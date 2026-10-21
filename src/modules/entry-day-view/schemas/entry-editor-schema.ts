@@ -25,25 +25,23 @@
  * ```
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
-import { isValidISODate } from '@/shared/utils/date-utils'
+import { isValidISODate } from '@/shared/utils/date-utils';
 
-import { CONTENT_VALIDATION, DATE_VALIDATION } from './validation-constants'
+import { CONTENT_VALIDATION, DATE_VALIDATION } from './validation-constants';
 
 export const entryEditorSchema = z.object({
   content: z
     .string()
     .min(CONTENT_VALIDATION.MIN_LENGTH, CONTENT_VALIDATION.messages.required)
-    .max(CONTENT_VALIDATION.MAX_LENGTH, CONTENT_VALIDATION.messages.maxLength),
+    .max(CONTENT_VALIDATION.MAX_LENGTH, CONTENT_VALIDATION.messages.maxLength)
+    .refine((value) => value.trim().length > 0, CONTENT_VALIDATION.messages.required),
 
   assignedDay: z
     .string()
-    .refine(
-      (dateStr) => isValidISODate(dateStr),
-      DATE_VALIDATION.messages.invalid
-    )
-})
+    .refine((dateStr) => isValidISODate(dateStr), DATE_VALIDATION.messages.invalid),
+});
 
 // Export inferred type
-export type EntryEditorFormData = z.infer<typeof entryEditorSchema>
+export type EntryEditorFormData = z.infer<typeof entryEditorSchema>;

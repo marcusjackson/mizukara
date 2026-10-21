@@ -1,3 +1,6 @@
+# Source repo: private on a plan without GitHub Pages, so this workflow cannot run here (the Pages API
+# returns 404). The release sync copies it to the public mirror, where it does run. Edit it in the source
+# repo, then release.
 name: Deploy to GitHub Pages
 
 on:

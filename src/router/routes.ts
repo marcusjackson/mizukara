@@ -14,8 +14,8 @@ export const ROUTES = {
   ENTRY_DAY: '/entries/:date?',
   SETTINGS: '/settings',
   TAGS: '/tags',
-  SEARCH: '/search'
-} as const
+  SEARCH: '/search',
+} as const;
 
 /**
  * Builds the URL path for the entry day view for a given date.
@@ -25,7 +25,7 @@ export const ROUTES = {
  * @example buildEntryDayRoute('2026-02-10') // '/entries/2026-02-10'
  */
 export function buildEntryDayRoute(date: string): string {
-  return `/entries/${date}`
+  return `/entries/${date}`;
 }
 
 /**
@@ -40,5 +40,5 @@ export function buildEntryDayRoute(date: string): string {
  * @example buildPageTitle(undefined) // 'Mizukara'
  */
 export function buildPageTitle(pageTitle: string | undefined): string {
-  return pageTitle ? `${pageTitle} | Mizukara` : 'Mizukara'
+  return pageTitle ? `${pageTitle} | Mizukara` : 'Mizukara';
 }

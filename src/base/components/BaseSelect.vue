@@ -49,6 +49,11 @@ const model = defineModel<string | null>()
 
 const selectId = useId()
 
+/** reka-ui types the emitted value as any acceptable value; only strings are offered here. */
+function handleModelUpdate(value: unknown) {
+  if (typeof value === 'string') model.value = value
+}
+
 // Build props object for SelectRoot, handling undefined values
 const selectRootProps = computed(() => {
   const rootProps: Record<string, unknown> = {
@@ -65,24 +70,12 @@ const selectRootProps = computed(() => {
 
 <template>
   <div class="base-select">
-    <label
-      v-if="label"
-      class="base-select-label"
-      :for="selectId"
-    >
+    <label v-if="label" class="base-select-label" :for="selectId">
       {{ label }}
-      <span
-        v-if="required"
-        aria-hidden="true"
-        class="base-select-required"
-        >*</span
-      >
+      <span v-if="required" aria-hidden="true" class="base-select-required">*</span>
     </label>
 
-    <SelectRoot
-      v-bind="selectRootProps"
-      @update:model-value="(val: string) => (model = val)"
-    >
+    <SelectRoot v-bind="selectRootProps" @update:model-value="handleModelUpdate">
       <SelectTrigger
         :id="selectId"
         :aria-describedby="error ? `${selectId}-error` : undefined"
@@ -92,14 +85,8 @@ const selectRootProps = computed(() => {
           { 'base-select-trigger-error': Boolean(error) }
         ]"
       >
-        <SelectValue
-          class="base-select-value"
-          :placeholder="placeholder ?? 'Select...'"
-        />
-        <span
-          aria-hidden="true"
-          class="base-select-icon"
-        >
+        <SelectValue class="base-select-value" :placeholder="placeholder ?? 'Select...'" />
+        <span aria-hidden="true" class="base-select-icon">
           <svg
             fill="none"
             height="16"
@@ -116,11 +103,7 @@ const selectRootProps = computed(() => {
       </SelectTrigger>
 
       <SelectPortal>
-        <SelectContent
-          class="base-select-content"
-          position="popper"
-          :side-offset="4"
-        >
+        <SelectContent class="base-select-content" position="popper" :side-offset="4">
           <SelectViewport class="base-select-viewport">
             <SelectItem
               v-for="option in options"
@@ -150,12 +133,7 @@ const selectRootProps = computed(() => {
       </SelectPortal>
     </SelectRoot>
 
-    <p
-      v-if="error"
-      :id="`${selectId}-error`"
-      class="base-select-error"
-      role="alert"
-    >
+    <p v-if="error" :id="`${selectId}-error`" class="base-select-error" role="alert">
       {{ error }}
     </p>
   </div>

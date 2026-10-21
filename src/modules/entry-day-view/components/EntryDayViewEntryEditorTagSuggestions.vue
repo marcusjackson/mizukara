@@ -120,20 +120,14 @@ async function handleApply(tagId: string): Promise<void> {
       {{ isWorking ? 'Suggesting…' : 'Suggest tags' }}
     </BaseButton>
 
-    <p
-      aria-live="polite"
-      class="entry-editor-tag-suggestions-status"
-    >
+    <p aria-live="polite" class="entry-editor-tag-suggestions-status">
       <span v-if="hasSuggested && !isWorking">
         {{ status }}
       </span>
     </p>
 
     <!-- The live region above announces this; the text here is for the eye. -->
-    <p
-      v-if="showsEmptyResult"
-      class="entry-editor-tag-suggestions-notice"
-    >
+    <p v-if="showsEmptyResult" class="entry-editor-tag-suggestions-notice">
       <span aria-hidden="true">{{ status }}</span>
       <RouterLink
         v-if="vocabulary.length === 0"
@@ -144,22 +138,12 @@ async function handleApply(tagId: string): Promise<void> {
       </RouterLink>
     </p>
 
-    <p
-      v-if="error"
-      class="entry-editor-tag-suggestions-notice"
-      role="status"
-    >
+    <p v-if="error" class="entry-editor-tag-suggestions-notice" role="status">
       {{ error }}
     </p>
 
-    <ul
-      v-if="remaining.length > 0"
-      class="entry-editor-tag-suggestions-list"
-    >
-      <li
-        v-for="suggestion in visibleSuggestions"
-        :key="suggestion.tagId"
-      >
+    <ul v-if="remaining.length > 0" class="entry-editor-tag-suggestions-list">
+      <li v-for="suggestion in visibleSuggestions" :key="suggestion.tagId">
         <button
           class="entry-editor-tag-suggestions-chip"
           type="button"
@@ -170,12 +154,7 @@ async function handleApply(tagId: string): Promise<void> {
       </li>
     </ul>
 
-    <BaseButton
-      v-if="hiddenCount > 0"
-      size="sm"
-      variant="ghost"
-      @click="isExpanded = true"
-    >
+    <BaseButton v-if="hiddenCount > 0" size="sm" variant="ghost" @click="isExpanded = true">
       Show {{ hiddenCount }} more
     </BaseButton>
   </div>

@@ -1,14 +1,14 @@
-import eslint from '@eslint/js'
-import vitest from '@vitest/eslint-plugin'
-import { defineConfig } from 'eslint/config'
-import eslintConfigPrettier from 'eslint-config-prettier'
-import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript'
-import importPlugin from 'eslint-plugin-import-x'
-import simpleImportSort from 'eslint-plugin-simple-import-sort'
-import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys'
-import pluginVue from 'eslint-plugin-vue'
-import vueA11y from 'eslint-plugin-vuejs-accessibility'
-import tseslint from 'typescript-eslint'
+import eslint from '@eslint/js';
+import vitest from '@vitest/eslint-plugin';
+import { defineConfig } from 'eslint/config';
+import eslintConfigPrettier from 'eslint-config-prettier';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import importPlugin from 'eslint-plugin-import-x';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import sortDestructureKeys from 'eslint-plugin-sort-destructure-keys';
+import pluginVue from 'eslint-plugin-vue';
+import vueA11y from 'eslint-plugin-vuejs-accessibility';
+import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   // Global ignores
@@ -21,14 +21,15 @@ export default defineConfig([
       'test-results/**',
       '*.min.js',
       'scripts/check-links.mjs', // machine-written by fleet-sync; not repo-styled
+      'scripts/**/*.mjs', // Plain Node scripts outside every tsconfig; type-aware rules cannot parse them (make lint never globbed .mjs, so `pnpm check` in CI was the only run that failed)
       'ignore/**',
       '.claude/worktrees/**', // Other checkouts of this repo made by agents; each is linted in its own tree
       '_local/**', // Throwaway spike archives — outside every tsconfig, so type-aware linting cannot parse them
       'spikes/**', // Committed spike code and data (records in docs/spikes/) — Node scripts outside every tsconfig
       'scripts/tag-head/**', // Offline training tooling: plain Node .mjs outside every tsconfig, like spikes/
       'specs/**', // Specification documentation - not runtime code
-      '*.config.mjs' // Ignore plain JS/MJS config files
-    ]
+      '*.config.mjs', // Ignore plain JS/MJS config files
+    ],
   },
 
   // Base ESLint recommended rules
@@ -51,11 +52,8 @@ export default defineConfig([
       // AND a `for` attribute. Our components use explicit :for="id" associations
       // (which satisfies the `id` check) without wrapping the control in the label.
       // Changing to `some` allows either pattern, matching standard accessible HTML.
-      'vuejs-accessibility/label-has-for': [
-        'error',
-        { required: { some: ['nesting', 'id'] } }
-      ]
-    }
+      'vuejs-accessibility/label-has-for': ['error', { required: { some: ['nesting', 'id'] } }],
+    },
   },
 
   // Accessibility overrides for components where the rule has false positives
@@ -69,11 +67,11 @@ export default defineConfig([
       'src/modules/entry-day-view/components/EntryDayViewEntryEditor.vue',
       // Drop zone: @drag* events are supplementary UX. The primary accessible
       // interaction path is the "Browse" button inside the drop zone.
-      'src/base/components/BaseFileInput.vue'
+      'src/base/components/BaseFileInput.vue',
     ],
     rules: {
-      'vuejs-accessibility/no-static-element-interactions': 'off'
-    }
+      'vuejs-accessibility/no-static-element-interactions': 'off',
+    },
   },
 
   // TypeScript parser options for all TS-like files
@@ -82,21 +80,17 @@ export default defineConfig([
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,
-        project: [
-          './tsconfig.json',
-          './tsconfig.test.json',
-          './tsconfig.e2e.json'
-        ],
+        project: ['./tsconfig.json', './tsconfig.test.json', './tsconfig.e2e.json'],
         tsconfigRootDir: import.meta.dirname,
-        extraFileExtensions: ['.vue']
-      }
-    }
+        extraFileExtensions: ['.vue'],
+      },
+    },
   },
 
   // Import sorting plugin
   {
     plugins: {
-      'simple-import-sort': simpleImportSort
+      'simple-import-sort': simpleImportSort,
     },
     rules: {
       'simple-import-sort/imports': [
@@ -118,43 +112,43 @@ export default defineConfig([
             // Relative imports from same directory
             [String.raw`^\.\/`],
             // Type imports
-            [String.raw`^.*\u0000$`]
-          ]
-        }
+            [String.raw`^.*\u0000$`],
+          ],
+        },
       ],
-      'simple-import-sort/exports': 'error'
-    }
+      'simple-import-sort/exports': 'error',
+    },
   },
 
   // Sort destructure keys plugin
   {
     plugins: {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      'sort-destructure-keys': sortDestructureKeys
+      'sort-destructure-keys': sortDestructureKeys,
     },
     rules: {
-      'sort-destructure-keys/sort-destructure-keys': 'error'
-    }
+      'sort-destructure-keys/sort-destructure-keys': 'error',
+    },
   },
 
   // Import plugin for validating imports
   {
     plugins: {
-      'import-x': importPlugin
+      'import-x': importPlugin,
     },
     settings: {
-      'import-x/resolver-next': [createTypeScriptImportResolver()]
+      'import-x/resolver-next': [createTypeScriptImportResolver()],
     },
     rules: {
-      'import-x/no-unresolved': ['error', { ignore: ['^virtual:'] }]
-    }
+      'import-x/no-unresolved': ['error', { ignore: ['^virtual:'] }],
+    },
   },
 
   // Vitest rules for test files
   {
     files: ['**/*.test.ts', '**/*.spec.ts', 'test/**/*.ts'],
     plugins: {
-      vitest
+      vitest,
     },
     rules: {
       ...vitest.configs.recommended.rules,
@@ -171,8 +165,8 @@ export default defineConfig([
       // Relax some TypeScript rules for tests
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
-      '@typescript-eslint/unbound-method': 'off'
-    }
+      '@typescript-eslint/unbound-method': 'off',
+    },
   },
 
   // File size and complexity rules (new code only)
@@ -193,46 +187,34 @@ export default defineConfig([
   {
     files: ['**/*.test.ts', '**/*.spec.ts', 'test/**/*.ts', 'e2e/**/*.ts'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 600, skipBlankLines: true, skipComments: true }
-      ],
+      'max-lines': ['error', { max: 600, skipBlankLines: true, skipComments: true }],
       'max-lines-per-function': 'off',
-      complexity: 'off'
-    }
+      complexity: 'off',
+    },
   },
 
   // Type files (300 lines)
   {
     files: ['**/*-types.ts'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 300, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Section components (250 lines)
   {
     files: ['**/*Section*.vue'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 250, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 250, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Root components (250 lines)
   {
     files: ['**/*Root*.vue'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 250, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 250, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Composables (200 lines)
@@ -240,11 +222,8 @@ export default defineConfig([
     files: ['**/use-*.ts', '**/composables/use-*.ts'],
     ignores: ['**/*.test.ts', 'src/base/**'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 200, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Base composables (300 lines)
@@ -252,11 +231,8 @@ export default defineConfig([
     files: ['src/base/composables/use-*.ts'],
     ignores: ['**/*.test.ts'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 300, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Repository files (250 lines)
@@ -264,11 +240,8 @@ export default defineConfig([
     files: ['**/api/**/*-repository.ts'],
     ignores: ['**/*.test.ts'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 250, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 250, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // UI components (225 lines) - excluding Root, Section, Page
@@ -277,11 +250,8 @@ export default defineConfig([
     files: ['**/*.vue'],
     ignores: ['**/*Root*.vue', '**/*Section*.vue', '**/*Page.vue'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 225, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 225, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Base components (350 lines) - generic primitives that work in any project
@@ -291,11 +261,8 @@ export default defineConfig([
   {
     files: ['src/base/components/**/*.vue'],
     rules: {
-      'max-lines': [
-        'error',
-        { max: 350, skipBlankLines: true, skipComments: true }
-      ]
-    }
+      'max-lines': ['error', { max: 350, skipBlankLines: true, skipComments: true }],
+    },
   },
 
   // Page components (100 lines) - thin route wrappers
@@ -305,9 +272,9 @@ export default defineConfig([
       'max-lines': [
         // Note: Test files are explicitly excluded - they have different requirements
         'error',
-        { max: 100, skipBlankLines: true, skipComments: true }
-      ]
-    }
+        { max: 100, skipBlankLines: true, skipComments: true },
+      ],
+    },
   },
 
   // General complexity rules for all TypeScript/Vue files
@@ -317,13 +284,13 @@ export default defineConfig([
     rules: {
       'max-lines-per-function': [
         'error',
-        { max: 50, skipBlankLines: true, skipComments: true, IIFEs: true }
+        { max: 50, skipBlankLines: true, skipComments: true, IIFEs: true },
       ],
       complexity: ['error', { max: 15 }],
       'max-depth': ['warn', { max: 4 }],
       'max-nested-callbacks': ['warn', { max: 3 }],
-      'max-params': ['warn', { max: 5 }]
-    }
+      'max-params': ['warn', { max: 5 }],
+    },
   },
 
   // Custom rules for all files
@@ -335,15 +302,15 @@ export default defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_'
-        }
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       '@typescript-eslint/consistent-type-imports': [
         'error',
         {
           prefer: 'type-imports',
-          fixStyle: 'separate-type-imports'
-        }
+          fixStyle: 'separate-type-imports',
+        },
       ],
       '@typescript-eslint/no-import-type-side-effects': 'error',
 
@@ -353,14 +320,14 @@ export default defineConfig([
       'vue/define-macros-order': [
         'error',
         {
-          order: ['defineProps', 'defineEmits', 'defineSlots']
-        }
+          order: ['defineProps', 'defineEmits', 'defineSlots'],
+        },
       ],
       'vue/html-self-closing': [
         'error',
         {
-          html: { void: 'always', normal: 'always', component: 'always' }
-        }
+          html: { void: 'always', normal: 'always', component: 'always' },
+        },
       ],
       'vue/no-unused-refs': 'error',
       'vue/no-useless-v-bind': 'error',
@@ -372,8 +339,8 @@ export default defineConfig([
       // General
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
-      'no-var': 'error'
-    }
+      'no-var': 'error',
+    },
   },
 
   // Script files (seed data, build scripts) - allow console.log
@@ -381,19 +348,19 @@ export default defineConfig([
   {
     files: ['scripts/**/*.ts'],
     rules: {
-      'no-console': 'off'
-    }
+      'no-console': 'off',
+    },
   },
 
   {
     languageOptions: {
       globals: {
         NodeJS: true,
-        __APP_VERSION__: 'readonly'
-      }
-    }
+        __APP_VERSION__: 'readonly',
+      },
+    },
   },
 
   // Prettier (must be last to override other formatting rules)
-  eslintConfigPrettier
-])
+  eslintConfigPrettier,
+]);

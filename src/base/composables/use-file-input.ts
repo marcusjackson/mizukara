@@ -4,50 +4,50 @@
  * Handles file input logic: drag-and-drop, file validation, MIME detection,
  * and preview URL lifecycle. Used by BaseFileInput.
  */
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue';
 
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const DEFAULT_ACCEPT = 'image/*'
-const DEFAULT_WARNING_SIZE = 512 * 1024 // 512KB
-const DEFAULT_MAX_SIZE = 2 * 1024 * 1024 // 2MB
+const DEFAULT_ACCEPT = 'image/*';
+const DEFAULT_WARNING_SIZE = 512 * 1024; // 512KB
+const DEFAULT_MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 // ============================================================================
 // MIME Detection
 // ============================================================================
 
 /** [minLength, bytesToMatch, mimeType] */
-type MimeSignature = [number, number[], string]
+type MimeSignature = [number, number[], string];
 
 const MIME_SIGNATURES: MimeSignature[] = [
   [4, [0x89, 0x50, 0x4e, 0x47], 'image/png'],
   [4, [0x47, 0x49, 0x46, 0x38], 'image/gif'],
   [3, [0xff, 0xd8, 0xff], 'image/jpeg'],
-  [12, [0x52, 0x49, 0x46, 0x46], 'image/webp']
-]
+  [12, [0x52, 0x49, 0x46, 0x46], 'image/webp'],
+];
 
 function detectMimeType(data: Uint8Array): string {
   for (const [minLen, bytes, mime] of MIME_SIGNATURES) {
     if (data.length >= minLen && bytes.every((b, i) => data[i] === b)) {
-      return mime
+      return mime;
     }
   }
-  return 'application/octet-stream'
+  return 'application/octet-stream';
 }
 
 function makePreviewUrl(data: Uint8Array): string {
-  const blob = new Blob([data] as BlobPart[], { type: detectMimeType(data) })
-  return URL.createObjectURL(blob)
+  const blob = new Blob([data] as BlobPart[], { type: detectMimeType(data) });
+  return URL.createObjectURL(blob);
 }
 
 function revokePreview(previewUrl: Ref<string | null>): void {
   if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
-    previewUrl.value = null
+    URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = null;
   }
 }
 
@@ -56,42 +56,39 @@ function revokePreview(previewUrl: Ref<string | null>): void {
 // ============================================================================
 
 export interface UseFileInputOptions {
-  accept?: Ref<string | undefined>
-  externalError?: Ref<string | undefined>
-  fileInputRef?: Ref<HTMLInputElement | null>
-  maxSizeBytes?: Ref<number | undefined>
-  warningSizeBytes?: Ref<number | undefined>
+  accept?: Ref<string | undefined>;
+  externalError?: Ref<string | undefined>;
+  fileInputRef?: Ref<HTMLInputElement | null>;
+  maxSizeBytes?: Ref<number | undefined>;
+  warningSizeBytes?: Ref<number | undefined>;
 }
 
 interface FileProcessorRefs {
-  model: Ref<Uint8Array | null>
-  onError: (message: string) => void
-  sizeError: Ref<string | null>
-  sizeWarning: Ref<string | null>
+  model: Ref<Uint8Array | null>;
+  onError: (message: string) => void;
+  sizeError: Ref<string | null>;
+  sizeWarning: Ref<string | null>;
 }
 
 /** Returns a bound async processor that captures refs and options via closure. */
-function createFileProcessor(
-  refs: FileProcessorRefs,
-  options: UseFileInputOptions
-) {
+function createFileProcessor(refs: FileProcessorRefs, options: UseFileInputOptions) {
   return async (file: File | undefined): Promise<void> => {
-    if (!file) return
-    refs.sizeWarning.value = null
-    refs.sizeError.value = null
-    const maxBytes = options.maxSizeBytes?.value ?? DEFAULT_MAX_SIZE
-    const warnBytes = options.warningSizeBytes?.value ?? DEFAULT_WARNING_SIZE
+    if (!file) return;
+    refs.sizeWarning.value = null;
+    refs.sizeError.value = null;
+    const maxBytes = options.maxSizeBytes?.value ?? DEFAULT_MAX_SIZE;
+    const warnBytes = options.warningSizeBytes?.value ?? DEFAULT_WARNING_SIZE;
     if (file.size > maxBytes) {
-      refs.sizeError.value = `File too large. Maximum size is ${(maxBytes / (1024 * 1024)).toFixed(1)} MB`
-      refs.onError(refs.sizeError.value)
-      return
+      refs.sizeError.value = `File too large. Maximum size is ${(maxBytes / (1024 * 1024)).toFixed(1)} MB`;
+      refs.onError(refs.sizeError.value);
+      return;
     }
     if (file.size > warnBytes) {
-      refs.sizeWarning.value = `File is larger than ${String(Math.round(warnBytes / 1024))}KB`
+      refs.sizeWarning.value = `File is larger than ${String(Math.round(warnBytes / 1024))}KB`;
     }
-    const buffer = await file.arrayBuffer()
-    refs.model.value = new Uint8Array(buffer)
-  }
+    const buffer = await file.arrayBuffer();
+    refs.model.value = new Uint8Array(buffer);
+  };
 }
 
 // ============================================================================
@@ -100,15 +97,15 @@ function createFileProcessor(
 
 function setDragging(isDragging: Ref<boolean>, value: boolean) {
   return (event: DragEvent): void => {
-    event.preventDefault()
-    isDragging.value = value
-  }
+    event.preventDefault();
+    isDragging.value = value;
+  };
 }
 
 interface DragDropHandlers {
-  handleDragEnterOver: (event: DragEvent) => void
-  handleDragLeave: (event: DragEvent) => void
-  handleDrop: (event: DragEvent) => void
+  handleDragEnterOver: (event: DragEvent) => void;
+  handleDragLeave: (event: DragEvent) => void;
+  handleDrop: (event: DragEvent) => void;
 }
 
 function buildDragDropHandlers(
@@ -119,11 +116,11 @@ function buildDragDropHandlers(
     handleDragEnterOver: setDragging(isDragging, true),
     handleDragLeave: setDragging(isDragging, false),
     handleDrop(event: DragEvent): void {
-      event.preventDefault()
-      isDragging.value = false
-      void runProcessFile(event.dataTransfer?.files[0])
-    }
-  }
+      event.preventDefault();
+      isDragging.value = false;
+      void runProcessFile(event.dataTransfer?.files[0]);
+    },
+  };
 }
 
 // ============================================================================
@@ -132,13 +129,13 @@ function buildDragDropHandlers(
 
 export interface UseFilePreviewReturn {
   /** Whether a preview URL is available for the current file */
-  hasPreview: ComputedRef<boolean>
+  hasPreview: ComputedRef<boolean>;
   /**
    * Object URL for the current file preview, or null if none.
    * The URL is created on file selection and revoked on removal or unmount
    * to prevent memory leaks.
    */
-  previewUrl: Ref<string | null>
+  previewUrl: Ref<string | null>;
 }
 
 /**
@@ -149,26 +146,24 @@ export interface UseFilePreviewReturn {
  * @param model - Reactive ref containing the raw file bytes, or null
  * @returns Preview URL state
  */
-export function useFilePreview(
-  model: Ref<Uint8Array | null>
-): UseFilePreviewReturn {
-  const previewUrl = ref<string | null>(null)
-  const hasPreview = computed(() => previewUrl.value !== null)
+export function useFilePreview(model: Ref<Uint8Array | null>): UseFilePreviewReturn {
+  const previewUrl = ref<string | null>(null);
+  const hasPreview = computed(() => previewUrl.value !== null);
 
   watch(
     () => model.value,
     (val) => {
-      revokePreview(previewUrl)
-      if (val) previewUrl.value = makePreviewUrl(val)
+      revokePreview(previewUrl);
+      if (val) previewUrl.value = makePreviewUrl(val);
     },
     { immediate: true }
-  )
+  );
 
   onUnmounted(() => {
-    revokePreview(previewUrl)
-  })
+    revokePreview(previewUrl);
+  });
 
-  return { hasPreview, previewUrl }
+  return { hasPreview, previewUrl };
 }
 
 // ============================================================================
@@ -177,31 +172,31 @@ export function useFilePreview(
 
 export interface UseFileInputReturn {
   /** The error message to show below the input (external or size error) */
-  displayError: ComputedRef<string | null>
+  displayError: ComputedRef<string | null>;
   /** Ref to the hidden file input element */
-  fileInputRef: Ref<HTMLInputElement | null>
+  fileInputRef: Ref<HTMLInputElement | null>;
   /** Whether a preview URL is available for the current file */
-  hasPreview: ComputedRef<boolean>
+  hasPreview: ComputedRef<boolean>;
   /** Whether the user is currently dragging a file over the drop zone */
-  isDragging: Ref<boolean>
+  isDragging: Ref<boolean>;
   /** Object URL for the current file preview, or null if none */
-  previewUrl: Ref<string | null>
+  previewUrl: Ref<string | null>;
   /** The resolved accepted file types string */
-  resolvedAccept: ComputedRef<string>
+  resolvedAccept: ComputedRef<string>;
   /** Non-blocking size warning message, or null */
-  sizeWarning: Ref<string | null>
+  sizeWarning: Ref<string | null>;
   /** Combined handler for dragenter and dragover events */
-  handleDragEnterOver: (event: DragEvent) => void
+  handleDragEnterOver: (event: DragEvent) => void;
   /** Handler for dragleave event */
-  handleDragLeave: (event: DragEvent) => void
+  handleDragLeave: (event: DragEvent) => void;
   /** Handler for drop event */
-  handleDrop: (event: DragEvent) => void
+  handleDrop: (event: DragEvent) => void;
   /** Handler for file input change event */
-  handleFileSelect: (event: Event) => void
+  handleFileSelect: (event: Event) => void;
   /** Remove the current file and reset all state */
-  handleRemove: () => void
+  handleRemove: () => void;
   /** Programmatically open the file picker dialog */
-  triggerFileInput: () => void
+  triggerFileInput: () => void;
 }
 
 /**
@@ -218,35 +213,31 @@ export function useFileInput(
   options: UseFileInputOptions,
   onError: (message: string) => void
 ): UseFileInputReturn {
-  const isDragging = ref(false)
-  const sizeWarning = ref<string | null>(null)
-  const sizeError = ref<string | null>(null)
-  const fileInputRef =
-    options.fileInputRef ?? ref<HTMLInputElement | null>(null)
-  const resolvedAccept = computed(() => options.accept?.value ?? DEFAULT_ACCEPT)
-  const displayError = computed(
-    () => options.externalError?.value ?? sizeError.value
-  )
-  const { hasPreview, previewUrl } = useFilePreview(model)
-  const runProcessFile = createFileProcessor(
-    { model, onError, sizeError, sizeWarning },
-    options
-  )
+  const isDragging = ref(false);
+  const sizeWarning = ref<string | null>(null);
+  const sizeError = ref<string | null>(null);
+  const fileInputRef = options.fileInputRef ?? ref<HTMLInputElement | null>(null);
+  const resolvedAccept = computed(() => options.accept?.value ?? DEFAULT_ACCEPT);
+  const displayError = computed(() => options.externalError?.value ?? sizeError.value);
+  const { hasPreview, previewUrl } = useFilePreview(model);
+  const runProcessFile = createFileProcessor({ model, onError, sizeError, sizeWarning }, options);
 
   function handleFileSelect(event: Event): void {
-    const input = event.target as HTMLInputElement
-    void runProcessFile(input.files?.[0])
-    input.value = ''
+    const input = event.target as HTMLInputElement;
+    void runProcessFile(input.files?.[0]);
+    input.value = '';
   }
 
   function handleRemove(): void {
-    model.value = null
-    sizeWarning.value = null
-    sizeError.value = null
+    model.value = null;
+    sizeWarning.value = null;
+    sizeError.value = null;
   }
 
-  const { handleDragEnterOver, handleDragLeave, handleDrop } =
-    buildDragDropHandlers(isDragging, runProcessFile)
+  const { handleDragEnterOver, handleDragLeave, handleDrop } = buildDragDropHandlers(
+    isDragging,
+    runProcessFile
+  );
 
   return {
     displayError,
@@ -261,6 +252,6 @@ export function useFileInput(
     handleDrop,
     handleFileSelect,
     handleRemove,
-    triggerFileInput: () => fileInputRef.value?.click()
-  }
+    triggerFileInput: () => fileInputRef.value?.click(),
+  };
 }

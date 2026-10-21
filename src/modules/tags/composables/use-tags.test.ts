@@ -5,51 +5,50 @@
  * and filtered entries by tag selection.
  */
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest';
 
 // =============================================================================
 // Mocks
 // =============================================================================
 
-const mockDatabase = {}
+const mockDatabase = {};
 
 vi.mock('@/shared/composables/use-database', () => ({
   useDatabase: () => ({
-    database: { value: mockDatabase }
-  })
-}))
+    database: { value: mockDatabase },
+  }),
+}));
 
-const { mockFindAllWithCount, mockFindEntriesByTags, mockShowError } =
-  vi.hoisted(() => ({
-    mockFindAllWithCount: vi.fn(),
-    mockFindEntriesByTags: vi.fn(),
-    mockShowError: vi.fn()
-  }))
+const { mockFindAllWithCount, mockFindEntriesByTags, mockShowError } = vi.hoisted(() => ({
+  mockFindAllWithCount: vi.fn(),
+  mockFindEntriesByTags: vi.fn(),
+  mockShowError: vi.fn(),
+}));
 
 vi.mock('@/api/tags/tag-queries', () => ({
-  findAllWithCount: mockFindAllWithCount
-}))
+  findAllWithCount: mockFindAllWithCount,
+}));
 
 vi.mock('@/api/entry-tags/entry-tag-queries', () => ({
   findByEntryId: vi.fn(),
   findByEntryIds: vi.fn(),
-  findEntriesByTags: mockFindEntriesByTags
-}))
+  findEntriesByTags: mockFindEntriesByTags,
+}));
 
 vi.mock('@/shared/composables/use-toast', () => ({
   useToast: () => ({
     error: mockShowError,
     info: vi.fn(),
     success: vi.fn(),
-    warning: vi.fn()
-  })
-}))
+    warning: vi.fn(),
+  }),
+}));
 
 // Import after mocks
-import { useTags } from './use-tags'
+import { useTags } from './use-tags';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { TagWithCount } from '@/shared/types/tag-types'
+import type { Entry } from '@/shared/types/entry-types';
+import type { TagWithCount } from '@/shared/types/tag-types';
 
 // =============================================================================
 // Fixtures
@@ -63,8 +62,8 @@ function makeTag(overrides: Partial<TagWithCount> = {}): TagWithCount {
     updatedAt: 1000,
     isDeleted: false,
     entryCount: 2,
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function makeEntry(overrides: Partial<Entry> = {}): Entry {
@@ -76,8 +75,8 @@ function makeEntry(overrides: Partial<Entry> = {}): Entry {
     assignedDay: '2026-02-28',
     orderPosition: 0,
     isDeleted: false,
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 // =============================================================================
@@ -85,253 +84,264 @@ function makeEntry(overrides: Partial<Entry> = {}): Entry {
 // =============================================================================
 
 function resetMocks() {
-  mockFindAllWithCount.mockReset()
-  mockFindEntriesByTags.mockReset()
-  mockShowError.mockReset()
+  mockFindAllWithCount.mockReset();
+  mockFindEntriesByTags.mockReset();
+  mockShowError.mockReset();
 }
 
 describe('useTags', () => {
   describe('initial state', () => {
     it('returns expected interface', () => {
-      resetMocks()
-      const result = useTags()
+      resetMocks();
+      const result = useTags();
 
-      expect(result).toHaveProperty('tags')
-      expect(result).toHaveProperty('tagOptions')
-      expect(result).toHaveProperty('filteredEntries')
-      expect(result).toHaveProperty('isLoading')
-      expect(result).toHaveProperty('fetchTags')
-      expect(result).toHaveProperty('fetchEntriesByTags')
-    })
+      expect(result).toHaveProperty('tags');
+      expect(result).toHaveProperty('tagOptions');
+      expect(result).toHaveProperty('filteredEntries');
+      expect(result).toHaveProperty('isLoading');
+      expect(result).toHaveProperty('fetchTags');
+      expect(result).toHaveProperty('fetchEntriesByTags');
+    });
 
     it('starts with empty tags list', () => {
-      resetMocks()
-      const { tags } = useTags()
+      resetMocks();
+      const { tags } = useTags();
 
-      expect(tags.value).toEqual([])
-    })
+      expect(tags.value).toEqual([]);
+    });
 
     it('starts with empty filteredEntries', () => {
-      resetMocks()
-      const { filteredEntries } = useTags()
+      resetMocks();
+      const { filteredEntries } = useTags();
 
-      expect(filteredEntries.value).toEqual([])
-    })
+      expect(filteredEntries.value).toEqual([]);
+    });
 
     it('starts with isLoading false', () => {
-      resetMocks()
-      const { isLoading } = useTags()
+      resetMocks();
+      const { isLoading } = useTags();
 
-      expect(isLoading.value).toBe(false)
-    })
+      expect(isLoading.value).toBe(false);
+    });
 
     it('starts with empty tagOptions', () => {
-      resetMocks()
-      const { tagOptions } = useTags()
+      resetMocks();
+      const { tagOptions } = useTags();
 
-      expect(tagOptions.value).toEqual([])
-    })
-  })
+      expect(tagOptions.value).toEqual([]);
+    });
+  });
 
   describe('fetchTags', () => {
     it('sets tags from findAllWithCount result', async () => {
-      resetMocks()
-      const tag = makeTag()
-      mockFindAllWithCount.mockReturnValue([tag])
+      resetMocks();
+      const tag = makeTag();
+      mockFindAllWithCount.mockReturnValue([tag]);
 
-      const { fetchTags, tags } = useTags()
-      await fetchTags()
+      const { fetchTags, tags } = useTags();
+      await fetchTags();
 
-      expect(tags.value).toEqual([tag])
-    })
+      expect(tags.value).toEqual([tag]);
+    });
 
     it('calls findAllWithCount with the database', async () => {
-      resetMocks()
-      mockFindAllWithCount.mockReturnValue([])
+      resetMocks();
+      mockFindAllWithCount.mockReturnValue([]);
 
-      const { fetchTags } = useTags()
-      await fetchTags()
+      const { fetchTags } = useTags();
+      await fetchTags();
 
-      expect(mockFindAllWithCount).toHaveBeenCalledWith(mockDatabase)
-    })
+      expect(mockFindAllWithCount).toHaveBeenCalledWith(mockDatabase);
+    });
 
     it('sets isLoading to false after fetch completes', async () => {
-      resetMocks()
-      mockFindAllWithCount.mockReturnValue([])
+      resetMocks();
+      mockFindAllWithCount.mockReturnValue([]);
 
-      const { fetchTags, isLoading } = useTags()
-      await fetchTags()
+      const { fetchTags, isLoading } = useTags();
+      await fetchTags();
 
-      expect(isLoading.value).toBe(false)
-    })
+      expect(isLoading.value).toBe(false);
+    });
 
     it('shows error toast when findAllWithCount throws', async () => {
-      resetMocks()
+      resetMocks();
       mockFindAllWithCount.mockImplementation(() => {
-        throw new Error('DB read error')
-      })
+        throw new Error('DB read error');
+      });
 
-      const { fetchTags } = useTags()
-      await fetchTags()
+      const { fetchTags } = useTags();
+      await fetchTags();
 
-      expect(mockShowError).toHaveBeenCalledWith('DB read error')
-    })
+      expect(mockShowError).toHaveBeenCalledWith('DB read error');
+    });
 
     it('sets isLoading to false after error', async () => {
-      resetMocks()
+      resetMocks();
       mockFindAllWithCount.mockImplementation(() => {
-        throw new Error('DB read error')
-      })
+        throw new Error('DB read error');
+      });
 
-      const { fetchTags, isLoading } = useTags()
-      await fetchTags()
+      const { fetchTags, isLoading } = useTags();
+      await fetchTags();
 
-      expect(isLoading.value).toBe(false)
-    })
+      expect(isLoading.value).toBe(false);
+    });
 
     it('records the failure message for the page to show, and clears it on success', async () => {
-      resetMocks()
+      resetMocks();
       mockFindAllWithCount.mockImplementationOnce(() => {
-        throw new Error('DB read error')
-      })
+        throw new Error('DB read error');
+      });
 
-      const { fetchTags, loadError } = useTags()
-      await fetchTags()
-      expect(loadError.value).toBe('DB read error')
+      const { fetchTags, loadError } = useTags();
+      await fetchTags();
+      expect(loadError.value).toBe('DB read error');
 
-      mockFindAllWithCount.mockReturnValue([])
-      await fetchTags()
-      expect(loadError.value).toBeNull()
-    })
+      mockFindAllWithCount.mockReturnValue([]);
+      await fetchTags();
+      expect(loadError.value).toBeNull();
+    });
 
     it('includes zero-count tags in the result', async () => {
-      resetMocks()
-      const zeroCountTag = makeTag({ entryCount: 0 })
-      mockFindAllWithCount.mockReturnValue([zeroCountTag])
+      resetMocks();
+      const zeroCountTag = makeTag({ entryCount: 0 });
+      mockFindAllWithCount.mockReturnValue([zeroCountTag]);
 
-      const { fetchTags, tags } = useTags()
-      await fetchTags()
+      const { fetchTags, tags } = useTags();
+      await fetchTags();
 
-      expect(tags.value).toHaveLength(1)
-      expect(tags.value[0]?.entryCount).toBe(0)
-    })
-  })
+      expect(tags.value).toHaveLength(1);
+      expect(tags.value[0]?.entryCount).toBe(0);
+    });
+  });
 
   describe('tagOptions', () => {
     it('maps tags to TagInputOption format', async () => {
-      resetMocks()
-      const tag = makeTag({ id: 'tag-abc', name: 'personal' })
-      mockFindAllWithCount.mockReturnValue([tag])
+      resetMocks();
+      const tag = makeTag({ id: 'tag-abc', name: 'personal' });
+      mockFindAllWithCount.mockReturnValue([tag]);
 
-      const { fetchTags, tagOptions } = useTags()
-      await fetchTags()
+      const { fetchTags, tagOptions } = useTags();
+      await fetchTags();
 
-      expect(tagOptions.value).toEqual([
-        { value: 'tag-abc', label: 'personal' }
-      ])
-    })
+      expect(tagOptions.value).toEqual([{ value: 'tag-abc', label: 'personal' }]);
+    });
 
     it('updates tagOptions reactively when tags change', async () => {
-      resetMocks()
-      mockFindAllWithCount.mockReturnValueOnce([])
+      resetMocks();
+      mockFindAllWithCount.mockReturnValueOnce([]);
 
-      const { fetchTags, tagOptions } = useTags()
-      await fetchTags()
-      expect(tagOptions.value).toEqual([])
+      const { fetchTags, tagOptions } = useTags();
+      await fetchTags();
+      expect(tagOptions.value).toEqual([]);
 
-      const tag = makeTag({ id: 'tag-x', name: 'health' })
-      mockFindAllWithCount.mockReturnValueOnce([tag])
-      await fetchTags()
+      const tag = makeTag({ id: 'tag-x', name: 'health' });
+      mockFindAllWithCount.mockReturnValueOnce([tag]);
+      await fetchTags();
 
-      expect(tagOptions.value).toEqual([{ value: 'tag-x', label: 'health' }])
-    })
-  })
+      expect(tagOptions.value).toEqual([{ value: 'tag-x', label: 'health' }]);
+    });
+  });
 
   describe('fetchEntriesByTags', () => {
     it('populates filteredEntries with matching entries', async () => {
-      resetMocks()
-      const entry = makeEntry()
-      mockFindEntriesByTags.mockReturnValue([entry])
+      resetMocks();
+      const entry = makeEntry();
+      mockFindEntriesByTags.mockReturnValue([entry]);
 
-      const { fetchEntriesByTags, filteredEntries } = useTags()
-      await fetchEntriesByTags(['tag-1'])
+      const { fetchEntriesByTags, filteredEntries } = useTags();
+      await fetchEntriesByTags(['tag-1']);
 
-      expect(filteredEntries.value).toEqual([entry])
-    })
+      expect(filteredEntries.value).toEqual([entry]);
+    });
 
     it('calls findEntriesByTags with database and tagIds', async () => {
-      resetMocks()
-      mockFindEntriesByTags.mockReturnValue([])
+      resetMocks();
+      mockFindEntriesByTags.mockReturnValue([]);
 
-      const { fetchEntriesByTags } = useTags()
-      await fetchEntriesByTags(['tag-1', 'tag-2'])
+      const { fetchEntriesByTags } = useTags();
+      await fetchEntriesByTags(['tag-1', 'tag-2']);
 
-      expect(mockFindEntriesByTags).toHaveBeenCalledWith(mockDatabase, [
-        'tag-1',
-        'tag-2'
-      ])
-    })
+      expect(mockFindEntriesByTags).toHaveBeenCalledWith(mockDatabase, ['tag-1', 'tag-2']);
+    });
 
     it('clears filteredEntries when tagIds is empty', async () => {
-      resetMocks()
-      const entry = makeEntry()
-      mockFindEntriesByTags.mockReturnValue([entry])
+      resetMocks();
+      const entry = makeEntry();
+      mockFindEntriesByTags.mockReturnValue([entry]);
 
-      const { fetchEntriesByTags, filteredEntries } = useTags()
-      await fetchEntriesByTags(['tag-1'])
-      expect(filteredEntries.value).toHaveLength(1)
+      const { fetchEntriesByTags, filteredEntries } = useTags();
+      await fetchEntriesByTags(['tag-1']);
+      expect(filteredEntries.value).toHaveLength(1);
 
-      await fetchEntriesByTags([])
-      expect(filteredEntries.value).toEqual([])
-    })
+      await fetchEntriesByTags([]);
+      expect(filteredEntries.value).toEqual([]);
+    });
 
     it('does not call findEntriesByTags when tagIds is empty', async () => {
-      resetMocks()
-      mockFindEntriesByTags.mockReturnValue([])
+      resetMocks();
+      mockFindEntriesByTags.mockReturnValue([]);
 
-      const { fetchEntriesByTags } = useTags()
-      await fetchEntriesByTags([])
+      const { fetchEntriesByTags } = useTags();
+      await fetchEntriesByTags([]);
 
-      expect(mockFindEntriesByTags).not.toHaveBeenCalled()
-    })
+      expect(mockFindEntriesByTags).not.toHaveBeenCalled();
+    });
 
     it('raises isLoading while the query runs and lowers it afterwards', async () => {
-      resetMocks()
-      const { fetchEntriesByTags, isLoading } = useTags()
-      let seenDuringQuery = false
+      resetMocks();
+      const { fetchEntriesByTags, isLoading } = useTags();
+      let seenDuringQuery = false;
       mockFindEntriesByTags.mockImplementation(() => {
-        seenDuringQuery = isLoading.value
-        return []
-      })
+        seenDuringQuery = isLoading.value;
+        return [];
+      });
 
-      await fetchEntriesByTags(['tag-1'])
+      await fetchEntriesByTags(['tag-1']);
 
-      expect(seenDuringQuery).toBe(true)
-      expect(isLoading.value).toBe(false)
-    })
+      expect(seenDuringQuery).toBe(true);
+      expect(isLoading.value).toBe(false);
+    });
 
     it('lowers isLoading when the query throws', async () => {
-      resetMocks()
+      resetMocks();
       mockFindEntriesByTags.mockImplementation(() => {
-        throw new Error('Query failed')
-      })
+        throw new Error('Query failed');
+      });
 
-      const { fetchEntriesByTags, isLoading } = useTags()
-      await fetchEntriesByTags(['tag-1'])
+      const { fetchEntriesByTags, isLoading } = useTags();
+      await fetchEntriesByTags(['tag-1']);
 
-      expect(isLoading.value).toBe(false)
-    })
+      expect(isLoading.value).toBe(false);
+    });
+
+    it('clears filteredEntries when the query throws', async () => {
+      resetMocks();
+      mockFindEntriesByTags.mockReturnValueOnce([makeEntry()]);
+
+      const { fetchEntriesByTags, filteredEntries } = useTags();
+      await fetchEntriesByTags(['tag-1']);
+      expect(filteredEntries.value).toHaveLength(1);
+
+      mockFindEntriesByTags.mockImplementation(() => {
+        throw new Error('Query failed');
+      });
+      await fetchEntriesByTags(['tag-2']);
+
+      expect(filteredEntries.value).toEqual([]);
+    });
 
     it('shows error toast when findEntriesByTags throws', async () => {
-      resetMocks()
+      resetMocks();
       mockFindEntriesByTags.mockImplementation(() => {
-        throw new Error('Query failed')
-      })
+        throw new Error('Query failed');
+      });
 
-      const { fetchEntriesByTags } = useTags()
-      await fetchEntriesByTags(['tag-1'])
+      const { fetchEntriesByTags } = useTags();
+      await fetchEntriesByTags(['tag-1']);
 
-      expect(mockShowError).toHaveBeenCalledWith('Query failed')
-    })
-  })
-})
+      expect(mockShowError).toHaveBeenCalledWith('Query failed');
+    });
+  });
+});

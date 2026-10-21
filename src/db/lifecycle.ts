@@ -6,9 +6,9 @@
  * WebView may be killed while backgrounded.
  */
 
-import { persistImmediately, persistSync } from './indexeddb'
+import { persistImmediately, persistSync } from './indexeddb';
 
-let lifecycleListenersAttached = false
+let lifecycleListenersAttached = false;
 
 /**
  * Handle visibility change - save when app goes to background.
@@ -17,7 +17,9 @@ let lifecycleListenersAttached = false
 function handleVisibilityChange(): void {
   if (document.visibilityState === 'hidden') {
     // Use async persist but don't await - we want to start it immediately
-    void persistImmediately()
+    persistImmediately().catch((err: unknown) => {
+      console.error('Failed to save when the app was hidden', err);
+    });
   }
 }
 
@@ -26,14 +28,14 @@ function handleVisibilityChange(): void {
  */
 function handlePageHide(): void {
   // On page hide, use sync persist as async may not complete
-  persistSync()
+  persistSync();
 }
 
 /**
  * Handle before unload - last chance to save.
  */
 function handleBeforeUnload(): void {
-  persistSync()
+  persistSync();
 }
 
 /**
@@ -41,18 +43,18 @@ function handleBeforeUnload(): void {
  * Called once during first database initialization.
  */
 export function attachLifecycleListeners(): void {
-  if (lifecycleListenersAttached) return
+  if (lifecycleListenersAttached) return;
 
   // visibilitychange is the most reliable for mobile PWAs
-  document.addEventListener('visibilitychange', handleVisibilityChange)
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   // pagehide is more reliable than beforeunload on some browsers
-  window.addEventListener('pagehide', handlePageHide)
+  window.addEventListener('pagehide', handlePageHide);
 
   // beforeunload as a fallback
-  window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-  lifecycleListenersAttached = true
+  lifecycleListenersAttached = true;
 }
 
 /**
@@ -60,8 +62,8 @@ export function attachLifecycleListeners(): void {
  * @internal For testing only.
  */
 export function detachLifecycleListeners(): void {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-  window.removeEventListener('pagehide', handlePageHide)
-  window.removeEventListener('beforeunload', handleBeforeUnload)
-  lifecycleListenersAttached = false
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('pagehide', handlePageHide);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+  lifecycleListenersAttached = false;
 }

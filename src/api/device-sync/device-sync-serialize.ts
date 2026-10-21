@@ -14,50 +14,43 @@ import {
   type SyncEntryTagRow,
   type SyncPayload,
   type SyncTableName,
-  type SyncTagRow
-} from '@/shared/types/device-sync-payload-types'
+  type SyncTagRow,
+} from '@/shared/types/device-sync-payload-types';
 
-import type { Database } from 'sql.js'
+import type { Database } from 'sql.js';
 
 /** Thrown when a sync payload (from JSON or an untrusted object) has an invalid shape. */
 export class DeviceSyncPayloadError extends Error {
-  override name = 'DeviceSyncPayloadError'
+  override name = 'DeviceSyncPayloadError';
 
   constructor(message: string) {
-    super(message)
+    super(message);
     // Restore prototype chain for instanceof checks in transpiled environments
-    Object.setPrototypeOf(this, new.target.prototype)
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
-function assertRecord(
-  value: unknown,
-  table: SyncTableName
-): Record<string, unknown> {
+function assertRecord(value: unknown, table: SyncTableName): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new DeviceSyncPayloadError(
       `expected an object for a "${table}" row, got ${typeof value}`
-    )
+    );
   }
-  return value as Record<string, unknown>
+  return value as Record<string, unknown>;
 }
 
 function assertString(value: unknown, field: string): string {
   if (typeof value !== 'string') {
-    throw new DeviceSyncPayloadError(
-      `expected string for "${field}", got ${typeof value}`
-    )
+    throw new DeviceSyncPayloadError(`expected string for "${field}", got ${typeof value}`);
   }
-  return value
+  return value;
 }
 
 function assertNumber(value: unknown, field: string): number {
   if (typeof value !== 'number') {
-    throw new DeviceSyncPayloadError(
-      `expected number for "${field}", got ${typeof value}`
-    )
+    throw new DeviceSyncPayloadError(`expected number for "${field}", got ${typeof value}`);
   }
-  return value
+  return value;
 }
 
 function toSyncEntryRow(raw: Record<string, unknown>): SyncEntryRow {
@@ -68,8 +61,8 @@ function toSyncEntryRow(raw: Record<string, unknown>): SyncEntryRow {
     updated_at: assertNumber(raw['updated_at'], 'updated_at'),
     assigned_day: assertString(raw['assigned_day'], 'assigned_day'),
     order_position: assertNumber(raw['order_position'], 'order_position'),
-    is_deleted: assertNumber(raw['is_deleted'], 'is_deleted')
-  }
+    is_deleted: assertNumber(raw['is_deleted'], 'is_deleted'),
+  };
 }
 
 function toSyncTagRow(raw: Record<string, unknown>): SyncTagRow {
@@ -78,8 +71,8 @@ function toSyncTagRow(raw: Record<string, unknown>): SyncTagRow {
     name: assertString(raw['name'], 'name'),
     created_at: assertNumber(raw['created_at'], 'created_at'),
     updated_at: assertNumber(raw['updated_at'], 'updated_at'),
-    is_deleted: assertNumber(raw['is_deleted'], 'is_deleted')
-  }
+    is_deleted: assertNumber(raw['is_deleted'], 'is_deleted'),
+  };
 }
 
 function toSyncEntryTagRow(raw: Record<string, unknown>): SyncEntryTagRow {
@@ -89,26 +82,21 @@ function toSyncEntryTagRow(raw: Record<string, unknown>): SyncEntryTagRow {
     tag_id: assertString(raw['tag_id'], 'tag_id'),
     created_at: assertNumber(raw['created_at'], 'created_at'),
     updated_at: assertNumber(raw['updated_at'], 'updated_at'),
-    is_deleted: assertNumber(raw['is_deleted'], 'is_deleted')
-  }
+    is_deleted: assertNumber(raw['is_deleted'], 'is_deleted'),
+  };
 }
 
 /**
  * Read every row of one synced table (including soft-deleted rows — deletion
  * is just another field a sync must propagate) into name-keyed objects.
  */
-function readTable(
-  db: Database,
-  table: SyncTableName
-): Record<string, unknown>[] {
-  const result = db.exec(`SELECT * FROM ${table}`)
-  const resultSet = result[0]
-  if (!resultSet) return []
+function readTable(db: Database, table: SyncTableName): Record<string, unknown>[] {
+  const result = db.exec(`SELECT * FROM ${table}`);
+  const resultSet = result[0];
+  if (!resultSet) return [];
 
-  const { columns } = resultSet
-  return resultSet.values.map((row) =>
-    Object.fromEntries(columns.map((col, i) => [col, row[i]]))
-  )
+  const { columns } = resultSet;
+  return resultSet.values.map((row) => Object.fromEntries(columns.map((col, i) => [col, row[i]])));
 }
 
 /**
@@ -122,8 +110,8 @@ export function serializeDatabase(db: Database): SyncPayload {
   return {
     entries: readTable(db, 'entries').map(toSyncEntryRow),
     tags: readTable(db, 'tags').map(toSyncTagRow),
-    entry_tags: readTable(db, 'entry_tags').map(toSyncEntryTagRow)
-  }
+    entry_tags: readTable(db, 'entry_tags').map(toSyncEntryTagRow),
+  };
 }
 
 /**
@@ -135,15 +123,13 @@ export function serializeDatabase(db: Database): SyncPayload {
  */
 export function validateSyncPayload(value: unknown): SyncPayload {
   if (typeof value !== 'object' || value === null) {
-    throw new DeviceSyncPayloadError(
-      `expected a sync payload object, got ${typeof value}`
-    )
+    throw new DeviceSyncPayloadError(`expected a sync payload object, got ${typeof value}`);
   }
 
-  const obj = value as Record<string, unknown>
+  const obj = value as Record<string, unknown>;
   for (const table of SYNC_TABLE_NAMES) {
     if (!Array.isArray(obj[table])) {
-      throw new DeviceSyncPayloadError(`expected an array for "${table}"`)
+      throw new DeviceSyncPayloadError(`expected an array for "${table}"`);
     }
   }
 
@@ -151,13 +137,11 @@ export function validateSyncPayload(value: unknown): SyncPayload {
     entries: (obj['entries'] as unknown[]).map((row) =>
       toSyncEntryRow(assertRecord(row, 'entries'))
     ),
-    tags: (obj['tags'] as unknown[]).map((row) =>
-      toSyncTagRow(assertRecord(row, 'tags'))
-    ),
+    tags: (obj['tags'] as unknown[]).map((row) => toSyncTagRow(assertRecord(row, 'tags'))),
     entry_tags: (obj['entry_tags'] as unknown[]).map((row) =>
       toSyncEntryTagRow(assertRecord(row, 'entry_tags'))
-    )
-  }
+    ),
+  };
 }
 
 /**
@@ -166,7 +150,7 @@ export function validateSyncPayload(value: unknown): SyncPayload {
  * @param db - SQLite database instance
  */
 export function serializeDatabaseToJSON(db: Database): string {
-  return JSON.stringify(serializeDatabase(db))
+  return JSON.stringify(serializeDatabase(db));
 }
 
 /**
@@ -175,13 +159,13 @@ export function serializeDatabaseToJSON(db: Database): string {
  * @throws {DeviceSyncPayloadError} If the JSON is malformed or doesn't match a `SyncPayload`
  */
 export function parseSyncPayloadJSON(json: string): SyncPayload {
-  let parsed: unknown
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(json)
+    parsed = JSON.parse(json);
   } catch (cause) {
     throw new DeviceSyncPayloadError(
       `malformed sync payload JSON: ${cause instanceof Error ? cause.message : String(cause)}`
-    )
+    );
   }
-  return validateSyncPayload(parsed)
+  return validateSyncPayload(parsed);
 }
