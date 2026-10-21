@@ -23,43 +23,43 @@
  * @see {@link UseDatabaseExport} for return type details
  */
 
-import { onScopeDispose, readonly, ref } from 'vue'
+import { readonly, ref } from 'vue';
 
-import { useDatabase } from '@/shared/composables/use-database'
-import { useToast } from '@/shared/composables/use-toast'
+import { useDatabase } from '@/shared/composables/use-database';
+import { useToast } from '@/shared/composables/use-toast';
 
-import type { Database } from 'sql.js'
-import type { DeepReadonly, Ref } from 'vue'
+import type { Database } from 'sql.js';
+import type { DeepReadonly, Ref } from 'vue';
 
 // =============================================================================
 // Constants
 // =============================================================================
 
 /** Valid SQLite database file extensions */
-const VALID_DB_EXTENSIONS = ['.db', '.sqlite', '.sqlite3'] as const
+const VALID_DB_EXTENSIONS = ['.db', '.sqlite', '.sqlite3'] as const;
 
 /** Valid SQLite database MIME types */
 const VALID_DB_MIME_TYPES = [
   'application/x-sqlite3',
   'application/vnd.sqlite3',
-  'application/octet-stream'
-] as const
+  'application/octet-stream',
+] as const;
 
 /** Maximum import file size (100 MB) */
-const MAX_DB_FILE_SIZE = 100 * 1024 * 1024
+const MAX_DB_FILE_SIZE = 100 * 1024 * 1024;
 
 // =============================================================================
 // Types
 // =============================================================================
 
 export interface UseDatabaseExport {
-  isExporting: DeepReadonly<Ref<boolean>>
-  isImporting: DeepReadonly<Ref<boolean>>
-  isClearing: DeepReadonly<Ref<boolean>>
-  exportDatabase: () => void
-  importDatabase: (file: File) => Promise<boolean>
-  validateDatabaseFile: (file: File) => Promise<boolean>
-  clearDatabase: () => Promise<boolean>
+  isExporting: DeepReadonly<Ref<boolean>>;
+  isImporting: DeepReadonly<Ref<boolean>>;
+  isClearing: DeepReadonly<Ref<boolean>>;
+  exportDatabase: () => void;
+  importDatabase: (file: File) => Promise<boolean>;
+  validateDatabaseFile: (file: File) => Promise<boolean>;
+  clearDatabase: () => Promise<boolean>;
 }
 
 // =============================================================================
@@ -70,7 +70,7 @@ export interface UseDatabaseExport {
  * Extract error message from unknown error
  */
 function getErrorMessage(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback
+  return err instanceof Error ? err.message : fallback;
 }
 
 /**
@@ -79,59 +79,54 @@ function getErrorMessage(err: unknown, fallback: string): string {
  * @returns Filename in format `mizukara-YYYY-MM-DD-HHMM.db`
  */
 export function generateExportFilename(): string {
-  const now = new Date()
-  const year = String(now.getFullYear())
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  return `mizukara-${year}-${month}-${day}-${hours}${minutes}.db`
+  const now = new Date();
+  const year = String(now.getFullYear());
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `mizukara-${year}-${month}-${day}-${hours}${minutes}.db`;
 }
 
 /**
  * Trigger a file download in the browser
  */
 function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
+
+/** Minimal interface for sql.js Database used during validation */
+type SqlJsDatabase = Pick<Database, 'exec' | 'close'>;
 
 /**
  * Validate that data is a valid SQLite database with expected schema.
  * Ensures the test database instance is always closed, even on error.
  */
-/** Minimal interface for sql.js Database used during validation */
-interface SqlJsDatabase {
-  exec(sql: string): { values: unknown[][] }[]
-  close(): void
-}
-
 async function validateSqliteData(data: Uint8Array): Promise<boolean> {
-  let testDb: SqlJsDatabase | null = null
+  let testDb: SqlJsDatabase | null = null;
   try {
-    const { default: initSqlJs } = await import('sql.js')
+    const { default: initSqlJs } = await import('sql.js');
     const SQL = await initSqlJs({
-      locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
-    })
+      locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`,
+    });
 
-    testDb = new SQL.Database(data)
+    testDb = new SQL.Database(data);
 
-    const result = testDb.exec(
-      "SELECT name FROM sqlite_master WHERE type='table'"
-    )
+    const result = testDb.exec("SELECT name FROM sqlite_master WHERE type='table'");
 
-    const tables = result[0]?.values.map((row: unknown[]) => row[0]) ?? []
-    return tables.includes('entries')
+    const tables = result[0]?.values.map((row: unknown[]) => row[0]) ?? [];
+    return tables.includes('entries');
   } catch {
-    return false
+    return false;
   } finally {
-    testDb?.close()
+    testDb?.close();
   }
 }
 
@@ -140,26 +135,24 @@ async function validateSqliteData(data: Uint8Array): Promise<boolean> {
  */
 async function performValidate(file: File): Promise<boolean> {
   try {
-    if (file.size > MAX_DB_FILE_SIZE) return false
+    if (file.size > MAX_DB_FILE_SIZE) return false;
 
     // Check MIME type
     const hasValidMimeType =
-      VALID_DB_MIME_TYPES.includes(
-        file.type as (typeof VALID_DB_MIME_TYPES)[number]
-      ) || !file.type // Allow empty MIME type
+      VALID_DB_MIME_TYPES.includes(file.type as (typeof VALID_DB_MIME_TYPES)[number]) || !file.type; // Allow empty MIME type
 
     // Check extension
     const hasValidExtension = VALID_DB_EXTENSIONS.some((ext) =>
       file.name.toLowerCase().endsWith(ext)
-    )
+    );
 
-    if (!hasValidMimeType && !hasValidExtension) return false
+    if (!hasValidMimeType && !hasValidExtension) return false;
 
-    const buffer = await file.arrayBuffer()
-    const data = new Uint8Array(buffer)
-    return await validateSqliteData(data)
+    const buffer = await file.arrayBuffer();
+    const data = new Uint8Array(buffer);
+    return await validateSqliteData(data);
   } catch {
-    return false
+    return false;
   }
 }
 
@@ -167,9 +160,9 @@ async function performValidate(file: File): Promise<boolean> {
 // Singleton State
 // =============================================================================
 
-const isExporting = ref(false)
-const isImporting = ref(false)
-const isClearing = ref(false)
+const isExporting = ref(false);
+const isImporting = ref(false);
+const isClearing = ref(false);
 
 // =============================================================================
 // Perform Functions
@@ -179,29 +172,26 @@ const isClearing = ref(false)
  * Execute database export operation.
  * Exports current database as a binary file with timestamped filename.
  */
-function performExport(
-  database: Ref<Database | null>,
-  toast: ReturnType<typeof useToast>
-): void {
+function performExport(database: Ref<Database | null>, toast: ReturnType<typeof useToast>): void {
   if (!database.value) {
-    toast.error('Database not initialized')
-    return
+    toast.error('Database not initialized');
+    return;
   }
 
-  isExporting.value = true
+  isExporting.value = true;
   try {
-    const data = database.value.export()
-    const buffer = new ArrayBuffer(data.length)
-    const view = new Uint8Array(buffer)
-    view.set(data)
-    const blob = new Blob([buffer], { type: 'application/x-sqlite3' })
-    const filename = generateExportFilename()
-    downloadBlob(blob, filename)
-    toast.success('Database exported successfully')
+    const data = database.value.export();
+    const buffer = new ArrayBuffer(data.length);
+    const view = new Uint8Array(buffer);
+    view.set(data);
+    const blob = new Blob([buffer], { type: 'application/x-sqlite3' });
+    const filename = generateExportFilename();
+    downloadBlob(blob, filename);
+    toast.success('Database exported successfully');
   } catch (err) {
-    toast.error(getErrorMessage(err, 'Export failed'))
+    toast.error(getErrorMessage(err, 'Export failed'));
   } finally {
-    isExporting.value = false
+    isExporting.value = false;
   }
 }
 
@@ -215,23 +205,23 @@ async function performImport(
   toast: ReturnType<typeof useToast>,
   replaceDatabase: (data: Uint8Array) => Promise<void>
 ): Promise<boolean> {
-  isImporting.value = true
+  isImporting.value = true;
   try {
-    const isValid = await performValidate(file)
+    const isValid = await performValidate(file);
     if (!isValid) {
-      toast.error('Invalid database file')
-      return false
+      toast.error('Invalid database file');
+      return false;
     }
-    const buffer = await file.arrayBuffer()
-    const data = new Uint8Array(buffer)
-    await replaceDatabase(data)
-    toast.success('Database imported successfully')
-    return true
+    const buffer = await file.arrayBuffer();
+    const data = new Uint8Array(buffer);
+    await replaceDatabase(data);
+    toast.success('Database imported successfully');
+    return true;
   } catch (err) {
-    toast.error(getErrorMessage(err, 'Import failed'))
-    return false
+    toast.error(getErrorMessage(err, 'Import failed'));
+    return false;
   } finally {
-    isImporting.value = false
+    isImporting.value = false;
   }
 }
 
@@ -246,30 +236,30 @@ async function performClear(
   persist: () => Promise<void>
 ): Promise<boolean> {
   if (!database.value) {
-    toast.error('Database not initialized')
-    return false
+    toast.error('Database not initialized');
+    return false;
   }
 
-  isClearing.value = true
+  isClearing.value = true;
   try {
-    run('BEGIN TRANSACTION')
+    run('BEGIN TRANSACTION');
     try {
-      run('DELETE FROM entry_tags')
-      run('DELETE FROM tags')
-      run('DELETE FROM entries')
-      run('COMMIT')
+      run('DELETE FROM entry_tags');
+      run('DELETE FROM tags');
+      run('DELETE FROM entries');
+      run('COMMIT');
     } catch (err) {
-      run('ROLLBACK')
-      throw err
+      run('ROLLBACK');
+      throw err;
     }
-    await persist()
-    toast.success('All data cleared successfully')
-    return true
+    await persist();
+    toast.success('All data cleared successfully');
+    return true;
   } catch (err) {
-    toast.error(getErrorMessage(err, 'Clear failed'))
-    return false
+    toast.error(getErrorMessage(err, 'Clear failed'));
+    return false;
   } finally {
-    isClearing.value = false
+    isClearing.value = false;
   }
 }
 
@@ -278,25 +268,18 @@ async function performClear(
 // =============================================================================
 
 export function useDatabaseExport(): UseDatabaseExport {
-  const { database, persist, replaceDatabase, run } = useDatabase()
-  const toast = useToast()
-
-  // Reset loading states when composable is disposed
-  onScopeDispose(() => {
-    isExporting.value = false
-    isImporting.value = false
-    isClearing.value = false
-  })
+  const { database, persist, replaceDatabase, run } = useDatabase();
+  const toast = useToast();
 
   return {
     isExporting: readonly(isExporting),
     isImporting: readonly(isImporting),
     isClearing: readonly(isClearing),
     exportDatabase: () => {
-      performExport(database, toast)
+      performExport(database, toast);
     },
     importDatabase: (file: File) => performImport(file, toast, replaceDatabase),
     validateDatabaseFile: performValidate,
-    clearDatabase: () => performClear(database, toast, run, persist)
-  }
+    clearDatabase: () => performClear(database, toast, run, persist),
+  };
 }

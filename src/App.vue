@@ -23,22 +23,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    v-if="error"
-    class="app-error"
-  >
+  <div v-if="error" class="app-error">
     <h1>Database Error</h1>
     <p>{{ error.message }}</p>
   </div>
   <template v-else-if="isReady">
     <RouterView />
   </template>
-  <output
-    v-else
-    aria-label="Application loading"
-    aria-live="polite"
-    class="app-loading"
-  >
+  <output v-else aria-label="Application loading" aria-live="polite" class="app-loading">
     <p>Loading...</p>
   </output>
   <SharedUpdatePrompt />

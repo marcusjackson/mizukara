@@ -9,8 +9,8 @@
   env.allowLocalModels = false
   let loaded = null
   window.api = {
-    // Mirrors the app's pipeline: feature extraction on WebAssembly, mean pooling, unit-normalised.
-    async embed(model, dtype, texts) {
+    // Mirrors the app's pipeline: feature extraction on WebAssembly, with the caller's pooling and normalisation.
+    async embed(model, dtype, texts, pooling, normalize) {
       if (!loaded) {
         loaded = await pipeline('feature-extraction', model, {
           dtype,
@@ -19,7 +19,7 @@
       }
       const out = []
       for (const text of texts) {
-        const r = await loaded(text, { pooling: 'mean', normalize: true })
+        const r = await loaded(text, { pooling, normalize })
         out.push(Array.from(r.data))
       }
       return out

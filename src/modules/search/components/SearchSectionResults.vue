@@ -49,10 +49,7 @@ const showsCapNotice = computed(
 </script>
 
 <template>
-  <section
-    aria-label="Search results"
-    class="search-section-results"
-  >
+  <section aria-label="Search results" class="search-section-results">
     <h2 class="search-section-results__title">Results</h2>
 
     <output
@@ -73,30 +70,18 @@ const showsCapNotice = computed(
       Enter a search term or select tags, then press Search.
     </p>
 
-    <p
-      v-else-if="!hasEntries"
-      class="search-section-results__empty"
-      data-testid="empty-no-results"
-    >
+    <p v-else-if="!hasEntries" class="search-section-results__empty" data-testid="empty-no-results">
       No entries found.
     </p>
 
     <template v-else>
-      <p
-        v-if="showsCapNotice"
-        class="search-section-results__notice"
-        data-testid="cap-notice"
-      >
-        Showing the {{ CAPPED_LIMIT }} most recent matches. There may be more:
-        turn on "Show all results" and search again to see them all.
+      <p v-if="showsCapNotice" class="search-section-results__notice" data-testid="cap-notice">
+        Showing the {{ CAPPED_LIMIT }} most recent matches. There may be more: turn on "Show all
+        results" and search again to see them all.
       </p>
 
       <ol class="search-section-results__list">
-        <li
-          v-for="entry in props.entries"
-          :key="entry.id"
-          class="search-section-results__item"
-        >
+        <li v-for="entry in props.entries" :key="entry.id" class="search-section-results__item">
           <SearchResultCard :entry="entry" />
         </li>
       </ol>

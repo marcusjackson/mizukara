@@ -16,6 +16,7 @@ import { RouterLink } from 'vue-router'
 import { BaseSpinner } from '@/base/components'
 
 import {
+  formatDateLong,
   formatMonthYear,
   getMonthGrid,
   getToday,
@@ -56,6 +57,13 @@ const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // Derived state
 // =============================================================================
 
+/** Full date, plus the match count when the day has matches (the badge alone is bare digits to a screen reader). */
+function dayLabel(date: string): string | undefined {
+  const count = countFor(date)
+  if (count === 0) return undefined
+  return `${formatDateLong(date)}, ${String(count)} ${count === 1 ? 'match' : 'matches'}`
+}
+
 const monthLabel = computed(() => formatMonthYear(props.month))
 
 const countsByDay = computed(() => {
@@ -79,10 +87,7 @@ function countFor(date: string): number {
 </script>
 
 <template>
-  <section
-    aria-label="Search calendar"
-    class="search-section-calendar"
-  >
+  <section aria-label="Search calendar" class="search-section-calendar">
     <div class="search-section-calendar__header">
       <button
         aria-label="Previous month"
@@ -115,27 +120,16 @@ function countFor(date: string): number {
       <BaseSpinner />
     </output>
 
-    <table
-      v-else
-      class="search-section-calendar__grid"
-      data-testid="calendar-grid"
-    >
+    <table v-else class="search-section-calendar__grid" data-testid="calendar-grid">
       <thead>
         <tr>
-          <th
-            v-for="label in WEEKDAY_LABELS"
-            :key="label"
-            scope="col"
-          >
+          <th v-for="label in WEEKDAY_LABELS" :key="label" scope="col">
             {{ label }}
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="(week, weekIndex) in weeks"
-          :key="weekIndex"
-        >
+        <tr v-for="(week, weekIndex) in weeks" :key="weekIndex">
           <td
             v-for="(date, dayIndex) in week"
             :key="dayIndex"
@@ -143,6 +137,7 @@ function countFor(date: string): number {
           >
             <RouterLink
               v-if="date"
+              :aria-label="dayLabel(date)"
               class="search-section-calendar__day"
               :class="{
                 'search-section-calendar__day--today': date === today

@@ -47,20 +47,11 @@ const announcedValue = computed(() => Math.round(clampedValue.value / 10) * 10)
       class="base-progress-track"
       role="progressbar"
     >
-      <div
-        class="base-progress-fill"
-        :style="{ width: `${clampedValue}%` }"
-      />
+      <div class="base-progress-fill" :style="{ width: `${clampedValue}%` }" />
     </div>
-    <p
-      v-if="showValue"
-      aria-live="polite"
-      class="base-progress-value"
-    >
+    <p v-if="showValue" aria-live="polite" class="base-progress-value">
       <span aria-hidden="true">{{ clampedValue }}%</span>
-      <span class="base-progress-announcement">
-        {{ label }} {{ announcedValue }} percent
-      </span>
+      <span class="base-progress-announcement"> {{ label }} {{ announcedValue }} percent </span>
     </p>
   </div>
 </template>

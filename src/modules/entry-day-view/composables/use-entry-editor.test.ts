@@ -2,15 +2,15 @@
  * Tests for useEntryEditor composable
  */
 
-import { nextTick } from 'vue'
+import { nextTick } from 'vue';
 
-import { withSetup } from '@test/helpers/with-setup'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { withSetup } from '@test/helpers/with-setup';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useEntryEditor } from './use-entry-editor'
+import { useEntryEditor } from './use-entry-editor';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { App } from 'vue'
+import type { Entry } from '@/shared/types/entry-types';
+import type { App } from 'vue';
 
 const makeEntry = (overrides: Partial<Entry> = {}): Entry => ({
   id: 'test-entry-id',
@@ -20,119 +20,149 @@ const makeEntry = (overrides: Partial<Entry> = {}): Entry => ({
   isDeleted: false,
   createdAt: 1234567890,
   updatedAt: 1234567890,
-  ...overrides
-})
+  ...overrides,
+});
 
 describe('useEntryEditor', () => {
-  let app: App | undefined
+  let app: App | undefined;
 
   afterEach(() => {
-    app?.unmount()
-  })
+    app?.unmount();
+  });
 
   describe('initialization', () => {
     it('initializes form with entry content', async () => {
-      const entry = makeEntry({ content: 'Initial content' })
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry))
+      const entry = makeEntry({ content: 'Initial content' });
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry));
 
-      await nextTick()
+      await nextTick();
 
-      expect(result.contentValue.value).toBe('Initial content')
-    })
+      expect(result.contentValue.value).toBe('Initial content');
+    });
 
     it('initializes form with entry assignedDay', async () => {
-      const entry = makeEntry({ assignedDay: '2026-02-18' })
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry))
+      const entry = makeEntry({ assignedDay: '2026-02-18' });
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry));
 
-      await nextTick()
+      await nextTick();
 
-      expect(result.assignedDayValue.value).toBe('2026-02-18')
-    })
-  })
+      expect(result.assignedDayValue.value).toBe('2026-02-18');
+    });
+  });
 
   describe('handleKeyDown', () => {
     it('calls onCancel when Escape key is pressed', () => {
-      const entry = makeEntry()
-      const onCancel = vi.fn()
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry, onCancel))
+      const entry = makeEntry();
+      const onCancel = vi.fn();
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry, onCancel));
 
-      const event = new KeyboardEvent('keydown', { key: 'Escape' })
-      result.handleKeyDown(event)
+      const event = new KeyboardEvent('keydown', { key: 'Escape' });
+      result.handleKeyDown(event);
 
-      expect(onCancel).toHaveBeenCalled()
-    })
+      expect(onCancel).toHaveBeenCalled();
+    });
 
     it('does not call onCancel for non-Escape keys', () => {
-      const entry = makeEntry()
-      const onCancel = vi.fn()
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry, onCancel))
+      const entry = makeEntry();
+      const onCancel = vi.fn();
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry, onCancel));
 
-      const event = new KeyboardEvent('keydown', { key: 'Enter' })
-      result.handleKeyDown(event)
+      const event = new KeyboardEvent('keydown', { key: 'Enter' });
+      result.handleKeyDown(event);
 
-      expect(onCancel).not.toHaveBeenCalled()
-    })
+      expect(onCancel).not.toHaveBeenCalled();
+    });
 
     it('handles missing onCancel gracefully', () => {
-      const entry = makeEntry()
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry))
+      const entry = makeEntry();
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry));
 
-      const event = new KeyboardEvent('keydown', { key: 'Escape' })
+      const event = new KeyboardEvent('keydown', { key: 'Escape' });
 
       expect(() => {
-        result.handleKeyDown(event)
-      }).not.toThrow()
-    })
-  })
+        result.handleKeyDown(event);
+      }).not.toThrow();
+    });
+
+    it('saves and prevents the browser dialog for Cmd+S with Caps Lock or Shift (key "S")', async () => {
+      const onSave = vi.fn();
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(makeEntry(), undefined, onSave));
+      await nextTick();
+
+      const event = new KeyboardEvent('keydown', { key: 'S', metaKey: true, cancelable: true });
+      result.handleKeyDown(event);
+      await vi.waitFor(() => {
+        expect(onSave).toHaveBeenCalledTimes(1);
+      });
+
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('shows the field error and does not save whitespace-only content on Cmd+S', async () => {
+      const onSave = vi.fn();
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(makeEntry(), undefined, onSave));
+      await nextTick();
+
+      result.contentValue.value = '   ';
+      result.handleKeyDown(new KeyboardEvent('keydown', { key: 's', ctrlKey: true }));
+
+      await vi.waitFor(() => {
+        expect(result.contentError.value).toBe('Please enter some content for your entry');
+      });
+      expect(onSave).not.toHaveBeenCalled();
+    });
+  });
 
   describe('updateAssignedDay', () => {
     it('updates the assignedDay field value', async () => {
-      const entry = makeEntry({ assignedDay: '2026-02-18' })
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry))
+      const entry = makeEntry({ assignedDay: '2026-02-18' });
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry));
 
-      await nextTick()
+      await nextTick();
 
-      result.updateAssignedDay('2026-03-01')
+      result.updateAssignedDay('2026-03-01');
 
-      await nextTick()
+      await nextTick();
 
-      expect(result.assignedDayValue.value).toBe('2026-03-01')
-    })
-  })
+      expect(result.assignedDayValue.value).toBe('2026-03-01');
+    });
+  });
 
   describe('handleBeforeUnload', () => {
     beforeEach(() => {
-      vi.useFakeTimers()
-    })
+      vi.useFakeTimers();
+    });
 
     afterEach(() => {
-      vi.useRealTimers()
-    })
+      vi.useRealTimers();
+    });
 
     it('calls event.preventDefault when form is dirty', async () => {
-      const entry = makeEntry({ content: 'Original' })
-      let result: ReturnType<typeof useEntryEditor>
-      ;[result, app] = withSetup(() => useEntryEditor(entry))
+      const entry = makeEntry({ content: 'Original' });
+      let result: ReturnType<typeof useEntryEditor>;
+      [result, app] = withSetup(() => useEntryEditor(entry));
 
-      await nextTick()
+      await nextTick();
 
       // Make the form dirty by changing the content
-      result.contentValue.value = 'Changed content'
+      result.contentValue.value = 'Changed content';
 
-      await nextTick()
+      await nextTick();
 
-      const event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent
-      result.handleBeforeUnload(event)
+      const event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
+      result.handleBeforeUnload(event);
 
       // The form should prevent unload when dirty
       // (dirty state depends on vee-validate's meta tracking)
-      expect(event.preventDefault).toBeDefined()
-    })
-  })
-})
+      expect(event.preventDefault).toBeDefined();
+    });
+  });
+});

@@ -99,10 +99,7 @@ function handleCancelClear(): void {
 </script>
 
 <template>
-  <section
-    aria-label="Database settings"
-    class="app-settings-section"
-  >
+  <section aria-label="Database settings" class="app-settings-section">
     <h2 class="app-settings-section-title">Database</h2>
 
     <div class="app-settings-db-operation">
@@ -151,7 +148,7 @@ function handleCancelClear(): void {
       <div class="app-settings-db-operation-info">
         <span class="app-settings-db-operation-label">Clear All Data</span>
         <span class="app-settings-db-operation-description">
-          Permanently delete all entries from the database
+          Permanently delete all entries and tags
         </span>
       </div>
       <BaseButton

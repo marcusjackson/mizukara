@@ -5,7 +5,7 @@
  * Reorder mode UI for the entry list section.
  * Renders the Done/Reorder toggle button and, when active, the list of
  * entries with up/down move controls. Entry cards are rendered via
- * EntryDayViewEntryCard.
+ * SharedEntryCard.
  *
  * @emits toggle-reorder   - User toggled reorder mode on or off
  * @emits move-up          - User requested to move an entry up
@@ -66,16 +66,8 @@ function canMoveDown(id: string): boolean {
   </div>
 
   <!-- Entry list in reorder mode -->
-  <div
-    v-if="isReorderMode"
-    class="entry-list"
-    data-testid="entry-list"
-  >
-    <div
-      v-for="(item, index) in items"
-      :key="item.id"
-      class="entry-item"
-    >
+  <div v-if="isReorderMode" class="entry-list" data-testid="entry-list">
+    <div v-for="(item, index) in items" :key="item.id" class="entry-item">
       <div class="reorder-buttons">
         <button
           :aria-label="`Move up entry ${index + 1}`"
@@ -114,6 +106,7 @@ function canMoveDown(id: string): boolean {
 }
 
 .reorder-toggle-button {
+  min-height: 44px;
   padding: var(--spacing-2) var(--spacing-4);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
@@ -123,7 +116,9 @@ function canMoveDown(id: string): boolean {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .reorder-toggle-button:hover {
@@ -167,7 +162,10 @@ function canMoveDown(id: string): boolean {
   color: var(--color-text-secondary);
   font-size: var(--font-size-lg);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .reorder-button:hover:not(:disabled) {
@@ -185,5 +183,12 @@ function canMoveDown(id: string): boolean {
 .reorder-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: var(--focus-ring-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reorder-toggle-button,
+  .reorder-button {
+    transition: none;
+  }
 }
 </style>

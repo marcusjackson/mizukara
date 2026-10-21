@@ -5,12 +5,12 @@
  * All queries filter by is_deleted = 0 to return only active records.
  */
 
-import { queryResultToEntries } from '@/api/entries/entry-helpers'
-import { rowToTag } from '@/api/tags/tag-row-mappers'
+import { queryResultToEntries } from '@/api/entries/entry-helpers';
+import { rowToTag } from '@/api/tags/tag-row-mappers';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { Tag } from '@/shared/types/tag-types'
-import type { Database } from 'sql.js'
+import type { Entry } from '@/shared/types/entry-types';
+import type { Tag } from '@/shared/types/tag-types';
+import type { Database } from 'sql.js';
 
 /**
  * Find all non-deleted tags associated with a single entry
@@ -32,13 +32,14 @@ export function findByEntryId(db: Database, entryId: string): Tag[] {
      INNER JOIN entry_tags et ON et.tag_id = t.id
      WHERE et.entry_id = ?
        AND et.is_deleted = 0
-       AND t.is_deleted = 0`,
+       AND t.is_deleted = 0
+     ORDER BY t.name COLLATE NOCASE, t.id`,
     [entryId]
-  )
+  );
 
-  if (!result[0]) return []
+  if (!result[0]) return [];
 
-  return result[0].values.map(rowToTag)
+  return result[0].values.map(rowToTag);
 }
 
 /**
@@ -56,20 +57,17 @@ export function findByEntryId(db: Database, entryId: string): Tag[] {
  * const tagMap = findByEntryIds(db, ['entry-1', 'entry-2'])
  * const tags = tagMap.get('entry-1') // Tag[]
  */
-export function findByEntryIds(
-  db: Database,
-  entryIds: string[]
-): Map<string, Tag[]> {
-  const result = new Map<string, Tag[]>()
+export function findByEntryIds(db: Database, entryIds: string[]): Map<string, Tag[]> {
+  const result = new Map<string, Tag[]>();
 
-  if (entryIds.length === 0) return result
+  if (entryIds.length === 0) return result;
 
   // Initialise all requested entries with empty arrays
   for (const id of entryIds) {
-    result.set(id, [])
+    result.set(id, []);
   }
 
-  const placeholders = entryIds.map(() => '?').join(', ')
+  const placeholders = entryIds.map(() => '?').join(', ');
 
   const queryResult = db.exec(
     `SELECT et.entry_id, t.id, t.name, t.created_at, t.updated_at, t.is_deleted
@@ -77,22 +75,23 @@ export function findByEntryIds(
      INNER JOIN tags t ON t.id = et.tag_id
      WHERE et.entry_id IN (${placeholders})
        AND et.is_deleted = 0
-       AND t.is_deleted = 0`,
+       AND t.is_deleted = 0
+     ORDER BY t.name COLLATE NOCASE, t.id`,
     entryIds
-  )
+  );
 
-  if (!queryResult[0]) return result
+  if (!queryResult[0]) return result;
 
   for (const row of queryResult[0].values) {
-    const entryId = row[0] as string
-    const tag = rowToTag(row.slice(1))
-    const tags = result.get(entryId)
+    const entryId = row[0] as string;
+    const tag = rowToTag(row.slice(1));
+    const tags = result.get(entryId);
     if (tags) {
-      tags.push(tag)
+      tags.push(tag);
     }
   }
 
-  return result
+  return result;
 }
 
 /**
@@ -111,9 +110,9 @@ export function findByEntryIds(
  * // Returns entries that have BOTH tag-1 and tag-2, newest day first
  */
 export function findEntriesByTags(db: Database, tagIds: string[]): Entry[] {
-  if (tagIds.length === 0) return []
+  if (tagIds.length === 0) return [];
 
-  const placeholders = tagIds.map(() => '?').join(', ')
+  const placeholders = tagIds.map(() => '?').join(', ');
 
   const result = db.exec(
     `SELECT e.id, e.content, e.created_at, e.updated_at,
@@ -126,9 +125,9 @@ export function findEntriesByTags(db: Database, tagIds: string[]): Entry[] {
      HAVING COUNT(DISTINCT et.tag_id) = ?
      ORDER BY e.assigned_day DESC, e.order_position ASC, e.created_at ASC, e.id ASC`,
     [...tagIds, tagIds.length]
-  )
+  );
 
-  if (!result[0]) return []
+  if (!result[0]) return [];
 
-  return queryResultToEntries(result[0])
+  return queryResultToEntries(result[0]);
 }

@@ -106,10 +106,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   >
     <div class="date-picker-content">
       <div class="date-picker-field">
-        <label
-          class="date-picker-label"
-          for="date-picker-input"
-        >
+        <label class="date-picker-label" for="date-picker-input">
           Select date
           <span class="date-picker-hint">(YYYY-MM-DD)</span>
         </label>
@@ -122,12 +119,7 @@ const handleKeydown = (event: KeyboardEvent) => {
           type="date"
           @keydown="handleKeydown"
         />
-        <p
-          v-if="validationError"
-          id="date-picker-error"
-          class="date-picker-error"
-          role="alert"
-        >
+        <p v-if="validationError" id="date-picker-error" class="date-picker-error" role="alert">
           {{ validationError }}
         </p>
       </div>

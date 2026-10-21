@@ -105,11 +105,7 @@ const isLastDay = computed(() => !isValidISODate(addDays(props.currentDate, 1)))
     >
       <span class="date-desktop">{{ dateLong }}</span>
       <span class="date-mobile">{{ dateMedium }}</span>
-      <span
-        aria-hidden="true"
-        class="date-picker-icon"
-        >▼</span
-      >
+      <span aria-hidden="true" class="date-picker-icon">▼</span>
     </button>
 
     <button

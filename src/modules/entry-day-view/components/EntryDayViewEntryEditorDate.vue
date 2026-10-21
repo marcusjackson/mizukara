@@ -30,12 +30,7 @@ function handleChange(event: Event): void {
 
 <template>
   <div class="entry-editor-date">
-    <label
-      class="entry-editor-date-label"
-      :for="inputId"
-    >
-      Assigned Day
-    </label>
+    <label class="entry-editor-date-label" :for="inputId"> Assigned Day </label>
     <input
       :id="inputId"
       :aria-describedby="props.error ? errorId : undefined"
@@ -46,12 +41,7 @@ function handleChange(event: Event): void {
       @change="handleChange"
       @input="handleChange"
     />
-    <p
-      v-if="props.error"
-      :id="errorId"
-      class="entry-editor-date-error"
-      role="alert"
-    >
+    <p v-if="props.error" :id="errorId" class="entry-editor-date-error" role="alert">
       {{ props.error }}
     </p>
   </div>

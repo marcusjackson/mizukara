@@ -6,15 +6,15 @@
  * without it, updates only apply once every open tab/window is fully closed.
  */
 
-import { useRegisterSW } from 'virtual:pwa-register/vue'
+import { useRegisterSW } from 'virtual:pwa-register/vue';
 
-import type { Ref } from 'vue'
+import type { Ref } from 'vue';
 
 export interface UsePwaUpdate {
   /** True once a new service worker has installed and is waiting to activate */
-  needRefresh: Ref<boolean>
+  needRefresh: Ref<boolean>;
   /** Activates the waiting service worker and reloads the page */
-  reload: () => Promise<void>
+  reload: () => Promise<void>;
 }
 
 /**
@@ -25,11 +25,11 @@ export interface UsePwaUpdate {
  * const { needRefresh, reload } = usePwaUpdate()
  */
 export function usePwaUpdate(): UsePwaUpdate {
-  const { needRefresh, updateServiceWorker } = useRegisterSW()
+  const { needRefresh, updateServiceWorker } = useRegisterSW();
 
   async function reload(): Promise<void> {
-    await updateServiceWorker(true)
+    await updateServiceWorker(true);
   }
 
-  return { needRefresh, reload }
+  return { needRefresh, reload };
 }

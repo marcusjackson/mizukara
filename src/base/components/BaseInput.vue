@@ -42,18 +42,9 @@ const inputClasses = computed(() => [
 
 <template>
   <div class="base-input">
-    <label
-      v-if="label"
-      class="base-input-label"
-      :for="inputId"
-    >
+    <label v-if="label" class="base-input-label" :for="inputId">
       {{ label }}
-      <span
-        v-if="required"
-        aria-hidden="true"
-        class="base-input-required"
-        >*</span
-      >
+      <span v-if="required" aria-hidden="true" class="base-input-required">*</span>
     </label>
 
     <input
@@ -70,12 +61,7 @@ const inputClasses = computed(() => [
       :type="type ?? 'text'"
     />
 
-    <p
-      v-if="error"
-      :id="`${inputId}-error`"
-      class="base-input-error"
-      role="alert"
-    >
+    <p v-if="error" :id="`${inputId}-error`" class="base-input-error" role="alert">
       {{ error }}
     </p>
   </div>

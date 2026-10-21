@@ -74,8 +74,12 @@ const showCreateOption = computed(() => {
   )
 })
 
-/** Called by ComboboxRoot when selection changes (real options only; create is prevented) */
-function handleModelUpdate(newOptions: TagInputOption[]) {
+/**
+ * Called by ComboboxRoot when selection changes (real options only; create is prevented).
+ * reka-ui types the emitted value as one option even in multiple mode, so accept both shapes.
+ */
+function handleModelUpdate(value: TagInputOption | TagInputOption[]) {
+  const newOptions = Array.isArray(value) ? value : [value]
   model.value = newOptions.map((opt) => opt.value)
   searchTerm.value = ''
 }
@@ -106,11 +110,7 @@ function handleCreateSelect() {
 
 <template>
   <div class="base-tag-input">
-    <label
-      v-if="label"
-      class="base-tag-input-label"
-      :for="comboboxId"
-    >
+    <label v-if="label" class="base-tag-input-label" :for="comboboxId">
       {{ label }}
     </label>
 
@@ -155,12 +155,7 @@ function handleCreateSelect() {
       />
     </ComboboxRoot>
 
-    <p
-      v-if="error"
-      :id="`${comboboxId}-error`"
-      class="base-tag-input-error"
-      role="alert"
-    >
+    <p v-if="error" :id="`${comboboxId}-error`" class="base-tag-input-error" role="alert">
       {{ error }}
     </p>
   </div>

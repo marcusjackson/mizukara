@@ -5,6 +5,8 @@
  * All dates use local timezone (no UTC conversion).
  */
 
+import { DATE_VALIDATION_CONSTRAINTS } from '@/shared/validation/validation-errors';
+
 /**
  * Format date as ISO string (YYYY-MM-DD)
  *
@@ -15,10 +17,10 @@
  * formatDateISO(new Date(2026, 0, 15)) // '2026-01-15'
  */
 export function formatDateISO(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${String(year)}-${month}-${day}`
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${String(year)}-${month}-${day}`;
 }
 
 /**
@@ -34,7 +36,7 @@ export function formatDateISO(date: Date): string {
  * console.log(date.getDate()) // 15
  */
 export function parseISODate(dateString: string): Date {
-  return new Date(dateString + 'T00:00:00')
+  return new Date(dateString + 'T00:00:00');
 }
 
 /**
@@ -48,13 +50,13 @@ export function parseISODate(dateString: string): Date {
  * formatDateLong(new Date(2026, 0, 15)) // 'Thursday, January 15, 2026'
  */
 export function formatDateLong(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISODate(date) : date
+  const d = typeof date === 'string' ? parseISODate(date) : date;
   return d.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
-  })
+    day: 'numeric',
+  });
 }
 
 /**
@@ -67,13 +69,13 @@ export function formatDateLong(date: string | Date): string {
  * formatDateMedium('2026-02-09') // 'Mon, Feb 9, 2026'
  */
 export function formatDateMedium(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISODate(date) : date
+  const d = typeof date === 'string' ? parseISODate(date) : date;
   return d.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
-  })
+    year: 'numeric',
+  });
 }
 
 /**
@@ -88,10 +90,10 @@ export function formatDateMedium(date: string | Date): string {
  * addDays('2026-01-15', -7) // '2026-01-08'
  */
 export function addDays(date: string | Date, days: number): string {
-  const d = typeof date === 'string' ? parseISODate(date) : new Date(date)
-  const result = new Date(d)
-  result.setDate(result.getDate() + days)
-  return formatDateISO(result)
+  const d = typeof date === 'string' ? parseISODate(date) : new Date(date);
+  const result = new Date(d);
+  result.setDate(result.getDate() + days);
+  return formatDateISO(result);
 }
 
 /**
@@ -105,7 +107,7 @@ export function addDays(date: string | Date, days: number): string {
  * subtractDays('2026-01-15', 7) // '2026-01-08'
  */
 export function subtractDays(date: string | Date, days: number): string {
-  return addDays(date, -days)
+  return addDays(date, -days);
 }
 
 /**
@@ -117,7 +119,7 @@ export function subtractDays(date: string | Date, days: number): string {
  * getToday() // '2026-02-11' (if run on Feb 11, 2026)
  */
 export function getToday(): string {
-  return formatDateISO(new Date())
+  return formatDateISO(new Date());
 }
 
 /**
@@ -137,35 +139,31 @@ export function getToday(): string {
  * isValidISODate('9999-01-01') // false (year out of range)
  */
 export function isValidISODate(dateString: string): boolean {
-  const regex = /^\d{4}-\d{2}-\d{2}$/
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
   if (!regex.test(dateString)) {
-    return false
+    return false;
   }
 
-  const date = new Date(dateString + 'T00:00:00')
+  const date = new Date(dateString + 'T00:00:00');
   if (Number.isNaN(date.getTime())) {
-    return false
+    return false;
   }
 
   // Check if the parsed date matches the input
-  const parts = dateString.split('-')
+  const parts = dateString.split('-');
   if (parts.length !== 3) {
-    return false
+    return false;
   }
-  const year = Number(parts[0])
-  const month = Number(parts[1])
-  const day = Number(parts[2])
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
 
   // Validate reasonable date range
-  if (year < 1900 || year > 2100) {
-    return false
+  if (year < DATE_VALIDATION_CONSTRAINTS.MIN_YEAR || year > DATE_VALIDATION_CONSTRAINTS.MAX_YEAR) {
+    return false;
   }
 
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  )
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
 
 /**
@@ -180,11 +178,11 @@ export function isValidISODate(dateString: string): boolean {
  * addMonths('2026-01', -1) // '2025-12'
  */
 export function addMonths(month: string, months: number): string {
-  const { month: monthNum, year } = parseMonthString(month)
-  const result = new Date(year, monthNum - 1 + months, 1)
-  const resultYear = String(result.getFullYear())
-  const resultMonth = String(result.getMonth() + 1).padStart(2, '0')
-  return `${resultYear}-${resultMonth}`
+  const { month: monthNum, year } = parseMonthString(month);
+  const result = new Date(year, monthNum - 1 + months, 1);
+  const resultYear = String(result.getFullYear());
+  const resultMonth = String(result.getMonth() + 1).padStart(2, '0');
+  return `${resultYear}-${resultMonth}`;
 }
 
 /**
@@ -197,9 +195,9 @@ export function addMonths(month: string, months: number): string {
  * formatMonthYear('2026-02') // 'February 2026'
  */
 export function formatMonthYear(month: string): string {
-  const { month: monthNum, year } = parseMonthString(month)
-  const date = new Date(year, monthNum - 1, 1)
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const { month: monthNum, year } = parseMonthString(month);
+  const date = new Date(year, monthNum - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 /**
@@ -209,16 +207,16 @@ export function formatMonthYear(month: string): string {
  * with isValidMonthString first rather than relying on this fallback.
  */
 export function parseMonthString(month: string): {
-  year: number
-  month: number
+  year: number;
+  month: number;
 } {
-  const [yearStr, monthStr] = month.split('-')
-  const year = Number(yearStr)
-  const monthNum = Number(monthStr)
+  const [yearStr, monthStr] = month.split('-');
+  const year = Number(yearStr);
+  const monthNum = Number(monthStr);
   return {
     year: Number.isNaN(year) ? 0 : year,
-    month: Number.isNaN(monthNum) ? 1 : monthNum
-  }
+    month: Number.isNaN(monthNum) ? 1 : monthNum,
+  };
 }
 
 /**
@@ -233,9 +231,9 @@ export function parseMonthString(month: string): {
  * isValidMonthString('2026-13') // false (month out of range)
  */
 export function isValidMonthString(month: string): boolean {
-  if (!/^\d{4}-\d{2}$/.test(month)) return false
-  const monthNum = Number(month.slice(5, 7))
-  return monthNum >= 1 && monthNum <= 12
+  if (!/^\d{4}-\d{2}$/.test(month)) return false;
+  const monthNum = Number(month.slice(5, 7));
+  return monthNum >= 1 && monthNum <= 12;
 }
 
 /**
@@ -253,29 +251,26 @@ export function isValidMonthString(month: string): boolean {
  * // [[null, null, null, null, null, null, '2026-02-01'], ['2026-02-02', ...], ...]
  */
 export function getMonthGrid(year: number, month: number): (string | null)[][] {
-  const firstOfMonth = new Date(year, month - 1, 1)
-  const daysInMonth = new Date(year, month, 0).getDate()
-  const leadingBlanks = firstOfMonth.getDay()
+  const firstOfMonth = new Date(year, month - 1, 1);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const leadingBlanks = firstOfMonth.getDay();
 
-  const cells: (string | null)[] = Array.from(
-    { length: leadingBlanks },
-    () => null
-  )
+  const cells: (string | null)[] = Array.from({ length: leadingBlanks }, () => null);
 
   for (let day = 1; day <= daysInMonth; day++) {
-    cells.push(formatDateISO(new Date(year, month - 1, day)))
+    cells.push(formatDateISO(new Date(year, month - 1, day)));
   }
 
   while (cells.length % 7 !== 0) {
-    cells.push(null)
+    cells.push(null);
   }
 
-  const weeks: (string | null)[][] = []
+  const weeks: (string | null)[][] = [];
   for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7))
+    weeks.push(cells.slice(i, i + 7));
   }
 
-  return weeks
+  return weeks;
 }
 
 /**
@@ -288,12 +283,12 @@ export function getMonthGrid(year: number, month: number): (string | null)[][] {
  * formatTimestampShort(1707592200000) // 'Feb 10, 2026, 2:30 PM'
  */
 export function formatTimestampShort(timestamp: number): string {
-  const date = new Date(timestamp)
+  const date = new Date(timestamp);
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
-    minute: '2-digit'
-  })
+    minute: '2-digit',
+  });
 }

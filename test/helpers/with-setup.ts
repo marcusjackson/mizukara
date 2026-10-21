@@ -5,9 +5,9 @@
  * so it has access to lifecycle hooks.
  */
 
-import { createApp, defineComponent } from 'vue'
+import { createApp, defineComponent } from 'vue';
 
-import type { App } from 'vue'
+import type { App } from 'vue';
 
 /**
  * Wraps a composable in a test component for proper lifecycle management
@@ -16,18 +16,18 @@ import type { App } from 'vue'
  * @returns Tuple of [result, app] - result is the composable return, app can be unmounted
  */
 export function withSetup<T>(composable: () => T): [T, App] {
-  let result!: T
+  let result!: T;
 
   const app = createApp(
     defineComponent({
       setup() {
-        result = composable()
-        return () => null
-      }
+        result = composable();
+        return () => null;
+      },
     })
-  )
+  );
 
-  app.mount(document.createElement('div'))
+  app.mount(document.createElement('div'));
 
-  return [result, app]
+  return [result, app];
 }

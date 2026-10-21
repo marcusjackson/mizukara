@@ -22,12 +22,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div
-    v-if="error"
-    class="tags-section-status"
-    data-testid="tags-error"
-    role="alert"
-  >
+  <div v-if="error" class="tags-section-status" data-testid="tags-error" role="alert">
     <p class="tags-section-status__message">Error loading tags: {{ error }}</p>
     <BaseButton @click="$emit('retry')">Retry</BaseButton>
   </div>

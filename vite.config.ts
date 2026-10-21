@@ -1,18 +1,17 @@
-import basicSsl from '@vitejs/plugin-basic-ssl'
-import vue from '@vitejs/plugin-vue'
-import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
-import { VitePWA } from 'vite-plugin-pwa'
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import vue from '@vitejs/plugin-vue';
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
-import pkg from './package.json' with { type: 'json' }
+import pkg from './package.json' with { type: 'json' };
 
 /* eslint-disable max-lines-per-function */
 export default defineConfig(({ command }) => ({
   // Base path for GitHub Pages deployment
   // Only apply /mizukara/ base during production build on GitHub Actions
   // Dev server always uses '/' so Playwright E2E tests work correctly
-  base:
-    command === 'build' && process.env['GITHUB_ACTIONS'] ? '/mizukara/' : '/',
+  base: command === 'build' && process.env['GITHUB_ACTIONS'] ? '/mizukara/' : '/',
 
   plugins: [
     vue(),
@@ -42,39 +41,39 @@ export default defineConfig(({ command }) => ({
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any'
+            purpose: 'any',
           },
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'maskable'
+            purpose: 'maskable',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any'
+            purpose: 'any',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'maskable'
+            purpose: 'maskable',
           },
           {
             src: 'pwa-192x192.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
-            purpose: 'any'
+            purpose: 'any',
           },
           {
             src: 'pwa-512x512.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'any'
-          }
-        ]
+            purpose: 'any',
+          },
+        ],
       },
       workbox: {
         // Cache all static assets. `wasm` is kept so sql.js's own ~660 KB
@@ -108,9 +107,9 @@ export default defineConfig(({ command }) => ({
               cacheName: 'onnx-runtime-wasm',
               expiration: {
                 maxEntries: 4,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+            },
           },
           {
             // The inference worker chunk, likewise excluded from precache.
@@ -120,23 +119,23 @@ export default defineConfig(({ command }) => ({
               cacheName: 'inference-worker',
               expiration: {
                 maxEntries: 4,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
-          }
-        ]
-      }
-    })
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+            },
+          },
+        ],
+      },
+    }),
   ],
 
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version)
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
   resolve: {
     alias: {
-      '@': resolve(import.meta.dirname, 'src')
-    }
+      '@': resolve(import.meta.dirname, 'src'),
+    },
   },
 
   // sql.js requires special handling for WASM files
@@ -144,19 +143,19 @@ export default defineConfig(({ command }) => ({
     include: ['sql.js'],
     // esbuild's pre-bundling rewrites onnxruntime-web's dynamic WASM loading
     // and breaks it on the dev server. Let Vite serve the package as-is.
-    exclude: ['@huggingface/transformers']
+    exclude: ['@huggingface/transformers'],
   },
 
   build: {
     target: 'es2022',
-    sourcemap: process.env['NODE_ENV'] !== 'production'
+    sourcemap: process.env['NODE_ENV'] !== 'production',
   },
 
   // The inference worker pulls in Transformers.js, which dynamically imports
   // its ONNX backends. Vite's default worker format is 'iife', which cannot
   // code-split — the build errors rather than degrading.
   worker: {
-    format: 'es'
+    format: 'es',
   },
 
   // This app is deliberately not cross-origin isolated. The COOP/COEP headers
@@ -168,12 +167,12 @@ export default defineConfig(({ command }) => ({
     port: 5173,
     strictPort: true,
     // Enable CORS for local development
-    cors: true
+    cors: true,
   },
 
   preview: {
     port: 4173,
-    strictPort: true
-  }
-}))
+    strictPort: true,
+  },
+}));
 /* eslint-enable max-lines-per-function */

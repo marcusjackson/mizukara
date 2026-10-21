@@ -8,11 +8,11 @@
  * - Attaching lifecycle listeners for persistence
  */
 
-import { loadFromIndexedDB, saveToIndexedDB, setDatabaseRef } from './indexeddb'
-import { attachLifecycleListeners } from './lifecycle'
-import { runMigrations } from './migrations'
+import { loadFromIndexedDB, saveToIndexedDB, setDatabaseRef } from './indexeddb';
+import { attachLifecycleListeners } from './lifecycle';
+import { runMigrations } from './migrations';
 
-import type { BindParams } from 'sql.js'
+import type { BindParams } from 'sql.js';
 
 // =============================================================================
 // Types
@@ -29,22 +29,19 @@ import type { BindParams } from 'sql.js'
  * so instances can be passed to functions from other modules that accept it.
  */
 interface SqlDatabase {
-  run(sql: string, params?: BindParams): SqlDatabase
-  exec(
-    sql: string,
-    params?: BindParams
-  ): { columns: string[]; values: SqlValue[][] }[]
-  close(): void
-  export(): Uint8Array
+  run(sql: string, params?: BindParams): SqlDatabase;
+  exec(sql: string, params?: BindParams): { columns: string[]; values: SqlValue[][] }[];
+  close(): void;
+  export(): Uint8Array;
 }
 
-type SqlValue = string | number | Uint8Array | null
+type SqlValue = string | number | Uint8Array | null;
 
 /**
  * Shape of the sql.js static module returned by initSqlJs.
  */
 interface SqlJsModule {
-  Database: new (data?: ArrayLike<number> | null) => SqlDatabase
+  Database: new (data?: ArrayLike<number> | null) => SqlDatabase;
 }
 
 /**
@@ -57,15 +54,13 @@ interface SqlJsModule {
  */
 async function loadSqlJs(): Promise<SqlJsModule> {
   const sqlJsModule = (await import('sql.js')) as {
-    default: (config?: {
-      locateFile?: (file: string) => string
-    }) => Promise<SqlJsModule>
-  }
+    default: (config?: { locateFile?: (file: string) => string }) => Promise<SqlJsModule>;
+  };
   return sqlJsModule.default({
     // Load WASM from public directory (self-hosted for reliability)
     // Use BASE_URL to ensure correct path on GitHub Pages with /mizukara/ base
-    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`
-  })
+    locateFile: (file: string) => `${import.meta.env.BASE_URL}${file}`,
+  });
 }
 
 /**
@@ -78,27 +73,27 @@ async function loadSqlJs(): Promise<SqlJsModule> {
  */
 export async function initializeDatabase(): Promise<SqlDatabase> {
   // Load sql.js library
-  const SQL = await loadSqlJs()
+  const SQL = await loadSqlJs();
 
   // Try to load existing database from IndexedDB
-  const existingData = await loadFromIndexedDB()
+  const existingData = await loadFromIndexedDB();
 
   // Create database from existing data or fresh
-  const db = existingData ? new SQL.Database(existingData) : new SQL.Database()
+  const db = existingData ? new SQL.Database(existingData) : new SQL.Database();
 
   // Run any pending migrations
-  runMigrations(db)
+  runMigrations(db);
 
   // Set database reference for persistence operations
-  setDatabaseRef(db)
+  setDatabaseRef(db);
 
   // Persist after migrations
-  await saveToIndexedDB(db.export())
+  await saveToIndexedDB(db.export());
 
   // Attach lifecycle listeners for automatic persistence
-  attachLifecycleListeners()
+  attachLifecycleListeners();
 
-  return db
+  return db;
 }
 
 /**
@@ -114,40 +109,38 @@ export async function initializeDatabase(): Promise<SqlDatabase> {
  * @returns New database instance
  * @throws {Error} If data is not a valid SQLite database file
  */
-export async function replaceDatabaseWithImported(
-  data: Uint8Array
-): Promise<SqlDatabase> {
+export async function replaceDatabaseWithImported(data: Uint8Array): Promise<SqlDatabase> {
   // Validate SQLite magic header: first 6 bytes must spell "SQLite"
-  const SQLITE_MAGIC = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65] as const
+  const SQLITE_MAGIC = [0x53, 0x51, 0x4c, 0x69, 0x74, 0x65] as const;
   if (data.length < 16 || !SQLITE_MAGIC.every((b, i) => data[i] === b)) {
-    throw new Error('Invalid file: not a SQLite database')
+    throw new Error('Invalid file: not a SQLite database');
   }
 
   // Load sql.js library
-  const SQL = await loadSqlJs()
+  const SQL = await loadSqlJs();
 
   // Create new database from imported data
-  const newDb = new SQL.Database(data)
+  const newDb = new SQL.Database(data);
 
   // Run migrations to ensure schema is up to date
   try {
-    runMigrations(newDb)
+    runMigrations(newDb);
   } catch (error) {
-    newDb.close()
-    throw error
+    newDb.close();
+    throw error;
   }
 
   // Persist first: if the save fails the caller keeps its current database,
   // so the persistence target must still be that one
   try {
-    await saveToIndexedDB(newDb.export())
+    await saveToIndexedDB(newDb.export());
   } catch (error) {
-    newDb.close()
-    throw error
+    newDb.close();
+    throw error;
   }
 
   // Update database reference for persistence
-  setDatabaseRef(newDb)
+  setDatabaseRef(newDb);
 
-  return newDb
+  return newDb;
 }

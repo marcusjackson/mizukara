@@ -15,19 +15,19 @@
  * in the first CAPPED_LIMIT.
  */
 
-import { queryResultToEntries } from '@/api/entries/entry-helpers'
+import { queryResultToEntries } from '@/api/entries/entry-helpers';
 
-import { addMonths } from '@/shared/utils/date-utils'
+import { addMonths } from '@/shared/utils/date-utils';
 
-import type { DayCount, SearchFilters } from './search-types'
-import type { Entry } from '@/shared/types/entry-types'
-import type { Database } from 'sql.js'
+import type { DayCount, SearchFilters } from './search-types';
+import type { Entry } from '@/shared/types/entry-types';
+import type { Database } from 'sql.js';
 
 /** How many matches the list view shows unless "Show all results" is on */
-export const CAPPED_LIMIT = 20
+export const CAPPED_LIMIT = 20;
 
 const ENTRY_COLUMNS = `e.id, e.content, e.created_at, e.updated_at,
-            e.assigned_day, e.order_position, e.is_deleted`
+            e.assigned_day, e.order_position, e.is_deleted`;
 
 /**
  * Search entries by free-text query and/or tag intersection
@@ -47,22 +47,22 @@ export function search(
   filters: SearchFilters,
   options: { capped: boolean }
 ): Entry[] {
-  const tagIds = [...new Set(filters.tagIds ?? [])]
-  const matchQuery = buildFtsMatchQuery(filters.query ?? '')
-  const hasTags = tagIds.length > 0
-  const limitClause = options.capped ? ` LIMIT ${String(CAPPED_LIMIT)}` : ''
+  const tagIds = [...new Set(filters.tagIds ?? [])];
+  const matchQuery = buildFtsMatchQuery(filters.query ?? '');
+  const hasTags = tagIds.length > 0;
+  const limitClause = options.capped ? ` LIMIT ${String(CAPPED_LIMIT)}` : '';
 
   if (matchQuery !== null) {
     return hasTags
       ? searchByTagsAndText(db, tagIds, matchQuery, limitClause)
-      : searchByText(db, matchQuery, limitClause)
+      : searchByText(db, matchQuery, limitClause);
   }
 
   if (hasTags) {
-    return searchByTags(db, tagIds, limitClause)
+    return searchByTags(db, tagIds, limitClause);
   }
 
-  return []
+  return [];
 }
 
 /**
@@ -91,19 +91,15 @@ function buildFtsMatchQuery(rawQuery: string): string | null {
     // A term with no letter/number content (e.g. "()", "--") can never match
     // porter-tokenized content anyway, so drop it rather than issue a query
     // for an empty phrase.
-    .filter((term) => /[\p{L}\p{N}]/u.test(term))
+    .filter((term) => /[\p{L}\p{N}]/u.test(term));
 
-  if (terms.length === 0) return null
+  if (terms.length === 0) return null;
 
-  return terms.map((term) => `"${term}"`).join(' ')
+  return terms.map((term) => `"${term}"`).join(' ');
 }
 
-function searchByTags(
-  db: Database,
-  tagIds: string[],
-  limitClause: string
-): Entry[] {
-  const placeholders = tagIds.map(() => '?').join(', ')
+function searchByTags(db: Database, tagIds: string[], limitClause: string): Entry[] {
+  const placeholders = tagIds.map(() => '?').join(', ');
 
   const result = db.exec(
     `SELECT ${ENTRY_COLUMNS}
@@ -115,17 +111,13 @@ function searchByTags(
      HAVING COUNT(DISTINCT et.tag_id) = ?
      ORDER BY e.assigned_day DESC, e.id ASC${limitClause}`,
     [...tagIds, tagIds.length]
-  )
+  );
 
-  if (!result[0]) return []
-  return queryResultToEntries(result[0])
+  if (!result[0]) return [];
+  return queryResultToEntries(result[0]);
 }
 
-function searchByText(
-  db: Database,
-  matchQuery: string,
-  limitClause: string
-): Entry[] {
+function searchByText(db: Database, matchQuery: string, limitClause: string): Entry[] {
   const result = db.exec(
     `SELECT ${ENTRY_COLUMNS}
      FROM entries e
@@ -135,10 +127,10 @@ function searchByText(
      GROUP BY e.id
      ORDER BY e.assigned_day DESC, e.id ASC${limitClause}`,
     [matchQuery]
-  )
+  );
 
-  if (!result[0]) return []
-  return queryResultToEntries(result[0])
+  if (!result[0]) return [];
+  return queryResultToEntries(result[0]);
 }
 
 function searchByTagsAndText(
@@ -147,7 +139,7 @@ function searchByTagsAndText(
   matchQuery: string,
   limitClause: string
 ): Entry[] {
-  const placeholders = tagIds.map(() => '?').join(', ')
+  const placeholders = tagIds.map(() => '?').join(', ');
 
   const result = db.exec(
     `SELECT ${ENTRY_COLUMNS}
@@ -161,10 +153,10 @@ function searchByTagsAndText(
      HAVING COUNT(DISTINCT et.tag_id) = ?
      ORDER BY e.assigned_day DESC, e.id ASC${limitClause}`,
     [...tagIds, matchQuery, tagIds.length]
-  )
+  );
 
-  if (!result[0]) return []
-  return queryResultToEntries(result[0])
+  if (!result[0]) return [];
+  return queryResultToEntries(result[0]);
 }
 
 /**
@@ -186,27 +178,23 @@ function searchByTagsAndText(
  * @returns Array of { assignedDay, count }, one entry per day with at least
  *   one match, ordered by assignedDay ascending
  */
-export function findDayCounts(
-  db: Database,
-  filters: SearchFilters,
-  month: string
-): DayCount[] {
-  const tagIds = [...new Set(filters.tagIds ?? [])]
-  const matchQuery = buildFtsMatchQuery(filters.query ?? '')
-  const hasTags = tagIds.length > 0
-  const { end, start } = getMonthBounds(month)
+export function findDayCounts(db: Database, filters: SearchFilters, month: string): DayCount[] {
+  const tagIds = [...new Set(filters.tagIds ?? [])];
+  const matchQuery = buildFtsMatchQuery(filters.query ?? '');
+  const hasTags = tagIds.length > 0;
+  const { end, start } = getMonthBounds(month);
 
   if (matchQuery !== null) {
     return hasTags
       ? dayCountsByTagsAndText(db, tagIds, matchQuery, start, end)
-      : dayCountsByText(db, matchQuery, start, end)
+      : dayCountsByText(db, matchQuery, start, end);
   }
 
   if (hasTags) {
-    return dayCountsByTags(db, tagIds, start, end)
+    return dayCountsByTags(db, tagIds, start, end);
   }
 
-  return dayCountsUnfiltered(db, start, end)
+  return dayCountsUnfiltered(db, start, end);
 }
 
 /**
@@ -214,26 +202,19 @@ export function findDayCounts(
  * `end` is the first day of the following month, for a half-open range.
  */
 function getMonthBounds(month: string): { start: string; end: string } {
-  return { start: `${month}-01`, end: `${addMonths(month, 1)}-01` }
+  return { start: `${month}-01`, end: `${addMonths(month, 1)}-01` };
 }
 
-function queryResultToDayCounts(
-  result: ReturnType<Database['exec']>
-): DayCount[] {
-  if (!result[0]) return []
+function queryResultToDayCounts(result: ReturnType<Database['exec']>): DayCount[] {
+  if (!result[0]) return [];
   return result[0].values.map((row) => ({
     assignedDay: row[0] as string,
-    count: row[1] as number
-  }))
+    count: row[1] as number,
+  }));
 }
 
-function dayCountsByTags(
-  db: Database,
-  tagIds: string[],
-  start: string,
-  end: string
-): DayCount[] {
-  const placeholders = tagIds.map(() => '?').join(', ')
+function dayCountsByTags(db: Database, tagIds: string[], start: string, end: string): DayCount[] {
+  const placeholders = tagIds.map(() => '?').join(', ');
 
   const result = db.exec(
     `SELECT assigned_day, COUNT(*) AS count FROM (
@@ -249,17 +230,12 @@ function dayCountsByTags(
      GROUP BY assigned_day
      ORDER BY assigned_day`,
     [...tagIds, start, end, tagIds.length]
-  )
+  );
 
-  return queryResultToDayCounts(result)
+  return queryResultToDayCounts(result);
 }
 
-function dayCountsByText(
-  db: Database,
-  matchQuery: string,
-  start: string,
-  end: string
-): DayCount[] {
+function dayCountsByText(db: Database, matchQuery: string, start: string, end: string): DayCount[] {
   const result = db.exec(
     `SELECT assigned_day, COUNT(*) AS count FROM (
        SELECT e.id, e.assigned_day
@@ -273,9 +249,9 @@ function dayCountsByText(
      GROUP BY assigned_day
      ORDER BY assigned_day`,
     [matchQuery, start, end]
-  )
+  );
 
-  return queryResultToDayCounts(result)
+  return queryResultToDayCounts(result);
 }
 
 function dayCountsByTagsAndText(
@@ -285,7 +261,7 @@ function dayCountsByTagsAndText(
   start: string,
   end: string
 ): DayCount[] {
-  const placeholders = tagIds.map(() => '?').join(', ')
+  const placeholders = tagIds.map(() => '?').join(', ');
 
   const result = db.exec(
     `SELECT assigned_day, COUNT(*) AS count FROM (
@@ -303,16 +279,12 @@ function dayCountsByTagsAndText(
      GROUP BY assigned_day
      ORDER BY assigned_day`,
     [...tagIds, matchQuery, start, end, tagIds.length]
-  )
+  );
 
-  return queryResultToDayCounts(result)
+  return queryResultToDayCounts(result);
 }
 
-function dayCountsUnfiltered(
-  db: Database,
-  start: string,
-  end: string
-): DayCount[] {
+function dayCountsUnfiltered(db: Database, start: string, end: string): DayCount[] {
   const result = db.exec(
     `SELECT assigned_day, COUNT(*) AS count
      FROM entries
@@ -321,7 +293,7 @@ function dayCountsUnfiltered(
      GROUP BY assigned_day
      ORDER BY assigned_day`,
     [start, end]
-  )
+  );
 
-  return queryResultToDayCounts(result)
+  return queryResultToDayCounts(result);
 }

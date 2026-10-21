@@ -5,44 +5,44 @@
  * inline tag creation via createAndAssignTag.
  */
 
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-import { flushPromises, mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import EntryDayViewEntryEditorTags from './EntryDayViewEntryEditorTags.vue'
+import EntryDayViewEntryEditorTags from './EntryDayViewEntryEditorTags.vue';
 
-import type { Tag, TagInputOption } from '@/shared/types/tag-types'
+import type { Tag, TagInputOption } from '@/shared/types/tag-types';
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockAssignTag = vi.fn().mockResolvedValue(undefined)
-const mockRemoveTag = vi.fn().mockResolvedValue(undefined)
-const mockCreateAndAssignTag = vi.fn()
+const mockAssignTag = vi.fn().mockResolvedValue(undefined);
+const mockRemoveTag = vi.fn().mockResolvedValue(undefined);
+const mockCreateAndAssignTag = vi.fn();
 
 vi.mock('@/modules/tags/composables/use-entry-tag-mutations', () => ({
   useEntryTagMutations: () => ({
     assignTag: mockAssignTag,
     removeTag: mockRemoveTag,
-    createAndAssignTag: mockCreateAndAssignTag
-  })
-}))
+    createAndAssignTag: mockCreateAndAssignTag,
+  }),
+}));
 
 const mockFindByEntryId = vi.hoisted(() =>
   vi.fn<(db: unknown, id: unknown) => Tag[]>().mockReturnValue([])
-)
+);
 
 vi.mock('@/api/entry-tags/entry-tag-queries', () => ({
-  findByEntryId: mockFindByEntryId
-}))
+  findByEntryId: mockFindByEntryId,
+}));
 
-const mockDb = ref<object | null>({ name: 'mock-db' })
+const mockDb = ref<object | null>({ name: 'mock-db' });
 
 vi.mock('@/shared/composables/use-database', () => ({
-  useDatabase: () => ({ database: mockDb })
-}))
+  useDatabase: () => ({ database: mockDb }),
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,8 +51,8 @@ vi.mock('@/shared/composables/use-database', () => ({
 const allTags: TagInputOption[] = [
   { value: 'tag-1', label: 'work' },
   { value: 'tag-2', label: 'personal' },
-  { value: 'tag-3', label: 'health' }
-]
+  { value: 'tag-3', label: 'health' },
+];
 
 /**
  * Stub for BaseTagInput that exposes buttons to trigger events.
@@ -69,14 +69,14 @@ const baseTagInputStub = {
     </div>
   `,
   props: ['options', 'label', 'placeholder', 'modelValue'],
-  emits: ['update:modelValue', 'create-tag']
-}
+  emits: ['update:modelValue', 'create-tag'],
+};
 
 function mountComponent(
   props?: Partial<{
-    entryId: string
-    allTags: TagInputOption[]
-    entryText: string
+    entryId: string;
+    allTags: TagInputOption[];
+    entryText: string;
   }>
 ) {
   return mount(EntryDayViewEntryEditorTags, {
@@ -84,17 +84,17 @@ function mountComponent(
       entryId: 'entry-id-1',
       allTags,
       entryText: 'A day of work',
-      ...props
+      ...props,
     },
     global: {
       stubs: {
         BaseTagInput: baseTagInputStub,
         EntryDayViewEntryEditorTagSuggestions: {
-          template: '<div data-testid="tag-suggestions" />'
-        }
-      }
-    }
-  })
+          template: '<div data-testid="tag-suggestions" />',
+        },
+      },
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -103,17 +103,17 @@ function mountComponent(
 
 describe('EntryDayViewEntryEditorTags', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockDb.value = { name: 'mock-db' }
-    mockFindByEntryId.mockReturnValue([])
-    mockCreateAndAssignTag.mockResolvedValue(null)
-  })
+    vi.clearAllMocks();
+    mockDb.value = { name: 'mock-db' };
+    mockFindByEntryId.mockReturnValue([]);
+    mockCreateAndAssignTag.mockResolvedValue(null);
+  });
 
   it('renders BaseTagInput', () => {
-    const wrapper = mountComponent()
+    const wrapper = mountComponent();
 
-    expect(wrapper.find('[data-testid="base-tag-input"]').exists()).toBe(true)
-  })
+    expect(wrapper.find('[data-testid="base-tag-input"]').exists()).toBe(true);
+  });
 
   it('loads current tags on mount', async () => {
     mockFindByEntryId.mockReturnValue([
@@ -122,15 +122,15 @@ describe('EntryDayViewEntryEditorTags', () => {
         name: 'work',
         createdAt: 0,
         updatedAt: 0,
-        isDeleted: false
-      }
-    ])
+        isDeleted: false,
+      },
+    ]);
 
-    mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    expect(mockFindByEntryId).toHaveBeenCalledWith(mockDb.value, 'entry-id-1')
-  })
+    expect(mockFindByEntryId).toHaveBeenCalledWith(mockDb.value, 'entry-id-1');
+  });
 
   it('calls assignTag for newly added tags', async () => {
     mockFindByEntryId.mockReturnValue([
@@ -139,19 +139,19 @@ describe('EntryDayViewEntryEditorTags', () => {
         name: 'work',
         createdAt: 0,
         updatedAt: 0,
-        isDeleted: false
-      }
-    ])
+        isDeleted: false,
+      },
+    ]);
 
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    await wrapper.find('[data-testid="emit-add-tag2"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-add-tag2"]').trigger('click');
+    await flushPromises();
 
-    expect(mockAssignTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
-    expect(mockRemoveTag).not.toHaveBeenCalled()
-  })
+    expect(mockAssignTag).toHaveBeenCalledWith('entry-id-1', 'tag-2');
+    expect(mockRemoveTag).not.toHaveBeenCalled();
+  });
 
   it('calls removeTag for deselected tags', async () => {
     mockFindByEntryId.mockReturnValue([
@@ -160,26 +160,26 @@ describe('EntryDayViewEntryEditorTags', () => {
         name: 'work',
         createdAt: 0,
         updatedAt: 0,
-        isDeleted: false
+        isDeleted: false,
       },
       {
         id: 'tag-2',
         name: 'personal',
         createdAt: 0,
         updatedAt: 0,
-        isDeleted: false
-      }
-    ])
+        isDeleted: false,
+      },
+    ]);
 
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    await wrapper.find('[data-testid="emit-remove-tag2"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-remove-tag2"]').trigger('click');
+    await flushPromises();
 
-    expect(mockRemoveTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
-    expect(mockAssignTag).not.toHaveBeenCalled()
-  })
+    expect(mockRemoveTag).toHaveBeenCalledWith('entry-id-1', 'tag-2');
+    expect(mockAssignTag).not.toHaveBeenCalled();
+  });
 
   it('applies overlapping selection changes in order, so a removal is not lost', async () => {
     mockFindByEntryId.mockReturnValue([
@@ -188,30 +188,30 @@ describe('EntryDayViewEntryEditorTags', () => {
         name: 'work',
         createdAt: 0,
         updatedAt: 0,
-        isDeleted: false
-      }
-    ])
+        isDeleted: false,
+      },
+    ]);
     let releaseAssign: () => void = () => {
-      throw new Error('assignTag was never called')
-    }
+      throw new Error('assignTag was never called');
+    };
     mockAssignTag.mockImplementationOnce(
       () =>
         new Promise<void>((resolve) => {
-          releaseAssign = resolve
+          releaseAssign = resolve;
         })
-    )
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    );
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
     // Add tag-2, and before that finishes, drop it again
-    await wrapper.find('[data-testid="emit-add-tag2"]').trigger('click')
-    await wrapper.find('[data-testid="emit-remove-tag2"]').trigger('click')
-    releaseAssign()
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-add-tag2"]').trigger('click');
+    await wrapper.find('[data-testid="emit-remove-tag2"]').trigger('click');
+    releaseAssign();
+    await flushPromises();
 
-    expect(mockAssignTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
-    expect(mockRemoveTag).toHaveBeenCalledWith('entry-id-1', 'tag-2')
-  })
+    expect(mockAssignTag).toHaveBeenCalledWith('entry-id-1', 'tag-2');
+    expect(mockRemoveTag).toHaveBeenCalledWith('entry-id-1', 'tag-2');
+  });
 
   it('calls createAndAssignTag on create-tag emit', async () => {
     const newTag = {
@@ -219,21 +219,18 @@ describe('EntryDayViewEntryEditorTags', () => {
       name: 'newlabel',
       createdAt: 0,
       updatedAt: 0,
-      isDeleted: false
-    }
-    mockCreateAndAssignTag.mockResolvedValue(newTag)
+      isDeleted: false,
+    };
+    mockCreateAndAssignTag.mockResolvedValue(newTag);
 
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    await wrapper.find('[data-testid="emit-create"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-create"]').trigger('click');
+    await flushPromises();
 
-    expect(mockCreateAndAssignTag).toHaveBeenCalledWith(
-      'entry-id-1',
-      'newlabel'
-    )
-  })
+    expect(mockCreateAndAssignTag).toHaveBeenCalledWith('entry-id-1', 'newlabel');
+  });
 
   it('adds new tag id to selectedTagIds after successful creation', async () => {
     const newTag = {
@@ -241,19 +238,19 @@ describe('EntryDayViewEntryEditorTags', () => {
       name: 'newlabel',
       createdAt: 0,
       updatedAt: 0,
-      isDeleted: false
-    }
-    mockCreateAndAssignTag.mockResolvedValue(newTag)
+      isDeleted: false,
+    };
+    mockCreateAndAssignTag.mockResolvedValue(newTag);
 
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    await wrapper.find('[data-testid="emit-create"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-create"]').trigger('click');
+    await flushPromises();
 
-    const tagInput = wrapper.findComponent({ name: 'BaseTagInput' })
-    expect(tagInput.props('modelValue')).toContain('tag-new')
-  })
+    const tagInput = wrapper.findComponent({ name: 'BaseTagInput' });
+    expect(tagInput.props('modelValue')).toContain('tag-new');
+  });
 
   it('adds newly created tag to options so chip renders immediately', async () => {
     const newTag = {
@@ -261,45 +258,43 @@ describe('EntryDayViewEntryEditorTags', () => {
       name: 'newlabel',
       createdAt: 0,
       updatedAt: 0,
-      isDeleted: false
-    }
-    mockCreateAndAssignTag.mockResolvedValue(newTag)
+      isDeleted: false,
+    };
+    mockCreateAndAssignTag.mockResolvedValue(newTag);
 
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    await wrapper.find('[data-testid="emit-create"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-create"]').trigger('click');
+    await flushPromises();
 
-    const tagInput = wrapper.findComponent({ name: 'BaseTagInput' })
+    const tagInput = wrapper.findComponent({ name: 'BaseTagInput' });
     const options = tagInput.props('options') as {
-      value: string
-      label: string
-    }[]
-    expect(
-      options.some((o) => o.value === 'tag-new' && o.label === 'newlabel')
-    ).toBe(true)
-  })
+      value: string;
+      label: string;
+    }[];
+    expect(options.some((o) => o.value === 'tag-new' && o.label === 'newlabel')).toBe(true);
+  });
 
   it('does not add chip when createAndAssignTag returns null', async () => {
-    mockCreateAndAssignTag.mockResolvedValue(null)
+    mockCreateAndAssignTag.mockResolvedValue(null);
 
-    const wrapper = mountComponent({ entryId: 'entry-id-1' })
-    await flushPromises()
+    const wrapper = mountComponent({ entryId: 'entry-id-1' });
+    await flushPromises();
 
-    await wrapper.find('[data-testid="emit-create"]').trigger('click')
-    await flushPromises()
+    await wrapper.find('[data-testid="emit-create"]').trigger('click');
+    await flushPromises();
 
     // selectedTagIds should remain empty
-    const tagInput = wrapper.findComponent({ name: 'BaseTagInput' })
-    expect(tagInput.props('modelValue')).toEqual([])
-  })
+    const tagInput = wrapper.findComponent({ name: 'BaseTagInput' });
+    expect(tagInput.props('modelValue')).toEqual([]);
+  });
 
   it('skips load when database is not initialized', () => {
-    mockDb.value = null
+    mockDb.value = null;
 
-    mountComponent()
+    mountComponent();
 
-    expect(mockFindByEntryId).not.toHaveBeenCalled()
-  })
-})
+    expect(mockFindByEntryId).not.toHaveBeenCalled();
+  });
+});

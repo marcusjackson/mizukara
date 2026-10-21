@@ -5,14 +5,14 @@
  * Handles assigning and removing tags from entries.
  */
 
-import { generateUUID } from '@/shared/utils/uuid-utils'
+import { generateUUID } from '@/shared/utils/uuid-utils';
 
-import { schedulePersist } from '@/db/indexeddb'
+import { schedulePersist } from '@/db/indexeddb';
 
-import { rowToEntryTag } from './entry-tag-row-mappers'
+import { rowToEntryTag } from './entry-tag-row-mappers';
 
-import type { AssignTagInput, EntryTag } from '@/shared/types/tag-types'
-import type { Database } from 'sql.js'
+import type { AssignTagInput, EntryTag } from '@/shared/types/tag-types';
+import type { Database } from 'sql.js';
 
 /**
  * Assign a tag to an entry (idempotent)
@@ -29,14 +29,14 @@ import type { Database } from 'sql.js'
  * const et = assignTag(db, { entryId: 'entry-uuid', tagId: 'tag-uuid' })
  */
 export function assignTag(db: Database, input: AssignTagInput): EntryTag {
-  db.run('BEGIN TRANSACTION')
+  db.run('BEGIN TRANSACTION');
   try {
-    const entryTag = assignTagWrites(db, input)
-    db.run('COMMIT')
-    return entryTag
+    const entryTag = assignTagWrites(db, input);
+    db.run('COMMIT');
+    return entryTag;
   } catch (error) {
-    db.run('ROLLBACK')
-    throw error
+    db.run('ROLLBACK');
+    throw error;
   }
 }
 
@@ -44,8 +44,8 @@ export function assignTag(db: Database, input: AssignTagInput): EntryTag {
  * The reads and writes behind assignTag, run inside its transaction
  */
 function assignTagWrites(db: Database, input: AssignTagInput): EntryTag {
-  const { entryId, tagId } = input
-  const now = Date.now()
+  const { entryId, tagId } = input;
+  const now = Date.now();
 
   // Check for an existing soft-deleted association to reactivate
   const existing = db.exec(
@@ -53,19 +53,16 @@ function assignTagWrites(db: Database, input: AssignTagInput): EntryTag {
      WHERE entry_id = ? AND tag_id = ? AND is_deleted = 1
      LIMIT 1`,
     [entryId, tagId]
-  )
+  );
 
   if (existing[0]?.values[0]) {
-    const existingId = existing[0].values[0][0] as string
+    const existingId = existing[0].values[0][0] as string;
 
-    db.run(
-      `UPDATE entry_tags SET is_deleted = 0, updated_at = ? WHERE id = ?`,
-      [now, existingId]
-    )
+    db.run(`UPDATE entry_tags SET is_deleted = 0, updated_at = ? WHERE id = ?`, [now, existingId]);
 
-    schedulePersist()
+    schedulePersist();
 
-    return fetchEntryTagById(db, existingId)
+    return fetchEntryTagById(db, existingId);
   }
 
   // Also check for an active (non-deleted) association — idempotent no-op
@@ -74,25 +71,25 @@ function assignTagWrites(db: Database, input: AssignTagInput): EntryTag {
      WHERE entry_id = ? AND tag_id = ? AND is_deleted = 0
      LIMIT 1`,
     [entryId, tagId]
-  )
+  );
 
   if (active[0]?.values[0]) {
-    const activeId = active[0].values[0][0] as string
-    return fetchEntryTagById(db, activeId)
+    const activeId = active[0].values[0][0] as string;
+    return fetchEntryTagById(db, activeId);
   }
 
   // Insert new association
-  const id = generateUUID()
+  const id = generateUUID();
 
   db.run(
     `INSERT INTO entry_tags (id, entry_id, tag_id, created_at, updated_at, is_deleted)
      VALUES (?, ?, ?, ?, ?, 0)`,
     [id, entryId, tagId, now, now]
-  )
+  );
 
-  schedulePersist()
+  schedulePersist();
 
-  return fetchEntryTagById(db, id)
+  return fetchEntryTagById(db, id);
 }
 
 /**
@@ -106,16 +103,16 @@ function assignTagWrites(db: Database, input: AssignTagInput): EntryTag {
  * @param tagId - Tag UUID
  */
 export function removeTag(db: Database, entryId: string, tagId: string): void {
-  const now = Date.now()
+  const now = Date.now();
 
   db.run(
     `UPDATE entry_tags
      SET is_deleted = 1, updated_at = ?
      WHERE entry_id = ? AND tag_id = ? AND is_deleted = 0`,
     [now, entryId, tagId]
-  )
+  );
 
-  schedulePersist()
+  schedulePersist();
 }
 
 /**
@@ -128,16 +125,16 @@ export function removeTag(db: Database, entryId: string, tagId: string): void {
  * @param tagId - Tag UUID whose associations should be soft-deleted
  */
 export function softDeleteByTagId(db: Database, tagId: string): void {
-  const now = Date.now()
+  const now = Date.now();
 
   db.run(
     `UPDATE entry_tags
      SET is_deleted = 1, updated_at = ?
      WHERE tag_id = ? AND is_deleted = 0`,
     [now, tagId]
-  )
+  );
 
-  schedulePersist()
+  schedulePersist();
 }
 
 /**
@@ -150,10 +147,10 @@ function fetchEntryTagById(db: Database, id: string): EntryTag {
   const result = db.exec(
     'SELECT id, entry_id, tag_id, created_at, updated_at, is_deleted FROM entry_tags WHERE id = ?',
     [id]
-  )
-  const row = result[0]?.values[0]
+  );
+  const row = result[0]?.values[0];
   if (!row) {
-    throw new Error(`entry_tags row not found: ${id}`)
+    throw new Error(`entry_tags row not found: ${id}`);
   }
-  return rowToEntryTag(row)
+  return rowToEntryTag(row);
 }

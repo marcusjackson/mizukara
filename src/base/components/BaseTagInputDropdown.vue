@@ -41,15 +41,9 @@ const CREATE_TAG_SENTINEL = '__create_new__' as const
 
 <template>
   <ComboboxPortal>
-    <ComboboxContent
-      class="base-tag-input-content"
-      position="popper"
-      :side-offset="4"
-    >
+    <ComboboxContent class="base-tag-input-content" position="popper" :side-offset="4">
       <ComboboxViewport class="base-tag-input-viewport">
-        <ComboboxEmpty class="base-tag-input-empty">
-          No results found
-        </ComboboxEmpty>
+        <ComboboxEmpty class="base-tag-input-empty"> No results found </ComboboxEmpty>
 
         <ComboboxItem
           v-for="option in props.filteredOptions"

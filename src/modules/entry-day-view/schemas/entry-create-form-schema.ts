@@ -22,20 +22,17 @@
  * ```
  */
 
-import { z } from 'zod'
+import { z } from 'zod';
 
-import { CONTENT_VALIDATION } from './validation-constants'
+import { CONTENT_VALIDATION } from './validation-constants';
 
 export const entryCreateFormSchema = z.object({
   content: z
     .string()
     .min(CONTENT_VALIDATION.MIN_LENGTH, CONTENT_VALIDATION.messages.required)
     .max(CONTENT_VALIDATION.MAX_LENGTH, CONTENT_VALIDATION.messages.maxLength)
-    .refine(
-      (value) => value.trim().length > 0,
-      CONTENT_VALIDATION.messages.required
-    )
-})
+    .refine((value) => value.trim().length > 0, CONTENT_VALIDATION.messages.required),
+});
 
 // Export inferred type
-export type EntryCreateFormData = z.infer<typeof entryCreateFormSchema>
+export type EntryCreateFormData = z.infer<typeof entryCreateFormSchema>;

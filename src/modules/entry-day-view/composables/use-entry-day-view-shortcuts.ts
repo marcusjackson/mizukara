@@ -6,15 +6,15 @@
  *
  * @param handlers - Object containing handler callbacks for each shortcut
  */
-import { useKeyboardShortcuts } from '@/shared/composables/use-keyboard-shortcuts'
+import { useKeyboardShortcuts } from '@/shared/composables/use-keyboard-shortcuts';
 
 interface ShortcutHandlers {
-  focusCreateForm: () => void
-  goToNextDay: () => void
-  goToPrevDay: () => void
-  handleOpenDatePicker: () => void
-  handleSave: () => void
-  handleEscape: () => void
+  focusCreateForm: () => void;
+  goToNextDay: () => void;
+  goToPrevDay: () => void;
+  handleOpenDatePicker: () => void;
+  handleSave: () => void;
+  handleEscape: () => void;
 }
 
 export function useEntryDayViewShortcuts(handlers: ShortcutHandlers) {
@@ -26,6 +26,6 @@ export function useEntryDayViewShortcuts(handlers: ShortcutHandlers) {
     { key: 'arrowup', handler: handlers.goToPrevDay, preventDefault: true },
     { key: 'g', handler: handlers.handleOpenDatePicker, preventDefault: true },
     { key: 'cmd+s', handler: handlers.handleSave, preventDefault: true },
-    { key: 'escape', handler: handlers.handleEscape, preventDefault: false }
-  ])
+    { key: 'escape', handler: handlers.handleEscape, preventDefault: false },
+  ]);
 }

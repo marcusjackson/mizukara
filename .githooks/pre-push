@@ -12,6 +12,35 @@ done
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
+# Hand edits inside a machine-written fleet region: each begin marker records the hash of its body, so a body that
+# no longer matches was edited by hand. The patterns are built in pieces so this file never matches itself.
+fleet_marker='fleet''-begin'
+fleet_marker=$(printf '%s' "$fleet_marker" | tr '-' ':')
+fleet_bad=
+fleet_tmp=$(mktemp -d "${TMPDIR:-/tmp}/fleet-regions.XXXXXX")
+for f in $(git grep -l -e "$fleet_marker .* sha=" -- . 2>/dev/null); do
+  awk -v m="$fleet_marker" -v dir="$fleet_tmp" '
+    index($0, m " ") && match($0, /sha=[0-9a-f]+/) { id = $0; sub(".*" m " ", "", id); sub(" .*", "", id)
+      sha = substr($0, RSTART + 4, RLENGTH - 4); n++; out = dir "/" n; first = 1; printf "%s\n%s\n", id, sha > (out ".meta"); next }
+    out != "" && /fleet:end / { close(out); close(out ".meta"); out = ""; next }
+    out != "" { printf "%s%s", (first ? "" : "\n"), $0 > out; first = 0 }
+  ' "$f"
+  for meta in "$fleet_tmp"/*.meta; do
+    [ -e "$meta" ] || continue
+    body=${meta%.meta}; id=$(sed -n 1p "$meta"); want=$(sed -n 2p "$meta")
+    [ -e "$body" ] || : > "$body"
+    got=$( (shasum -a 256 "$body" 2>/dev/null || sha256sum "$body") | cut -c1-10)
+    [ "$got" = "$want" ] || fleet_bad="$fleet_bad  $f [$id]\n"
+    rm -f "$meta" "$body"
+  done
+done
+rm -rf "$fleet_tmp"
+if [ -n "$fleet_bad" ]; then
+  printf 'pre-push: machine-written fleet regions were edited by hand:\n%b' "$fleet_bad" >&2
+  echo "pre-push: move the change into its source in the tooling repo (dev/fleet/sync/blocks), or bypass once with --no-verify." >&2
+  exit 1
+fi
+
 # A fresh worktree has no dependencies; failing the push on that would only teach people to bypass.
 if [ ! -e node_modules ]; then
   echo "pre-push: no node_modules here, gate skipped. Link or install them to run it." >&2
@@ -22,6 +51,20 @@ fi
 if make -n pre-push >/dev/null 2>&1; then gate=pre-push
 elif make -n ci >/dev/null 2>&1; then gate=ci
 else gate=check; fi
+# Parallel sessions would each run a gate at once, and on a 16 GB machine that tripled the time (255s alone, 779s
+# beside another gate). Queue behind any gate already running; a lock whose owner died is taken over.
+lock=${TMPDIR:-/tmp}/pre-push-gate.lock
+until mkdir "$lock" 2>/dev/null; do
+  owner=$(cat "$lock/pid" 2>/dev/null)
+  # No pid yet means the owner is between mkdir and writing it; give it a moment, then call the lock stale.
+  [ -n "$owner" ] || { sleep 2; owner=$(cat "$lock/pid" 2>/dev/null); }
+  if [ -z "$owner" ] || ! kill -0 "$owner" 2>/dev/null; then rm -rf "$lock"; continue; fi
+  echo "pre-push: another push gate is running (pid ${owner:-?}); waiting" >&2
+  sleep 10
+done
+echo $$ >"$lock/pid"
+trap 'rm -rf "$lock"' EXIT
+trap 'exit 1' INT TERM
 log=$(mktemp "${TMPDIR:-/tmp}/pre-push-gate.XXXXXX")
 echo "pre-push: make $gate (log: $log)" >&2
 if make "$gate" >"$log" 2>&1; then

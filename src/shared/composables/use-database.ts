@@ -15,24 +15,24 @@
  * - This ensures data survives Android PWA session kills
  */
 
-import { markRaw, readonly, ref, shallowRef } from 'vue'
+import { markRaw, readonly, ref, shallowRef } from 'vue';
 
-import { saveToIndexedDB, schedulePersist } from '@/db/indexeddb'
-import { initializeDatabase, replaceDatabaseWithImported } from '@/db/init'
+import { saveToIndexedDB, schedulePersist } from '@/db/indexeddb';
+import { initializeDatabase, replaceDatabaseWithImported } from '@/db/init';
 
-import type { BindParams, Database } from 'sql.js'
-import type { DeepReadonly, Ref, ShallowRef } from 'vue'
+import type { BindParams, Database } from 'sql.js';
+import type { DeepReadonly, Ref, ShallowRef } from 'vue';
 
 // =============================================================================
 // Singleton State
 // =============================================================================
 
-const database = shallowRef<Database | null>(null)
-const isInitialized = ref(false)
-const isInitializing = ref(false)
-const initError = ref<Error | null>(null)
+const database = shallowRef<Database | null>(null);
+const isInitialized = ref(false);
+const isInitializing = ref(false);
+const initError = ref<Error | null>(null);
 
-let initPromise: Promise<void> | null = null
+let initPromise: Promise<void> | null = null;
 
 // =============================================================================
 // Composable Interface
@@ -40,23 +40,23 @@ let initPromise: Promise<void> | null = null
 
 export interface UseDatabase {
   /** The sql.js database instance. Null until initialized. */
-  database: DeepReadonly<ShallowRef<Database | null>>
+  database: DeepReadonly<ShallowRef<Database | null>>;
   /** Whether the database has been initialized */
-  isInitialized: DeepReadonly<Ref<boolean>>
+  isInitialized: DeepReadonly<Ref<boolean>>;
   /** Whether initialization is in progress */
-  isInitializing: DeepReadonly<Ref<boolean>>
+  isInitializing: DeepReadonly<Ref<boolean>>;
   /** Error that occurred during initialization, if any */
-  initError: DeepReadonly<Ref<Error | null>>
+  initError: DeepReadonly<Ref<Error | null>>;
   /** Initialize the database. Safe to call multiple times. */
-  initialize: () => Promise<void>
+  initialize: () => Promise<void>;
   /** Persist current database state to IndexedDB */
-  persist: () => Promise<void>
+  persist: () => Promise<void>;
   /** Execute a SQL query and return results */
-  exec: (sql: string, params?: BindParams) => ReturnType<Database['exec']>
+  exec: (sql: string, params?: BindParams) => ReturnType<Database['exec']>;
   /** Execute a SQL statement (no results) */
-  run: (sql: string, params?: BindParams) => void
+  run: (sql: string, params?: BindParams) => void;
   /** Replace the current database with imported data */
-  replaceDatabase: (data: Uint8Array) => Promise<void>
+  replaceDatabase: (data: Uint8Array) => Promise<void>;
 }
 
 // =============================================================================
@@ -65,62 +65,62 @@ export interface UseDatabase {
 
 async function initialize(): Promise<void> {
   if (isInitialized.value) {
-    return
+    return;
   }
 
   if (initPromise) {
-    return initPromise
+    return initPromise;
   }
 
-  isInitializing.value = true
-  initError.value = null
+  isInitializing.value = true;
+  initError.value = null;
 
   initPromise = (async () => {
     try {
-      database.value = markRaw(await initializeDatabase())
-      isInitialized.value = true
+      database.value = markRaw(await initializeDatabase());
+      isInitialized.value = true;
     } catch (err) {
-      initError.value = err instanceof Error ? err : new Error(String(err))
-      throw initError.value
+      initError.value = err instanceof Error ? err : new Error(String(err));
+      throw initError.value;
     } finally {
-      isInitializing.value = false
+      isInitializing.value = false;
     }
-  })()
+  })();
 
-  return initPromise
+  return initPromise;
 }
 
 async function persist(): Promise<void> {
   if (!database.value) {
-    throw new Error('Database not initialized')
+    throw new Error('Database not initialized');
   }
-  await saveToIndexedDB(database.value.export())
+  await saveToIndexedDB(database.value.export());
 }
 
 function exec(sql: string, params?: BindParams): ReturnType<Database['exec']> {
   if (!database.value) {
-    throw new Error('Database not initialized')
+    throw new Error('Database not initialized');
   }
-  return database.value.exec(sql, params ?? null)
+  return database.value.exec(sql, params ?? null);
 }
 
 function run(sql: string, params?: BindParams): void {
   if (!database.value) {
-    throw new Error('Database not initialized')
+    throw new Error('Database not initialized');
   }
-  database.value.run(sql, params ?? null)
+  database.value.run(sql, params ?? null);
   // Auto-persist to IndexedDB after write operations (debounced)
   // This groups rapid writes into a single save operation
-  schedulePersist()
+  schedulePersist();
 }
 
 async function replaceDatabase(data: Uint8Array): Promise<void> {
   // Keep the current database open until the import has loaded and migrated,
   // so a refused or failed import leaves it usable
-  const previous = database.value
-  database.value = markRaw(await replaceDatabaseWithImported(data))
-  previous?.close()
-  isInitialized.value = true
+  const previous = database.value;
+  database.value = markRaw(await replaceDatabaseWithImported(data));
+  previous?.close();
+  isInitialized.value = true;
 }
 
 // =============================================================================
@@ -150,6 +150,6 @@ export function useDatabase(): UseDatabase {
     persist,
     exec,
     run,
-    replaceDatabase
-  }
+    replaceDatabase,
+  };
 }

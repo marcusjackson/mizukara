@@ -13,6 +13,8 @@
  * - Empty state when no entries
  *
  * Exposed Methods:
+ * - handleGlobalSave() / handleGlobalEscape() - Context-aware save and cancel/clear,
+ *   used by the Root component's Cmd/Ctrl+S and Escape shortcuts.
  * - focusCreateForm() - Programmatically focus the create form textarea.
  *   Used by parent Root component for keyboard shortcuts (Cmd/Ctrl+N).
  *
@@ -112,6 +114,12 @@ const handleReorderToggle = () => {
   editingItemId.value = null
 }
 
+// Cancelling can follow tag changes that were saved immediately, so refresh card chips and tag options
+const handleEditCancelled = () => {
+  editingItemId.value = null
+  emit('refetch')
+}
+
 const handleSaveRequested = async (
   entryId: string,
   data: { content: string; assignedDay: string }
@@ -123,7 +131,7 @@ const handleSaveRequested = async (
 /**
  * Focus the create form textarea
  *
- * Exposed for parent component keyboard shortcuts (Cmd/Ctrl+K).
+ * Exposed for parent component keyboard shortcuts (Cmd/Ctrl+N).
  * Safe to call at any time - no side effects if form is not rendered.
  */
 const focusCreateForm = () => {
@@ -173,10 +181,7 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
 </script>
 
 <template>
-  <section
-    aria-label="Entry list"
-    class="entry-day-view-section-list"
-  >
+  <section aria-label="Entry list" class="entry-day-view-section-list">
     <!-- Create form always visible at top -->
     <EntryDayViewCreateForm
       ref="createFormRef"
@@ -197,31 +202,20 @@ defineExpose({ focusCreateForm, handleGlobalSave, handleGlobalEscape })
     />
 
     <!-- Empty state when no entries -->
-    <div
-      v-if="items.length === 0"
-      class="empty-state"
-      data-testid="empty-state"
-    >
+    <div v-if="items.length === 0" class="empty-state" data-testid="empty-state">
       No entries yet. Start writing to capture this day's memories.
     </div>
 
     <!-- Entry list (view/edit mode) -->
-    <div
-      v-else-if="!isReorderMode"
-      class="entry-list"
-      data-testid="entry-list"
-    >
-      <template
-        v-for="item in items"
-        :key="item.id"
-      >
+    <div v-else-if="!isReorderMode" class="entry-list" data-testid="entry-list">
+      <template v-for="item in items" :key="item.id">
         <!-- Edit mode: show editor -->
         <EntryDayViewEntryEditor
           v-if="editingItemId === item.id"
           ref="currentEditorRef"
           :all-tags="allTags ?? []"
           :entry="item"
-          @edit-cancelled="editingItemId = null"
+          @edit-cancelled="handleEditCancelled"
           @save-requested="(data) => handleSaveRequested(item.id, data)"
         />
 

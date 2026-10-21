@@ -74,14 +74,7 @@
     "pets",
     "decluttering"
   ],
-  "Getting around and outdoors": [
-    "car",
-    "commute",
-    "travel",
-    "outdoors",
-    "hiking",
-    "weather"
-  ],
+  "Getting around and outdoors": ["car", "commute", "travel", "outdoors", "hiking", "weather"],
   "Leisure and culture": [
     "music",
     "movies",

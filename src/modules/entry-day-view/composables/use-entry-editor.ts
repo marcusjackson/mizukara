@@ -1,37 +1,34 @@
-import { toTypedSchema } from '@vee-validate/zod'
-import { useField, useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod';
+import { useField, useForm } from 'vee-validate';
 
-import {
-  type EntryEditorFormData,
-  entryEditorSchema
-} from '../schemas/entry-editor-schema'
+import { type EntryEditorFormData, entryEditorSchema } from '../schemas/entry-editor-schema';
 
-import type { Entry } from '@/shared/types/entry-types'
-import type { FormMeta } from 'vee-validate'
-import type { ComputedRef, Ref } from 'vue'
+import type { Entry } from '@/shared/types/entry-types';
+import type { FormMeta } from 'vee-validate';
+import type { ComputedRef, Ref } from 'vue';
 
 /**
  * Return type for useEntryEditor composable
  */
 export interface UseEntryEditorReturn {
   /** Content field error message */
-  contentError: Ref<string | undefined>
+  contentError: Ref<string | undefined>;
   /** Content field value */
-  contentValue: Ref<string>
+  contentValue: Ref<string>;
   /** Assigned day field error message */
-  assignedDayError: Ref<string | undefined>
+  assignedDayError: Ref<string | undefined>;
   /** Assigned day field value */
-  assignedDayValue: Ref<string>
+  assignedDayValue: Ref<string>;
   /** Form metadata for dirty/valid state */
-  meta: ComputedRef<FormMeta<EntryEditorFormData>>
+  meta: ComputedRef<FormMeta<EntryEditorFormData>>;
   /** Handle browser beforeunload event to warn about unsaved changes */
-  handleBeforeUnload: (event: BeforeUnloadEvent) => void
+  handleBeforeUnload: (event: BeforeUnloadEvent) => void;
   /** Handle global document keyboard events (Escape to cancel, Cmd+S to save) */
-  handleKeyDown: (event: KeyboardEvent) => void
+  handleKeyDown: (event: KeyboardEvent) => void;
   /** Update the assigned day value programmatically */
-  updateAssignedDay: (value: string) => void
+  updateAssignedDay: (value: string) => void;
   /** Validate the form, then save; field errors show and nothing is saved if invalid */
-  validatedSave: (e?: Event) => Promise<void>
+  validatedSave: (e?: Event) => Promise<void>;
 }
 
 /**
@@ -59,28 +56,27 @@ export function useEntryEditor(
   onSave?: () => void
 ): UseEntryEditorReturn {
   // Form setup
-  const schema = toTypedSchema(entryEditorSchema)
+  const schema = toTypedSchema(entryEditorSchema);
 
   const { handleSubmit, meta, setFieldValue } = useForm<EntryEditorFormData>({
     validationSchema: schema,
-    initialValues: { content: entry.content, assignedDay: entry.assignedDay }
-  })
+    initialValues: { content: entry.content, assignedDay: entry.assignedDay },
+  });
 
   // Field setup
-  const { errorMessage: contentError, value: contentValue } =
-    useField<string>('content')
+  const { errorMessage: contentError, value: contentValue } = useField<string>('content');
   const { errorMessage: assignedDayError, value: assignedDayValue } =
-    useField<string>('assignedDay')
+    useField<string>('assignedDay');
 
   const validatedSave = handleSubmit(() => {
-    onSave?.()
-  })
+    onSave?.();
+  });
 
   const { handleBeforeUnload, handleKeyDown } = createEditorEventHandlers(
     meta,
     validatedSave,
     onCancel
-  )
+  );
 
   /**
    * The date input is bound explicitly (`:value` + `@input`/`@change`) rather than with `v-model`.
@@ -91,8 +87,8 @@ export function useEntryEditor(
    * stale-value bug that only the e2e suite catches.
    */
   const updateAssignedDay = (value: string) => {
-    setFieldValue('assignedDay', value)
-  }
+    setFieldValue('assignedDay', value);
+  };
 
   return {
     contentError,
@@ -103,8 +99,8 @@ export function useEntryEditor(
     handleBeforeUnload,
     handleKeyDown,
     updateAssignedDay,
-    validatedSave
-  }
+    validatedSave,
+  };
 }
 
 function createEditorEventHandlers(
@@ -114,20 +110,20 @@ function createEditorEventHandlers(
 ): Pick<UseEntryEditorReturn, 'handleBeforeUnload' | 'handleKeyDown'> {
   const handleBeforeUnload = (event: BeforeUnloadEvent) => {
     if (meta.value.dirty) {
-      event.preventDefault()
+      event.preventDefault();
     }
-  }
+  };
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
-      onCancel?.()
+      onCancel?.();
     }
-    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
-      event.preventDefault()
-      event.stopPropagation()
-      void validatedSave()
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      event.stopPropagation();
+      void validatedSave();
     }
-  }
+  };
 
-  return { handleBeforeUnload, handleKeyDown }
+  return { handleBeforeUnload, handleKeyDown };
 }

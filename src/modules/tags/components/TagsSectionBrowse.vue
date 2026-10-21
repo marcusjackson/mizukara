@@ -34,10 +34,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section
-    aria-label="Tags"
-    class="tags-section-browse"
-  >
+  <section aria-label="Tags" class="tags-section-browse">
     <h2 class="tags-section-browse__title">Tags</h2>
 
     <p
@@ -48,10 +45,7 @@ const emit = defineEmits<{
       No tags yet
     </p>
 
-    <ul
-      v-else
-      class="tags-section-browse__list"
-    >
+    <ul v-else class="tags-section-browse__list">
       <TagsSectionBrowseRow
         v-for="tag in props.tags"
         :key="tag.id"

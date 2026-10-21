@@ -8,7 +8,7 @@
  * must exist are a worker and WebAssembly; the graphics chip is irrelevant.
  */
 
-import type { LocalInferenceUnsupportedReason } from '../local-inference-types'
+import type { LocalInferenceUnsupportedReason } from '../local-inference-types';
 
 /**
  * Ask the browser whether it can run local inference.
@@ -19,25 +19,20 @@ import type { LocalInferenceUnsupportedReason } from '../local-inference-types'
  * @returns Why it cannot, or null when it can.
  */
 export function probeInferenceSupport(): LocalInferenceUnsupportedReason | null {
-  const scope = globalThis as unknown as Record<string, unknown>
+  const scope = globalThis as unknown as Record<string, unknown>;
 
   if (typeof scope['Worker'] !== 'function') {
-    return 'no-worker'
+    return 'no-worker';
   }
-  if (
-    typeof scope['WebAssembly'] !== 'object' ||
-    scope['WebAssembly'] === null
-  ) {
-    return 'no-webassembly'
+  if (typeof scope['WebAssembly'] !== 'object' || scope['WebAssembly'] === null) {
+    return 'no-webassembly';
   }
-  return null
+  return null;
 }
 
 /** A sentence a person can act on, for each way the check can fail. */
-export function describeUnsupportedReason(
-  reason: LocalInferenceUnsupportedReason
-): string {
+export function describeUnsupportedReason(reason: LocalInferenceUnsupportedReason): string {
   return reason === 'no-worker'
     ? 'This browser cannot run background workers, which suggesting tags with a local model requires.'
-    : 'This browser has WebAssembly switched off or unsupported, which suggesting tags with a local model requires.'
+    : 'This browser has WebAssembly switched off or unsupported, which suggesting tags with a local model requires.';
 }

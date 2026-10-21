@@ -34,26 +34,10 @@ function handleRetry(): void {
 
 <template>
   <div class="shared-device-sync-qr-scanner">
-    <video
-      ref="videoRef"
-      autoplay
-      class="shared-device-sync-qr-scanner-video"
-      muted
-      playsinline
-    />
-    <p
-      v-if="scanner.error.value"
-      class="shared-device-sync-qr-scanner-error"
-      role="alert"
-    >
+    <video ref="videoRef" autoplay class="shared-device-sync-qr-scanner-video" muted playsinline />
+    <p v-if="scanner.error.value" class="shared-device-sync-qr-scanner-error" role="alert">
       {{ scanner.error.value }}
-      <BaseButton
-        size="sm"
-        variant="secondary"
-        @click="handleRetry"
-      >
-        Try again
-      </BaseButton>
+      <BaseButton size="sm" variant="secondary" @click="handleRetry"> Try again </BaseButton>
     </p>
   </div>
 </template>

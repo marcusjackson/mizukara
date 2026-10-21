@@ -1,18 +1,18 @@
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue';
 
 export interface KeyboardShortcut {
   /** Key combination (e.g., "cmd+n", "k", "escape") */
-  key: string
+  key: string;
   /** Callback function */
-  handler: (event: KeyboardEvent) => void
+  handler: (event: KeyboardEvent) => void;
   /** Prevent default browser behavior */
-  preventDefault?: boolean
+  preventDefault?: boolean;
 }
 
 /** Keys that should only trigger when no input is focused */
-const NAVIGATION_KEYS = ['j', 'k', 'arrowup', 'arrowdown'] as const
+const NAVIGATION_KEYS = ['j', 'k', 'arrowup', 'arrowdown'] as const;
 
-type NavigationKey = (typeof NAVIGATION_KEYS)[number]
+type NavigationKey = (typeof NAVIGATION_KEYS)[number];
 
 /**
  * Key aliases for Vim-style navigation
@@ -21,8 +21,8 @@ type NavigationKey = (typeof NAVIGATION_KEYS)[number]
  */
 const KEY_ALIASES = new Map<string, string>([
   ['k', 'arrowup'],
-  ['j', 'arrowdown']
-])
+  ['j', 'arrowdown'],
+]);
 
 /**
  * Register global keyboard shortcuts with context-aware behavior
@@ -52,22 +52,22 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]): void {
         // Check context awareness
         if (shouldTriggerShortcut(shortcut.key)) {
           if (shortcut.preventDefault !== false) {
-            event.preventDefault()
+            event.preventDefault();
           }
-          shortcut.handler(event)
+          shortcut.handler(event);
         }
-        break
+        break;
       }
     }
-  }
+  };
 
   onMounted(() => {
-    document.addEventListener('keydown', handleKeydown)
-  })
+    document.addEventListener('keydown', handleKeydown);
+  });
 
   onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeydown)
-  })
+    document.removeEventListener('keydown', handleKeydown);
+  });
 }
 
 /**
@@ -80,73 +80,71 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]): void {
  * Uses KEY_ALIASES for Vim-style navigation (J/K → Arrow keys)
  */
 function matchesShortcut(event: KeyboardEvent, keyCombo: string): boolean {
-  const normalizedKeyCombo = keyCombo.toLowerCase()
-  const parts = normalizedKeyCombo.split('+')
-  const key = parts.at(-1) ?? ''
-  const modifiers = new Set(parts.slice(0, -1))
+  const normalizedKeyCombo = keyCombo.toLowerCase();
+  const parts = normalizedKeyCombo.split('+');
+  const key = parts.at(-1) ?? '';
+  const modifiers = new Set(parts.slice(0, -1));
 
-  const eventKey = event.key.toLowerCase()
-  const eventCode = event.code.toLowerCase()
+  const eventKey = event.key.toLowerCase();
+  const eventCode = event.code.toLowerCase();
 
   // Check key match with aliases
-  const aliasedKey = KEY_ALIASES.get(key) ?? key
-  const keyMatches =
-    eventKey === key || eventKey === aliasedKey || eventCode === 'key' + key
+  const aliasedKey = KEY_ALIASES.get(key) ?? key;
+  const keyMatches = eventKey === key || eventKey === aliasedKey || eventCode === 'key' + key;
 
-  if (!keyMatches) return false
+  if (!keyMatches) return false;
 
   // Platform-aware modifier checking
-  const hasCmd = modifiers.has('cmd')
-  const hasCtrl = modifiers.has('ctrl')
+  const hasCmd = modifiers.has('cmd');
+  const hasCtrl = modifiers.has('ctrl');
 
   if (hasCmd) {
     // 'cmd' means metaKey on Mac, ctrlKey on Windows/Linux
-    const isMac =
-      typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac')
-    return (isMac ? event.metaKey : event.ctrlKey) && !event.altKey
+    const isMac = typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac');
+    return (isMac ? event.metaKey : event.ctrlKey) && !event.altKey;
   }
 
   if (hasCtrl) {
     // 'ctrl' always means ctrlKey on all platforms
-    return event.ctrlKey && !event.altKey
+    return event.ctrlKey && !event.altKey;
   }
 
   // A combo with no modifier must not fire for a keystroke that carries one:
   // Ctrl+K or Cmd+K belongs to the browser or the OS. Shift is left alone
   // because a key like '?' is only reachable with it.
-  return !event.ctrlKey && !event.metaKey && !event.altKey
+  return !event.ctrlKey && !event.metaKey && !event.altKey;
 }
 
 /**
  * Check if element is an input field (input or textarea)
  */
 function isInputElement(element: Element | null): boolean {
-  return element?.tagName === 'INPUT' || element?.tagName === 'TEXTAREA'
+  return element?.tagName === 'INPUT' || element?.tagName === 'TEXTAREA';
 }
 
 /**
  * Determine if shortcut should trigger based on current focus context
  */
 function shouldTriggerShortcut(keyCombo: string): boolean {
-  const activeElement = document.activeElement
-  const normalizedCombo = keyCombo.toLowerCase()
-  const parts = normalizedCombo.split('+')
+  const activeElement = document.activeElement;
+  const normalizedCombo = keyCombo.toLowerCase();
+  const parts = normalizedCombo.split('+');
 
   // Navigation shortcuts (J/K/Arrow) only when no input focused
   if (NAVIGATION_KEYS.includes(normalizedCombo as NavigationKey)) {
-    return !isInputElement(activeElement)
+    return !isInputElement(activeElement);
   }
 
   // Escape always triggers, but context handled in handler
   if (normalizedCombo === 'escape') {
-    return true
+    return true;
   }
 
   // Save shortcut (cmd/ctrl+s) when textarea focused
   if (parts.length > 1 && parts.at(-1) === 's') {
-    return activeElement?.tagName === 'TEXTAREA'
+    return activeElement?.tagName === 'TEXTAREA';
   }
 
   // Other shortcuts (like cmd+n) when no input focused
-  return !isInputElement(activeElement)
+  return !isInputElement(activeElement);
 }

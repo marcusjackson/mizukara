@@ -4,10 +4,17 @@
 #   `*` runs the whole suite; `-` means no e2e test covers the path. An unmatched src/ path runs the whole suite.
 
 src/modules/app-settings/ -> app-settings.test.ts, visual-regression.test.ts#Settings Page
-src/modules/entry-day-view/ -> entry-creation.test.ts, entry-editing.test.ts, entry-reordering.test.ts, entry-day-reassignment.test.ts, day-navigation.test.ts, date-picker.test.ts, keyboard-shortcuts.test.ts, keyboard-shortcuts-help.test.ts, visual-regression.test.ts#EntryDayView|SharedEntryCard|Empty State
+src/modules/entry-day-view/ -> entry-creation.test.ts, entry-editing.test.ts, entry-reordering.test.ts, entry-day-reassignment.test.ts, day-navigation.test.ts, date-picker.test.ts, keyboard-shortcuts.test.ts, keyboard-shortcuts-help.test.ts, visual-regression.test.ts#EntryDayView|SharedEntryCard|Empty State|Layouts
 src/modules/tags/ -> tags.test.ts, tag-suggestions.test.ts, visual-regression-tags.test.ts
 src/modules/local-inference/ -> tag-suggestions.test.ts
 src/modules/search/ -> -
+
+# Base components. BaseSelect and BaseCombobox* have no consumer outside src/base yet; the generic ones
+# (BaseButton, BaseDialog, BaseIcon and the rest) are used everywhere, so they stay unmatched and run the whole suite.
+src/base/components/BaseSelect -> -
+src/base/components/BaseCombobox -> -
+src/base/composables/use-combobox -> -
+src/base/components/BaseTagInput -> entry-editing.test.ts, tags.test.ts, tag-suggestions.test.ts, visual-regression-tags.test.ts
 
 src/pages/HomePage -> home-redirect.test.ts
 src/pages/EntryDayPage -> day-navigation.test.ts, entry-creation.test.ts, visual-regression.test.ts#Layouts

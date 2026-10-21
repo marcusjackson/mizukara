@@ -1,21 +1,16 @@
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, getCurrentScope, onScopeDispose, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-import {
-  addDays,
-  getToday,
-  isValidISODate,
-  subtractDays
-} from '@/shared/utils/date-utils'
+import { addDays, getToday, isValidISODate, subtractDays } from '@/shared/utils/date-utils';
 
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue';
 
 /**
  * Options for useDayNavigation composable
  */
 export interface UseDayNavigationOptions {
   /** Initial date as ISO string (YYYY-MM-DD) or null to use today */
-  initialDate?: string | null
+  initialDate?: string | null;
 }
 
 /**
@@ -23,17 +18,17 @@ export interface UseDayNavigationOptions {
  */
 export interface UseDayNavigationReturn {
   /** Current selected date (ISO string YYYY-MM-DD) */
-  currentDate: Ref<string>
+  currentDate: Ref<string>;
   /** Whether currentDate is today's date */
-  isToday: ComputedRef<boolean>
+  isToday: ComputedRef<boolean>;
   /** Navigate to the previous day */
-  goToPrevDay: () => void
+  goToPrevDay: () => void;
   /** Navigate to the next day */
-  goToNextDay: () => void
+  goToNextDay: () => void;
   /** Navigate to today's date */
-  goToToday: () => void
+  goToToday: () => void;
   /** Navigate to a specific date, returns true if successful */
-  goToDate: (date: string) => boolean
+  goToDate: (date: string) => boolean;
 }
 
 /**
@@ -48,23 +43,62 @@ export interface UseDayNavigationReturn {
  * @param initialDate - Optional initial date (can be null to skip)
  * @returns Valid ISO date string (YYYY-MM-DD)
  */
-function getInitialDate(
-  route: ReturnType<typeof useRoute>,
-  initialDate?: string | null
-): string {
+function getInitialDate(route: ReturnType<typeof useRoute>, initialDate?: string | null): string {
   // Check route param first
-  const routeDate = route.params['date'] as string | undefined
+  const routeDate = route.params['date'] as string | undefined;
   if (routeDate && isValidISODate(routeDate)) {
-    return routeDate
+    return routeDate;
   }
 
   // Then check provided initialDate
   if (initialDate && isValidISODate(initialDate)) {
-    return initialDate
+    return initialDate;
   }
 
   // Finally fallback to today
-  return getToday()
+  return getToday();
+}
+
+/**
+ * Reactive today's date that rolls over at midnight and when the page becomes visible again
+ *
+ * A page left open overnight would otherwise keep treating yesterday as today.
+ *
+ * @returns Ref holding today's ISO date
+ */
+function useToday(): Ref<string> {
+  const today = ref(getToday());
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  function refresh(): void {
+    today.value = getToday();
+  }
+
+  function scheduleMidnight(): void {
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    timer = setTimeout(
+      () => {
+        refresh();
+        scheduleMidnight();
+      },
+      midnight.getTime() - now.getTime() + 50
+    );
+  }
+
+  function onVisibilityChange(): void {
+    if (document.visibilityState === 'visible') refresh();
+  }
+
+  scheduleMidnight();
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    });
+  }
+  return today;
 }
 
 /**
@@ -81,42 +115,42 @@ function getInitialDate(
  *   initialDate: '2026-02-11'
  * })
  */
-export function useDayNavigation(
-  options: UseDayNavigationOptions = {}
-): UseDayNavigationReturn {
-  const { initialDate } = options
-  const route = useRoute()
-  const router = useRouter()
+export function useDayNavigation(options: UseDayNavigationOptions = {}): UseDayNavigationReturn {
+  const { initialDate } = options;
+  const route = useRoute();
+  const router = useRouter();
 
-  const currentDate = ref<string>(getInitialDate(route, initialDate))
-  const isToday = computed(() => currentDate.value === getToday())
+  const currentDate = ref<string>(getInitialDate(route, initialDate));
+  const today = useToday();
+  const isToday = computed(() => currentDate.value === today.value);
 
   // Track whether we're currently updating the route to prevent loops
-  let isUpdatingRoute = false
+  let isUpdatingRoute = false;
 
   /**
    * Navigate to the previous day
    */
   function goToPrevDay(): void {
-    const previous = subtractDays(currentDate.value, 1)
+    const previous = subtractDays(currentDate.value, 1);
     // Stay on the first supported day rather than moving past the range
-    if (isValidISODate(previous)) currentDate.value = previous
+    if (isValidISODate(previous)) currentDate.value = previous;
   }
 
   /**
    * Navigate to the next day
    */
   function goToNextDay(): void {
-    const next = addDays(currentDate.value, 1)
+    const next = addDays(currentDate.value, 1);
     // Stay on the last supported day rather than moving past the range
-    if (isValidISODate(next)) currentDate.value = next
+    if (isValidISODate(next)) currentDate.value = next;
   }
 
   /**
    * Navigate to today's date
    */
   function goToToday(): void {
-    currentDate.value = getToday()
+    today.value = getToday();
+    currentDate.value = today.value;
   }
 
   /**
@@ -127,10 +161,10 @@ export function useDayNavigation(
    */
   function goToDate(date: string): boolean {
     if (isValidISODate(date)) {
-      currentDate.value = date
-      return true
+      currentDate.value = date;
+      return true;
     }
-    return false
+    return false;
   }
 
   // Setup bidirectional sync between currentDate and route params
@@ -140,9 +174,9 @@ export function useDayNavigation(
     router,
     () => isUpdatingRoute,
     (value) => {
-      isUpdatingRoute = value
+      isUpdatingRoute = value;
     }
-  )
+  );
 
   return {
     currentDate,
@@ -150,8 +184,8 @@ export function useDayNavigation(
     goToPrevDay,
     goToNextDay,
     goToToday,
-    goToDate
-  }
+    goToDate,
+  };
 }
 
 /**
@@ -178,14 +212,14 @@ function setupDateRouteSync(
   watch(currentDate, (newDate) => {
     if (getIsUpdating()) {
       // This change came from route watch, skip route update
-      return
+      return;
     }
 
-    const currentRouteDate = route.params['date'] as string | undefined
+    const currentRouteDate = route.params['date'] as string | undefined;
     if (currentRouteDate !== newDate) {
-      void router.push({ params: { ...route.params, date: newDate } })
+      void router.push({ params: { ...route.params, date: newDate } });
     }
-  })
+  });
 
   /**
    * Watch route changes and update currentDate
@@ -200,15 +234,15 @@ function setupDateRouteSync(
       const targetDate =
         typeof newRouteDate === 'string' && isValidISODate(newRouteDate)
           ? newRouteDate
-          : getToday()
+          : getToday();
       if (targetDate !== currentDate.value) {
-        setIsUpdating(true)
-        currentDate.value = targetDate
+        setIsUpdating(true);
+        currentDate.value = targetDate;
         // Reset flag on next tick after currentDate watch has run
         void Promise.resolve().then(() => {
-          setIsUpdating(false)
-        })
+          setIsUpdating(false);
+        });
       }
     }
-  )
+  );
 }

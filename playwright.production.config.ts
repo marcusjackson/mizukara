@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Checks that only a production build can answer, so they cannot run against
@@ -17,10 +17,9 @@ export default defineConfig({
   use: { baseURL: 'http://localhost:4199', actionTimeout: 15_000 },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command:
-      'pnpm exec vite build && pnpm exec vite preview --port 4199 --strictPort',
+    command: 'pnpm exec vite build && pnpm exec vite preview --port 4199 --strictPort',
     url: 'http://localhost:4199',
     reuseExistingServer: false,
-    timeout: 300_000
-  }
-})
+    timeout: 300_000,
+  },
+});

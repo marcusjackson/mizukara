@@ -5,7 +5,7 @@
  * imports in the pages/routes layer, matching the tags module's convention.
  */
 
-export type { UseSearchReturn } from './composables/use-search'
-export { useSearch } from './composables/use-search'
-export type { UseSearchTagOptionsReturn } from './composables/use-search-tag-options'
-export { useSearchTagOptions } from './composables/use-search-tag-options'
+export type { UseSearchReturn } from './composables/use-search';
+export { useSearch } from './composables/use-search';
+export type { UseSearchTagOptionsReturn } from './composables/use-search-tag-options';
+export { useSearchTagOptions } from './composables/use-search-tag-options';

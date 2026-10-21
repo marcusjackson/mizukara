@@ -1,29 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EMBEDDING_MODEL } from '../utils/embedding-model'
+import { EMBEDDING_MODEL } from '../utils/embedding-model';
 
-import type {
-  ModelInstallState,
-  UseLocalInferenceEngine
-} from '../local-inference-types'
-import type { InferenceWorkerClient } from '../utils/inference-worker-client'
+import type { ModelInstallState, UseLocalInferenceEngine } from '../local-inference-types';
+import type { InferenceWorkerClient } from '../utils/inference-worker-client';
 
-const load = vi.fn<InferenceWorkerClient['load']>()
-const embed = vi.fn<InferenceWorkerClient['embed']>()
-const terminate = vi.fn<InferenceWorkerClient['terminate']>()
-const probeInferenceSupport = vi.fn<() => string | null>()
-const readModelInstallState = vi.fn<() => Promise<ModelInstallState>>()
-const deleteModelFiles = vi.fn<() => Promise<void>>()
-const requestPersistentStorage = vi.fn<() => Promise<boolean>>()
+const load = vi.fn<InferenceWorkerClient['load']>();
+const embed = vi.fn<InferenceWorkerClient['embed']>();
+const terminate = vi.fn<InferenceWorkerClient['terminate']>();
+const probeInferenceSupport = vi.fn<() => string | null>();
+const readModelInstallState = vi.fn<() => Promise<ModelInstallState>>();
+const deleteModelFiles = vi.fn<() => Promise<void>>();
+const requestPersistentStorage = vi.fn<() => Promise<boolean>>();
 
 vi.mock('../utils/inference-worker-client', () => ({
   createInferenceWorkerClient: () => ({
     embed,
     isRunning: () => false,
     load,
-    terminate
-  })
-}))
+    terminate,
+  }),
+}));
 
 /**
  * Make load hang until released, and make terminate reject it the way the
@@ -31,425 +28,457 @@ vi.mock('../utils/inference-worker-client', () => ({
  * a deliberate teardown is reported to the person as a failure.
  */
 function hangingLoad(): { release: () => void } {
-  let rejectLoad: (error: Error) => void = () => undefined
+  let rejectLoad: (error: Error) => void = () => undefined;
   load.mockImplementation(
     () =>
       new Promise<void>((_resolve, reject) => {
-        rejectLoad = reject
+        rejectLoad = reject;
       })
-  )
+  );
   terminate.mockImplementation(() => {
-    rejectLoad(new Error('The model was unloaded.'))
-  })
+    rejectLoad(new Error('The model was unloaded.'));
+  });
   return {
     release: () => {
-      rejectLoad(new Error('The model was unloaded.'))
-    }
-  }
+      rejectLoad(new Error('The model was unloaded.'));
+    },
+  };
 }
 
 vi.mock('../utils/inference-support', () => ({
   describeUnsupportedReason: () => 'unsupported',
-  probeInferenceSupport: () => probeInferenceSupport()
-}))
+  probeInferenceSupport: () => probeInferenceSupport(),
+}));
 
 vi.mock('../utils/model-cache-storage', () => ({
   deleteModelFiles: () => deleteModelFiles(),
   readModelInstallState: () => readModelInstallState(),
   readStorageUsage: () => Promise.resolve(null),
-  requestPersistentStorage: () => requestPersistentStorage()
-}))
+  requestPersistentStorage: () => requestPersistentStorage(),
+}));
 
-const VECTOR = Array.from({ length: EMBEDDING_MODEL.dimensions }, () => 0.1)
+const VECTOR = Array.from({ length: EMBEDDING_MODEL.dimensions }, () => 0.1);
 
-function installState(
-  installed: boolean,
-  hasAnyFiles = installed
-): ModelInstallState {
-  return { hasAnyFiles, isInstalled: installed }
+function installState(installed: boolean, hasAnyFiles = installed): ModelInstallState {
+  return { hasAnyFiles, isInstalled: installed };
 }
 
 async function loadEngine(): Promise<UseLocalInferenceEngine> {
-  const module = await import('./use-local-inference-engine')
-  return module.useLocalInferenceEngine()
+  const module = await import('./use-local-inference-engine');
+  return module.useLocalInferenceEngine();
 }
 
 describe('useLocalInferenceEngine', () => {
   beforeEach(() => {
-    vi.resetModules()
-    vi.clearAllMocks()
-    probeInferenceSupport.mockReturnValue(null)
-    readModelInstallState.mockResolvedValue(installState(false))
-    requestPersistentStorage.mockResolvedValue(true)
-    load.mockResolvedValue(undefined)
-    embed.mockResolvedValue(VECTOR)
-    deleteModelFiles.mockResolvedValue(undefined)
-  })
+    vi.resetModules();
+    vi.clearAllMocks();
+    probeInferenceSupport.mockReturnValue(null);
+    readModelInstallState.mockResolvedValue(installState(false));
+    requestPersistentStorage.mockResolvedValue(true);
+    load.mockResolvedValue(undefined);
+    embed.mockResolvedValue(VECTOR);
+    deleteModelFiles.mockResolvedValue(undefined);
+  });
 
   afterEach(() => {
-    vi.useRealTimers()
-  })
+    vi.useRealTimers();
+  });
 
   it('should report unsupported when the device cannot run a worker', async () => {
-    probeInferenceSupport.mockReturnValue('no-worker')
-    const engine = await loadEngine()
+    probeInferenceSupport.mockReturnValue('no-worker');
+    const engine = await loadEngine();
 
-    await engine.initialize()
+    await engine.initialize();
 
-    expect(engine.state.value).toBe('unsupported')
-    expect(engine.unsupportedReason.value).toBe('no-worker')
-  })
+    expect(engine.state.value).toBe('unsupported');
+    expect(engine.unsupportedReason.value).toBe('no-worker');
+  });
 
   it('should report no model when nothing has been downloaded', async () => {
-    const engine = await loadEngine()
+    const engine = await loadEngine();
 
-    await engine.initialize()
+    await engine.initialize();
 
-    expect(engine.state.value).toBe('no-model')
-  })
+    expect(engine.state.value).toBe('no-model');
+  });
 
   it('should report idle when a model is already on disk', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
 
-    await engine.initialize()
+    await engine.initialize();
 
-    expect(engine.state.value).toBe('idle')
-  })
+    expect(engine.state.value).toBe('idle');
+  });
 
   it('should probe the device only once across repeated initialization', async () => {
-    const engine = await loadEngine()
+    const engine = await loadEngine();
 
-    await engine.initialize()
-    await engine.initialize()
+    await engine.initialize();
+    await engine.initialize();
 
-    expect(probeInferenceSupport).toHaveBeenCalledTimes(1)
-  })
+    expect(probeInferenceSupport).toHaveBeenCalledTimes(1);
+  });
 
   it('should ask for persistent storage before a first download', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
-    readModelInstallState.mockResolvedValue(installState(true))
+    const engine = await loadEngine();
+    await engine.initialize();
+    readModelInstallState.mockResolvedValue(installState(true));
 
-    await engine.downloadModel()
+    await engine.downloadModel();
 
-    expect(requestPersistentStorage).toHaveBeenCalledTimes(1)
-    expect(engine.isStoragePersistent.value).toBe(true)
-  })
+    expect(requestPersistentStorage).toHaveBeenCalledTimes(1);
+    expect(engine.isStoragePersistent.value).toBe(true);
+  });
 
   it('should free the memory once a settings-initiated download finishes', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
-    readModelInstallState.mockResolvedValue(installState(true))
+    const engine = await loadEngine();
+    await engine.initialize();
+    readModelInstallState.mockResolvedValue(installState(true));
 
-    await engine.downloadModel()
+    await engine.downloadModel();
 
-    expect(terminate).toHaveBeenCalled()
-    expect(engine.state.value).toBe('idle')
-  })
+    expect(terminate).toHaveBeenCalled();
+    expect(engine.state.value).toBe('idle');
+  });
 
   it('should surface the download percentage while a download runs', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
-    const seen: (number | null)[] = []
+    const engine = await loadEngine();
+    await engine.initialize();
+    const seen: (number | null)[] = [];
     load.mockImplementation((_model, onProgress) => {
-      onProgress(35)
-      seen.push(engine.downloadProgress.value)
-      return Promise.resolve()
-    })
+      onProgress(35);
+      seen.push(engine.downloadProgress.value);
+      return Promise.resolve();
+    });
 
-    await engine.downloadModel()
+    await engine.downloadModel();
 
-    expect(seen).toEqual([35])
-  })
+    expect(seen).toEqual([35]);
+  });
 
   it('should return the vector and land ready when embedding succeeds', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
 
-    const vector = await engine.embed('Entry')
+    const vector = await engine.embed('Entry');
 
-    expect(vector).toEqual(VECTOR)
-    expect(engine.state.value).toBe('ready')
-  })
+    expect(vector).toEqual(VECTOR);
+    expect(engine.state.value).toBe('ready');
+  });
 
   it('should return null and record the error when embedding fails', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    embed.mockRejectedValue(new Error('out of memory'))
-    const engine = await loadEngine()
-    await engine.initialize()
+    readModelInstallState.mockResolvedValue(installState(true));
+    embed.mockRejectedValue(new Error('out of memory'));
+    const engine = await loadEngine();
+    await engine.initialize();
 
-    const vector = await engine.embed('Entry')
+    const vector = await engine.embed('Entry');
 
-    expect(vector).toBeNull()
-    expect(engine.state.value).toBe('error')
-    expect(engine.error.value).toBe('out of memory')
-  })
+    expect(vector).toBeNull();
+    expect(engine.state.value).toBe('error');
+    expect(engine.error.value).toBe('out of memory');
+  });
 
   it('should leave the error state when the error is dismissed', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    embed.mockRejectedValue(new Error('out of memory'))
-    const engine = await loadEngine()
-    await engine.initialize()
-    await engine.embed('Entry')
+    readModelInstallState.mockResolvedValue(installState(true));
+    embed.mockRejectedValue(new Error('out of memory'));
+    const engine = await loadEngine();
+    await engine.initialize();
+    await engine.embed('Entry');
 
-    engine.dismissError()
+    engine.dismissError();
 
-    expect(engine.state.value).toBe('idle')
-    expect(engine.error.value).toBeNull()
-  })
+    expect(engine.state.value).toBe('idle');
+    expect(engine.error.value).toBeNull();
+  });
+
+  it('should leave a download running when an error is dismissed mid-download', async () => {
+    const engine = await loadEngine();
+    await engine.initialize();
+    const { release } = hangingLoad();
+
+    const download = engine.downloadModel();
+    await vi.waitFor(() => {
+      expect(load).toHaveBeenCalled();
+    });
+    engine.dismissError();
+
+    expect(engine.state.value).toBe('downloading');
+    release();
+    await download;
+  });
+
+  it('should report nothing installed when reading the install state rejects', async () => {
+    readModelInstallState.mockRejectedValue(new Error('cache unreadable'));
+    const engine = await loadEngine();
+
+    await engine.initialize();
+
+    expect(engine.state.value).toBe('no-model');
+    expect(engine.installState.value).toEqual({ hasAnyFiles: false, isInstalled: false });
+  });
+
+  it('should settle a delete when re-reading storage rejects', async () => {
+    readModelInstallState.mockResolvedValueOnce(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    readModelInstallState.mockRejectedValue(new Error('cache unreadable'));
+
+    await expect(engine.deleteModel()).resolves.toBeUndefined();
+
+    expect(engine.state.value).toBe('no-model');
+  });
 
   it('should tear the worker down after the idle period elapses', async () => {
-    vi.useFakeTimers()
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
-    await engine.embed('Entry')
-    terminate.mockClear()
+    vi.useFakeTimers();
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    await engine.embed('Entry');
+    terminate.mockClear();
 
-    vi.advanceTimersByTime(120000)
+    vi.advanceTimersByTime(120000);
 
-    expect(terminate).toHaveBeenCalledTimes(1)
-    expect(engine.state.value).toBe('idle')
-  })
+    expect(terminate).toHaveBeenCalledTimes(1);
+    expect(engine.state.value).toBe('idle');
+  });
 
   it('should keep the model loaded while it is still being used', async () => {
-    vi.useFakeTimers()
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
-    await engine.embed('Entry')
-    terminate.mockClear()
+    vi.useFakeTimers();
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    await engine.embed('Entry');
+    terminate.mockClear();
 
-    vi.advanceTimersByTime(119000)
+    vi.advanceTimersByTime(119000);
 
-    expect(terminate).not.toHaveBeenCalled()
-    expect(engine.state.value).toBe('ready')
-  })
+    expect(terminate).not.toHaveBeenCalled();
+    expect(engine.state.value).toBe('ready');
+  });
 
   it('should tear the worker down before deleting a model file', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
-    const order: string[] = []
-    terminate.mockImplementation(() => order.push('terminate'))
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    const order: string[] = [];
+    terminate.mockImplementation(() => order.push('terminate'));
     deleteModelFiles.mockImplementation(() => {
-      order.push('delete')
-      return Promise.resolve()
-    })
-    readModelInstallState.mockResolvedValue(installState(false))
+      order.push('delete');
+      return Promise.resolve();
+    });
+    readModelInstallState.mockResolvedValue(installState(false));
 
-    await engine.deleteModel()
+    await engine.deleteModel();
 
-    expect(order).toEqual(['terminate', 'delete'])
-    expect(engine.state.value).toBe('no-model')
-  })
+    expect(order).toEqual(['terminate', 'delete']);
+    expect(engine.state.value).toBe('no-model');
+  });
 
   describe('when the tab comes back to the foreground', () => {
     // Engines from earlier tests keep their listeners on the shared document,
     // so wait for a read beyond the count already made rather than for an exact one.
     function showTab(): Promise<void> {
-      const readsBefore = readModelInstallState.mock.calls.length
+      const readsBefore = readModelInstallState.mock.calls.length;
       Object.defineProperty(document, 'visibilityState', {
         configurable: true,
-        value: 'visible'
-      })
-      document.dispatchEvent(new Event('visibilitychange'))
+        value: 'visible',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
       return vi.waitFor(() => {
-        expect(readModelInstallState.mock.calls.length).toBeGreaterThan(
-          readsBefore
-        )
-      })
+        expect(readModelInstallState.mock.calls.length).toBeGreaterThan(readsBefore);
+      });
     }
 
     it('should notice a model another tab deleted', async () => {
-      readModelInstallState.mockResolvedValue(installState(true))
-      const engine = await loadEngine()
-      await engine.initialize()
-      expect(engine.state.value).toBe('idle')
+      readModelInstallState.mockResolvedValue(installState(true));
+      const engine = await loadEngine();
+      await engine.initialize();
+      expect(engine.state.value).toBe('idle');
 
-      readModelInstallState.mockResolvedValue(installState(false))
-      await showTab()
+      readModelInstallState.mockResolvedValue(installState(false));
+      await showTab();
 
       await vi.waitFor(() => {
-        expect(engine.state.value).toBe('no-model')
-      })
-      expect(engine.installState.value.isInstalled).toBe(false)
-    })
+        expect(engine.state.value).toBe('no-model');
+      });
+      expect(engine.installState.value.isInstalled).toBe(false);
+    });
 
     it('should notice a model another tab downloaded', async () => {
-      const engine = await loadEngine()
-      await engine.initialize()
-      expect(engine.state.value).toBe('no-model')
+      const engine = await loadEngine();
+      await engine.initialize();
+      expect(engine.state.value).toBe('no-model');
 
-      readModelInstallState.mockResolvedValue(installState(true))
-      await showTab()
+      readModelInstallState.mockResolvedValue(installState(true));
+      await showTab();
 
       await vi.waitFor(() => {
-        expect(engine.state.value).toBe('idle')
-      })
-    })
-  })
+        expect(engine.state.value).toBe('idle');
+      });
+    });
+  });
 
   it('should share one engine between callers, so only one model is ever loaded', async () => {
-    const module = await import('./use-local-inference-engine')
-    const first = module.useLocalInferenceEngine()
-    const second = module.useLocalInferenceEngine()
+    const module = await import('./use-local-inference-engine');
+    const first = module.useLocalInferenceEngine();
+    const second = module.useLocalInferenceEngine();
 
-    await first.initialize()
-    await second.initialize()
+    await first.initialize();
+    await second.initialize();
 
-    expect(probeInferenceSupport).toHaveBeenCalledTimes(1)
-    expect(second.state.value).toBe(first.state.value)
-  })
+    expect(probeInferenceSupport).toHaveBeenCalledTimes(1);
+    expect(second.state.value).toBe(first.state.value);
+  });
 
   it('should refuse to start a second operation while one is running', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
+    const engine = await loadEngine();
+    await engine.initialize();
     let release: () => void = () => {
-      throw new Error('load was never called')
-    }
+      throw new Error('load was never called');
+    };
     load.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
-          release = resolve
+          release = resolve;
         })
-    )
+    );
 
-    const first = engine.downloadModel()
-    await engine.downloadModel()
-    release()
-    await first
+    const first = engine.downloadModel();
+    await engine.downloadModel();
+    release();
+    await first;
 
-    expect(load).toHaveBeenCalledTimes(1)
-  })
+    expect(load).toHaveBeenCalledTimes(1);
+  });
 
   it('should return quietly to rest when a download is cancelled', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
-    hangingLoad()
+    const engine = await loadEngine();
+    await engine.initialize();
+    hangingLoad();
 
-    const download = engine.downloadModel()
-    engine.cancelDownload()
-    await download
+    const download = engine.downloadModel();
+    engine.cancelDownload();
+    await download;
 
-    expect(engine.state.value).toBe('no-model')
-    expect(engine.error.value).toBeNull()
-  })
+    expect(engine.state.value).toBe('no-model');
+    expect(engine.error.value).toBeNull();
+  });
 
-  it('should return quietly to rest when the feature is switched off mid-download', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
-    hangingLoad()
+  it('should return quietly to rest when the engine is torn down mid-download', async () => {
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    hangingLoad();
 
-    const download = engine.downloadModel()
-    engine.teardown()
-    await download
+    const download = engine.downloadModel();
+    engine.teardown();
+    await download;
 
-    expect(engine.state.value).toBe('idle')
-    expect(engine.error.value).toBeNull()
-  })
+    expect(engine.state.value).toBe('idle');
+    expect(engine.error.value).toBeNull();
+  });
 
   it('should say the engine is busy rather than nothing when asked twice', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
-    hangingLoad()
+    const engine = await loadEngine();
+    await engine.initialize();
+    hangingLoad();
 
-    const first = engine.downloadModel()
-    const vector = await engine.embed('Entry')
-    engine.teardown()
-    await first
+    const first = engine.downloadModel();
+    const vector = await engine.embed('Entry');
+    engine.teardown();
+    await first;
 
-    expect(vector).toBeNull()
-    expect(engine.error.value).toContain('busy')
-  })
+    expect(vector).toBeNull();
+    expect(engine.error.value).toContain('busy');
+  });
 
   it('should free the worker after an embedding failure, since no idle timer is left', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    embed.mockRejectedValue(new Error('out of memory'))
-    const engine = await loadEngine()
-    await engine.initialize()
-    terminate.mockClear()
+    readModelInstallState.mockResolvedValue(installState(true));
+    embed.mockRejectedValue(new Error('out of memory'));
+    const engine = await loadEngine();
+    await engine.initialize();
+    terminate.mockClear();
 
-    await engine.embed('Entry')
+    await engine.embed('Entry');
 
-    expect(terminate).toHaveBeenCalledTimes(1)
-    expect(engine.state.value).toBe('error')
-  })
+    expect(terminate).toHaveBeenCalledTimes(1);
+    expect(engine.state.value).toBe('error');
+  });
 
   it('should free the worker after a failed load', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    load.mockRejectedValue(new Error('bad weights'))
-    const engine = await loadEngine()
-    await engine.initialize()
-    terminate.mockClear()
+    readModelInstallState.mockResolvedValue(installState(true));
+    load.mockRejectedValue(new Error('bad weights'));
+    const engine = await loadEngine();
+    await engine.initialize();
+    terminate.mockClear();
 
-    await engine.embed('Entry')
+    await engine.embed('Entry');
 
-    expect(terminate).toHaveBeenCalledTimes(1)
-    expect(engine.error.value).toBe('bad weights')
-  })
+    expect(terminate).toHaveBeenCalledTimes(1);
+    expect(engine.error.value).toBe('bad weights');
+  });
 
   it('should not reset the state under an operation that started while deleting', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
-    let finishDelete: () => void = () => undefined
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    let finishDelete: () => void = () => undefined;
     deleteModelFiles.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
-          finishDelete = resolve
+          finishDelete = resolve;
         })
-    )
-    hangingLoad()
+    );
+    hangingLoad();
 
-    const deleting = engine.deleteModel()
-    const embedding = engine.embed('Entry')
-    await Promise.resolve()
-    expect(engine.state.value).toBe('loading')
-    finishDelete()
-    await deleting
+    const deleting = engine.deleteModel();
+    const embedding = engine.embed('Entry');
+    await Promise.resolve();
+    expect(engine.state.value).toBe('loading');
+    finishDelete();
+    await deleting;
 
-    expect(engine.state.value).toBe('loading')
-    engine.teardown()
-    await embedding
-  })
+    expect(engine.state.value).toBe('loading');
+    engine.teardown();
+    await embedding;
+  });
 
   it('should not download when asked to embed with no model installed', async () => {
-    const engine = await loadEngine()
-    await engine.initialize()
+    const engine = await loadEngine();
+    await engine.initialize();
 
-    const vector = await engine.embed('Entry')
+    const vector = await engine.embed('Entry');
 
-    expect(vector).toBeNull()
-    expect(load).not.toHaveBeenCalled()
-    expect(engine.error.value).toContain('not been downloaded')
-  })
+    expect(vector).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+    expect(engine.error.value).toContain('not been downloaded');
+  });
 
   it('should reject a vector that is not the width the head expects', async () => {
-    readModelInstallState.mockResolvedValue(installState(true))
-    embed.mockResolvedValue([])
-    const engine = await loadEngine()
-    await engine.initialize()
+    readModelInstallState.mockResolvedValue(installState(true));
+    embed.mockResolvedValue([]);
+    const engine = await loadEngine();
+    await engine.initialize();
 
-    expect(await engine.embed('Entry')).toBeNull()
-    expect(engine.error.value).toContain('unusable')
-  })
+    expect(await engine.embed('Entry')).toBeNull();
+    expect(engine.error.value).toContain('unusable');
+  });
 
   it('should not let a stale idle timer break a later download', async () => {
-    vi.useFakeTimers()
-    readModelInstallState.mockResolvedValue(installState(true))
-    const engine = await loadEngine()
-    await engine.initialize()
-    await engine.embed('Entry')
+    vi.useFakeTimers();
+    readModelInstallState.mockResolvedValue(installState(true));
+    const engine = await loadEngine();
+    await engine.initialize();
+    await engine.embed('Entry');
 
-    const download = engine.downloadModel()
-    vi.advanceTimersByTime(150000)
-    await download
+    const download = engine.downloadModel();
+    vi.advanceTimersByTime(150000);
+    await download;
 
-    expect(engine.state.value).toBe('idle')
-    expect(engine.error.value).toBeNull()
-  })
-})
+    expect(engine.state.value).toBe('idle');
+    expect(engine.error.value).toBeNull();
+  });
+});

@@ -14,15 +14,6 @@ export const TIMEOUTS = {
   /** Toast notification auto-dismiss duration (2 seconds) */
   TOAST_DURATION: 2000,
 
-  /** Default debounce delay for user input (150ms) */
-  DEBOUNCE_DEFAULT: 150,
-
-  /** Navigation debounce to prevent rapid clicking (150ms) */
-  NAVIGATION_DEBOUNCE: 150,
-
-  /** Form submission debounce (300ms) */
-  FORM_SUBMIT_DEBOUNCE: 300,
-
   /**
    * How long a loaded local-inference model stays in memory unused (2 minutes)
    *
@@ -45,5 +36,5 @@ export const TIMEOUTS = {
    * so this only ever fires on a worker that has stopped replying. Without it
    * that is a button that spins forever.
    */
-  INFERENCE_EMBED: 30000
-} as const
+  INFERENCE_EMBED: 30000,
+} as const;

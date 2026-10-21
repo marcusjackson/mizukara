@@ -68,11 +68,7 @@ const {
 
 <template>
   <div class="base-file-input">
-    <label
-      v-if="label"
-      class="base-file-input-label"
-      :for="fileInputId"
-    >
+    <label v-if="label" class="base-file-input-label" :for="fileInputId">
       {{ label }}
     </label>
 
@@ -104,10 +100,7 @@ const {
       />
 
       <!-- Preview -->
-      <div
-        v-if="hasPreview"
-        class="base-file-input-preview-container"
-      >
+      <div v-if="hasPreview" class="base-file-input-preview-container">
         <img
           alt="File preview"
           class="base-file-input-preview"
@@ -138,10 +131,7 @@ const {
       </div>
 
       <!-- Empty state -->
-      <div
-        v-else
-        class="base-file-input-empty"
-      >
+      <div v-else class="base-file-input-empty">
         <div class="base-file-input-icon">
           <svg
             aria-hidden="true"
@@ -156,12 +146,7 @@ const {
           >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
-            <line
-              x1="12"
-              x2="12"
-              y1="3"
-              y2="15"
-            />
+            <line x1="12" x2="12" y1="3" y2="15" />
           </svg>
         </div>
         <p class="base-file-input-text">Drag and drop or click to upload</p>
@@ -178,20 +163,12 @@ const {
     </div>
 
     <!-- Warning -->
-    <p
-      v-if="sizeWarning"
-      class="base-file-input-warning"
-      role="alert"
-    >
+    <p v-if="sizeWarning" class="base-file-input-warning" role="alert">
       {{ sizeWarning }}
     </p>
 
     <!-- Error -->
-    <p
-      v-if="displayError"
-      class="base-file-input-error"
-      role="alert"
-    >
+    <p v-if="displayError" class="base-file-input-error" role="alert">
       {{ displayError }}
     </p>
   </div>

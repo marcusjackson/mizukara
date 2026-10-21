@@ -1,10 +1,9 @@
 /**
  * Stopwords for tag extraction and matching
  *
- * Shared by the classical tag matcher and the noun-phrase candidate
- * extractor. Kept verbatim from the classical-NLP spike whose measured
- * output both are built on — changing this list changes which candidates
- * a model is offered, and therefore invalidates that measurement.
+ * Used by the classical tag matcher. Kept verbatim from the classical-NLP
+ * spike whose measured output it is built on — changing this list changes
+ * which tags match, and therefore invalidates that measurement.
  */
 
 /**
@@ -98,5 +97,5 @@ export const TAG_STOPWORDS: ReadonlySet<string> = new Set([
   'got',
   'going',
   'go',
-  'went'
-])
+  'went',
+]);

@@ -17,10 +17,8 @@
  */
 export function assertString(v: unknown, col: string, mapper: string): string {
   if (typeof v !== 'string')
-    throw new TypeError(
-      `${mapper}: column "${col}" expected string, got ${typeof v}`
-    )
-  return v
+    throw new TypeError(`${mapper}: column "${col}" expected string, got ${typeof v}`);
+  return v;
 }
 
 /**
@@ -34,8 +32,6 @@ export function assertString(v: unknown, col: string, mapper: string): string {
  */
 export function assertNumber(v: unknown, col: string, mapper: string): number {
   if (typeof v !== 'number')
-    throw new TypeError(
-      `${mapper}: column "${col}" expected number, got ${typeof v}`
-    )
-  return v
+    throw new TypeError(`${mapper}: column "${col}" expected number, got ${typeof v}`);
+  return v;
 }

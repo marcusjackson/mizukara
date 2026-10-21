@@ -12,18 +12,13 @@
  * - Verify navigation works offline
  * - Reconnect network
  * - Verify no errors, data persists
- *
- * Requirements tested: 6.2, 6.3, 6.4, 6.5
- * Note: Requirement 6.1 (PWA service worker app shell caching) is not tested because:
- * - PWA service worker testing is complex with Playwright (activation timing, caching behavior)
- * - The functionality is already configured via VitePWA and works in production
- * - Focus is on core offline database operations, which are fully tested here
+ * Not covered: PWA service worker app shell caching (activation timing and cache behaviour are hard to test with Playwright; VitePWA configures it).
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test';
 
-import { TIMEOUTS } from './helpers/test-constants'
-import { TEST_ENTRY_CONTENT } from './helpers/test-data'
+import { TIMEOUTS } from './helpers/test-constants';
+import { TEST_ENTRY_CONTENT } from './helpers/test-data';
 import {
   createEntry,
   getEditorTextarea,
@@ -33,269 +28,245 @@ import {
   saveEntryEdit,
   startEditingEntry,
   waitForEntries,
-  waitForPageReady
-} from './helpers/test-utils'
+  waitForPageReady,
+} from './helpers/test-utils';
 
 test.describe('Offline Functionality', () => {
   test.beforeEach(async ({ context, page }) => {
     // Clear state for test isolation
-    await context.clearCookies()
+    await context.clearCookies();
 
     // Navigate to entry day view while online
-    await page.goto('/entries', { waitUntil: 'networkidle' })
+    await page.goto('/entries', { waitUntil: 'networkidle' });
 
     // Wait for database initialization
-    await waitForPageReady(page)
-  })
+    await waitForPageReady(page);
+  });
 
   test('creates new entry while offline', async ({ context, page }) => {
     // Go offline
-    await context.setOffline(true)
+    await context.setOffline(true);
 
     // Create entry offline
-    const textarea = page.getByLabel('Content')
-    await textarea.fill(TEST_ENTRY_CONTENT.SIMPLE)
-    await page.getByRole('button', { name: 'New Entry' }).click()
+    const textarea = page.getByLabel('Content');
+    await textarea.fill(TEST_ENTRY_CONTENT.SIMPLE);
+    await page.getByRole('button', { name: 'New Entry' }).click();
 
     // Verify entry was created and appears in list with correct content
-    const entryCard = page
-      .getByTestId('entry-card')
-      .filter({ hasText: TEST_ENTRY_CONTENT.SIMPLE })
-    await expect(entryCard).toBeVisible()
-    await expect(entryCard.getByTestId('entry-content')).toContainText(
-      TEST_ENTRY_CONTENT.SIMPLE
-    )
+    const entryCard = page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.SIMPLE });
+    await expect(entryCard).toBeVisible();
+    await expect(entryCard.getByTestId('entry-content')).toContainText(TEST_ENTRY_CONTENT.SIMPLE);
 
     // Go back online
-    await context.setOffline(false)
+    await context.setOffline(false);
 
     // Refresh page to verify persistence
-    await page.reload({ waitUntil: 'networkidle' })
-    await waitForPageReady(page)
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForPageReady(page);
 
     // Verify entry still exists after reconnecting
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.SIMPLE })
-    ).toBeVisible()
-  })
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.SIMPLE })
+    ).toBeVisible();
+  });
 
   test('edits existing entry while offline', async ({ context, page }) => {
     // Create entry while online first
-    await createEntry(page, TEST_ENTRY_CONTENT.ORIGINAL)
+    await createEntry(page, TEST_ENTRY_CONTENT.ORIGINAL);
 
     // Go offline
-    await context.setOffline(true)
+    await context.setOffline(true);
 
     // Edit the entry offline
-    const entryCard = page.getByTestId('entry-card').first()
-    await startEditingEntry(entryCard, isMobileViewport(page))
+    const entryCard = page.getByTestId('entry-card').first();
+    await startEditingEntry(entryCard, isMobileViewport(page));
 
-    const editor = getEntryEditor(page)
-    await expect(editor).toBeVisible()
+    const editor = getEntryEditor(page);
+    await expect(editor).toBeVisible();
 
-    const editorTextarea = getEditorTextarea(page)
-    await editorTextarea.clear()
-    await editorTextarea.fill(TEST_ENTRY_CONTENT.UPDATED)
+    const editorTextarea = getEditorTextarea(page);
+    await editorTextarea.clear();
+    await editorTextarea.fill(TEST_ENTRY_CONTENT.UPDATED);
 
     // Save changes
-    await saveEntryEdit(page)
+    await saveEntryEdit(page);
 
     // Verify updated content displays
-    await expect(
-      page.getByTestId('entry-card').first().getByTestId('entry-content')
-    ).toContainText(TEST_ENTRY_CONTENT.UPDATED)
+    await expect(page.getByTestId('entry-card').first().getByTestId('entry-content')).toContainText(
+      TEST_ENTRY_CONTENT.UPDATED
+    );
 
     // Go back online
-    await context.setOffline(false)
+    await context.setOffline(false);
 
     // Refresh to verify persistence
-    await page.reload({ waitUntil: 'networkidle' })
-    await waitForPageReady(page)
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForPageReady(page);
 
     // Verify edit persisted
-    await expect(
-      page.getByTestId('entry-card').first().getByTestId('entry-content')
-    ).toContainText(TEST_ENTRY_CONTENT.UPDATED)
-  })
+    await expect(page.getByTestId('entry-card').first().getByTestId('entry-content')).toContainText(
+      TEST_ENTRY_CONTENT.UPDATED
+    );
+  });
 
   test('navigates between days while offline', async ({ context, page }) => {
     // Create entry for today while online
-    await createEntry(page, TEST_ENTRY_CONTENT.TODAY)
+    await createEntry(page, TEST_ENTRY_CONTENT.TODAY);
 
     // Navigate to previous day while online
-    await navigateToDay(page, 'previous')
+    await navigateToDay(page, 'previous');
 
     // Create entry for yesterday while online
-    await createEntry(page, TEST_ENTRY_CONTENT.YESTERDAY)
+    await createEntry(page, TEST_ENTRY_CONTENT.YESTERDAY);
 
     // Go offline
-    await context.setOffline(true)
+    await context.setOffline(true);
 
     // Navigate back to today offline
-    await navigateToDay(page, 'next')
+    await navigateToDay(page, 'next');
 
     // Verify today's entry is visible
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.TODAY })
-    ).toBeVisible()
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.TODAY })
+    ).toBeVisible();
 
     // Verify yesterday's entry is NOT visible
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.YESTERDAY })
-    ).toHaveCount(0)
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.YESTERDAY })
+    ).toHaveCount(0);
 
     // Navigate back to yesterday offline
-    await navigateToDay(page, 'previous')
+    await navigateToDay(page, 'previous');
 
     // Verify yesterday's entry is visible
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.YESTERDAY })
-    ).toBeVisible()
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.YESTERDAY })
+    ).toBeVisible();
 
     // Verify today's entry is NOT visible
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.TODAY })
-    ).toHaveCount(0)
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.TODAY })
+    ).toHaveCount(0);
 
     // Go back online
-    await context.setOffline(false)
-  })
+    await context.setOffline(false);
+  });
 
-  test('creates multiple entries offline and all persist', async ({
-    context,
-    page
-  }) => {
+  test('creates multiple entries offline and all persist', async ({ context, page }) => {
     // Go offline
-    await context.setOffline(true)
+    await context.setOffline(true);
 
     // Create first entry
-    await createEntry(page, TEST_ENTRY_CONTENT.FIRST)
+    await createEntry(page, TEST_ENTRY_CONTENT.FIRST);
 
     // Create second entry
-    await createEntry(page, TEST_ENTRY_CONTENT.SECOND)
+    await createEntry(page, TEST_ENTRY_CONTENT.SECOND);
 
     // Create third entry
-    await createEntry(page, TEST_ENTRY_CONTENT.THIRD)
+    await createEntry(page, TEST_ENTRY_CONTENT.THIRD);
 
     // Verify all three entries are visible and list is stable
     await waitForEntries(page, [
       TEST_ENTRY_CONTENT.FIRST,
       TEST_ENTRY_CONTENT.SECOND,
-      TEST_ENTRY_CONTENT.THIRD
-    ])
-    const entryCards = page.getByTestId('entry-card')
+      TEST_ENTRY_CONTENT.THIRD,
+    ]);
+    const entryCards = page.getByTestId('entry-card');
 
     // Go back online
-    await context.setOffline(false)
+    await context.setOffline(false);
 
     // Refresh page
-    await page.reload({ waitUntil: 'networkidle' })
-    await waitForPageReady(page)
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForPageReady(page);
 
     // Wait for all entries to be restored from database after reload
     await waitForEntries(page, [
       TEST_ENTRY_CONTENT.FIRST,
       TEST_ENTRY_CONTENT.SECOND,
-      TEST_ENTRY_CONTENT.THIRD
-    ])
+      TEST_ENTRY_CONTENT.THIRD,
+    ]);
     await expect(entryCards.nth(0).getByTestId('entry-content')).toContainText(
       TEST_ENTRY_CONTENT.FIRST
-    )
+    );
     await expect(entryCards.nth(1).getByTestId('entry-content')).toContainText(
       TEST_ENTRY_CONTENT.SECOND
-    )
+    );
     await expect(entryCards.nth(2).getByTestId('entry-content')).toContainText(
       TEST_ENTRY_CONTENT.THIRD
-    )
-  })
+    );
+  });
 
   test('shows no network errors when offline', async ({ context, page }) => {
     // Go offline
-    await context.setOffline(true)
+    await context.setOffline(true);
 
     // Perform various operations
-    await createEntry(page, TEST_ENTRY_CONTENT.SIMPLE)
-    await navigateToDay(page, 'next')
-    await navigateToDay(page, 'previous')
+    await createEntry(page, TEST_ENTRY_CONTENT.SIMPLE);
+    await navigateToDay(page, 'next');
+    await navigateToDay(page, 'previous');
 
     // Verify no error messages are shown
-    await expect(page.getByTestId('error-container')).not.toBeVisible()
+    await expect(page.getByTestId('error-container')).not.toBeVisible();
 
     // Verify no error toast (no role-based locator separates error toasts from others)
-    await expect(page.locator('.base-toast-error')).not.toBeVisible()
+    await expect(page.locator('.base-toast-error')).not.toBeVisible();
 
     // Go back online
-    await context.setOffline(false)
-  })
+    await context.setOffline(false);
+  });
 
-  test('database operations work correctly offline', async ({
-    context,
-    page
-  }) => {
+  test('database operations work correctly offline', async ({ context, page }) => {
     // Create initial entry online
-    await createEntry(page, TEST_ENTRY_CONTENT.ORIGINAL)
+    await createEntry(page, TEST_ENTRY_CONTENT.ORIGINAL);
 
     // Go offline
-    await context.setOffline(true)
+    await context.setOffline(true);
 
     // Edit entry offline
-    const entryCard = page.getByTestId('entry-card').first()
-    await startEditingEntry(entryCard, isMobileViewport(page))
+    const entryCard = page.getByTestId('entry-card').first();
+    await startEditingEntry(entryCard, isMobileViewport(page));
 
-    const editorTextarea = getEditorTextarea(page)
-    await editorTextarea.clear()
-    await editorTextarea.fill(TEST_ENTRY_CONTENT.UPDATED)
-    await saveEntryEdit(page)
+    const editorTextarea = getEditorTextarea(page);
+    await editorTextarea.clear();
+    await editorTextarea.fill(TEST_ENTRY_CONTENT.UPDATED);
+    await saveEntryEdit(page);
 
     // Create another entry offline
-    await createEntry(page, TEST_ENTRY_CONTENT.SECOND)
+    await createEntry(page, TEST_ENTRY_CONTENT.SECOND);
 
     // Verify both entries exist (wait for update + creation to appear)
     const updatedEntry = page
       .getByTestId('entry-card')
-      .filter({ hasText: TEST_ENTRY_CONTENT.UPDATED })
+      .filter({ hasText: TEST_ENTRY_CONTENT.UPDATED });
     const secondEntry = page
       .getByTestId('entry-card')
-      .filter({ hasText: TEST_ENTRY_CONTENT.SECOND })
+      .filter({ hasText: TEST_ENTRY_CONTENT.SECOND });
 
-    await expect(updatedEntry).toBeVisible({ timeout: TIMEOUTS.long })
-    await expect(secondEntry).toBeVisible({ timeout: TIMEOUTS.long })
+    await expect(updatedEntry).toBeVisible({ timeout: TIMEOUTS.long });
+    await expect(secondEntry).toBeVisible({ timeout: TIMEOUTS.long });
 
-    const entries = page.getByTestId('entry-card')
-    await expect(entries).toHaveCount(2, { timeout: TIMEOUTS.long })
+    const entries = page.getByTestId('entry-card');
+    await expect(entries).toHaveCount(2, { timeout: TIMEOUTS.long });
 
     // Verify first entry was updated
     await expect(entries.first().getByTestId('entry-content')).toContainText(
       TEST_ENTRY_CONTENT.UPDATED
-    )
+    );
 
     // Go back online
-    await context.setOffline(false)
+    await context.setOffline(false);
 
     // Refresh and verify all changes persisted
-    await page.reload({ waitUntil: 'networkidle' })
-    await waitForPageReady(page)
+    await page.reload({ waitUntil: 'networkidle' });
+    await waitForPageReady(page);
 
-    await expect(entries).toHaveCount(2)
+    await expect(entries).toHaveCount(2);
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.UPDATED })
-    ).toBeVisible()
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.UPDATED })
+    ).toBeVisible();
     await expect(
-      page
-        .getByTestId('entry-card')
-        .filter({ hasText: TEST_ENTRY_CONTENT.SECOND })
-    ).toBeVisible()
-  })
-})
+      page.getByTestId('entry-card').filter({ hasText: TEST_ENTRY_CONTENT.SECOND })
+    ).toBeVisible();
+  });
+});

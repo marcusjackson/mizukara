@@ -4,6 +4,22 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-10-21
+
+### Fixed
+
+- Saving: a save counts as done only when the transaction commits, and the database connection recovers after a failed one.
+- Device sync: restoring the tag index keeps the schema version, and tag de-duplication stamps stay newer than the rows they replace.
+- Entries: reordering renumbers a day whenever entries tie; edits and tag changes refuse deleted entries; tag chips on a card appear in name order; the edit box no longer autofocuses on touch devices.
+- Day view: "today" rolls over at midnight and when you return to the tab; blank edits are rejected; Cmd/Ctrl+S works in either case; cancelling an edit refetches.
+- Tags: a failed read clears the filtered entries.
+- Tag suggestions: the local model's word fallback matches words ending in a silent e and possessives, and pairing-code decoding is more robust.
+- Accessibility and polish: calendar day labels, a 44px view toggle, dark colour scheme, a forced-colors focus ring, the settings switch thumb position, error announcements, and dialogs that no longer dismiss mid-load.
+
+### Changed
+
+- Internal: shared Prettier config, a quicker pre-push check, and dependency and test updates.
+
 ## [0.6.0] - 2026-10-09
 
 ### Added

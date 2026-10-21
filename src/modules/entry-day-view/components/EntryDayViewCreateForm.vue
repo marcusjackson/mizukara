@@ -156,16 +156,10 @@ defineExpose({
       :rows="3"
     />
     <div class="form-actions">
-      <BaseButton
-        :disabled="isContentEmpty"
-        type="submit"
-        variant="primary"
-      >
+      <BaseButton :disabled="isContentEmpty" type="submit" variant="primary">
         New Entry
       </BaseButton>
-      <span class="keyboard-hint">
-        <kbd>⌘/Ctrl+S</kbd> to save • <kbd>Esc</kbd> to clear
-      </span>
+      <span class="keyboard-hint"> <kbd>⌘/Ctrl+S</kbd> to save • <kbd>Esc</kbd> to clear </span>
     </div>
   </form>
 

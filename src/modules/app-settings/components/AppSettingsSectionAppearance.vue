@@ -29,10 +29,7 @@ function handleThemeToggle(isDark: boolean): void {
 </script>
 
 <template>
-  <section
-    aria-label="Appearance settings"
-    class="app-settings-section"
-  >
+  <section aria-label="Appearance settings" class="app-settings-section">
     <h2 class="app-settings-section-title">Appearance</h2>
 
     <div class="app-settings-option">

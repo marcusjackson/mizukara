@@ -16,19 +16,9 @@ const { needRefresh, reload } = usePwaUpdate()
 </script>
 
 <template>
-  <div
-    v-if="needRefresh"
-    aria-live="polite"
-    class="shared-update-prompt"
-    role="status"
-  >
+  <div v-if="needRefresh" aria-live="polite" class="shared-update-prompt" role="status">
     <p class="shared-update-prompt-text">A new version is available.</p>
-    <BaseButton
-      size="sm"
-      @click="reload"
-    >
-      Reload to update
-    </BaseButton>
+    <BaseButton size="sm" @click="reload"> Reload to update </BaseButton>
   </div>
 </template>
 

@@ -5,41 +5,47 @@
  * Provides both async and sync save methods for different lifecycle events.
  */
 
-import { useToast } from '@/shared/composables/use-toast'
+import { useToast } from '@/shared/composables/use-toast';
 
-import type { Database } from 'sql.js'
+import type { Database } from 'sql.js';
 
-const INDEXEDDB_NAME = 'mizukara'
-const INDEXEDDB_STORE = 'database'
-const INDEXEDDB_KEY = 'db'
+const INDEXEDDB_NAME = 'mizukara';
+const INDEXEDDB_STORE = 'database';
+const INDEXEDDB_KEY = 'db';
 
 /** Debounce delay for auto-persist after writes (ms) */
-const PERSIST_DEBOUNCE_MS = 100
+const PERSIST_DEBOUNCE_MS = 100;
 
 /** Pending debounce timer for auto-persist */
-let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** Whether a persist operation is currently in progress */
-let isPersisting = false
+let isPersisting = false;
 
 /** Queue the next persist after current one completes */
-let persistQueuedWhileBusy = false
+let persistQueuedWhileBusy = false;
 
 /** In-progress persist promise — awaited by persistImmediately to avoid race conditions */
-let currentPersistPromise: Promise<void> | null = null
+let currentPersistPromise: Promise<void> | null = null;
 
 /** Reference to the database instance for persistence */
-let databaseRef: Database | null = null
+let databaseRef: Database | null = null;
 
 /** Cached IndexedDB connection promise — re-used across load/save operations */
-let _idbConnection: Promise<IDBDatabase> | null = null
+let _idbConnection: Promise<IDBDatabase> | null = null;
 
 /** Cached open IndexedDB connection for use in synchronous contexts */
-let idbConnectionRef: IDBDatabase | null = null
+let idbConnectionRef: IDBDatabase | null = null;
 
 // =============================================================================
 // IndexedDB Operations
 // =============================================================================
+
+/** Forget the cached connection so the next operation opens a new one. */
+function resetConnectionCache(): void {
+  idbConnectionRef = null;
+  _idbConnection = null;
+}
 
 /**
  * Open IndexedDB connection, caching for reuse.
@@ -50,73 +56,78 @@ let idbConnectionRef: IDBDatabase | null = null
  */
 export function openIndexedDB(): Promise<IDBDatabase> {
   if (idbConnectionRef) {
-    return Promise.resolve(idbConnectionRef)
+    return Promise.resolve(idbConnectionRef);
   }
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(INDEXEDDB_NAME, 1)
+    const request = indexedDB.open(INDEXEDDB_NAME, 1);
 
     request.onerror = () => {
-      reject(new Error(request.error?.message ?? 'Failed to open IndexedDB'))
-    }
+      reject(new Error(request.error?.message ?? 'Failed to open IndexedDB'));
+    };
     request.onblocked = () => {
-      reject(
-        new Error(
-          'IndexedDB upgrade blocked. Please close other tabs and reload.'
-        )
-      )
-    }
+      reject(new Error('IndexedDB upgrade blocked. Please close other tabs and reload.'));
+    };
     request.onsuccess = () => {
-      idbConnectionRef = request.result
-      // Clear cache if the connection is unexpectedly closed
-      idbConnectionRef.onclose = () => {
-        idbConnectionRef = null
-      }
-      resolve(idbConnectionRef)
-    }
+      const connection = request.result;
+      idbConnectionRef = connection;
+      // Drop both caches if the connection closes unexpectedly, so the next
+      // save opens a fresh one instead of failing on a dead handle.
+      connection.onclose = () => {
+        resetConnectionCache();
+      };
+      // Another tab upgrading the database needs this connection closed.
+      connection.onversionchange = () => {
+        connection.close();
+        resetConnectionCache();
+      };
+      resolve(connection);
+    };
 
     request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result
+      const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(INDEXEDDB_STORE)) {
-        db.createObjectStore(INDEXEDDB_STORE)
+        db.createObjectStore(INDEXEDDB_STORE);
       }
-    }
-  })
+    };
+  });
 }
 
 /**
  * Get (or create) the shared IndexedDB connection.
  * Caching the connection avoids opening a new connection for every operation.
+ * A failed open is not cached, so a later save can try again.
  *
- * @returns Promise resolving to database binary or null if empty
- * @throws {Error} If load fails
+ * @returns Promise resolving to the open connection
+ * @throws {Error} If opening fails
  */
 function getIdbConnection(): Promise<IDBDatabase> {
-  _idbConnection ??= openIndexedDB()
-  return _idbConnection
+  _idbConnection ??= openIndexedDB().catch((err: unknown) => {
+    _idbConnection = null;
+    throw err;
+  });
+  return _idbConnection;
 }
 
 /**
  * Load database from IndexedDB
  */
 export async function loadFromIndexedDB(): Promise<Uint8Array | null> {
-  const idb = await getIdbConnection()
+  const idb = await getIdbConnection();
 
   return new Promise((resolve, reject) => {
-    const transaction = idb.transaction(INDEXEDDB_STORE, 'readonly')
-    const store = transaction.objectStore(INDEXEDDB_STORE)
-    const request = store.get(INDEXEDDB_KEY)
+    const transaction = idb.transaction(INDEXEDDB_STORE, 'readonly');
+    const store = transaction.objectStore(INDEXEDDB_STORE);
+    const request = store.get(INDEXEDDB_KEY);
 
     request.onerror = () => {
-      reject(
-        new Error(request.error?.message ?? 'Failed to load from IndexedDB')
-      )
-    }
+      reject(new Error(request.error?.message ?? 'Failed to load from IndexedDB'));
+    };
     request.onsuccess = () => {
-      const result = request.result as Uint8Array | undefined
-      resolve(result ?? null)
-    }
-  })
+      const result = request.result as Uint8Array | undefined;
+      resolve(result ?? null);
+    };
+  });
 }
 
 /**
@@ -127,20 +138,25 @@ export async function loadFromIndexedDB(): Promise<Uint8Array | null> {
  * @throws {Error} If save fails
  */
 export async function saveToIndexedDB(data: Uint8Array): Promise<void> {
-  const idb = await getIdbConnection()
+  const idb = await getIdbConnection();
 
   return new Promise((resolve, reject) => {
-    const transaction = idb.transaction(INDEXEDDB_STORE, 'readwrite')
-    const store = transaction.objectStore(INDEXEDDB_STORE)
-    const request = store.put(data, INDEXEDDB_KEY)
+    const transaction = idb.transaction(INDEXEDDB_STORE, 'readwrite');
+    const store = transaction.objectStore(INDEXEDDB_STORE);
+    const request = store.put(data, INDEXEDDB_KEY);
 
+    // The save is only durable once the transaction commits; a request can
+    // succeed and the transaction still abort (for example on a full quota).
     request.onerror = () => {
-      reject(new Error(request.error?.message ?? 'Failed to save to IndexedDB'))
-    }
-    request.onsuccess = () => {
-      resolve()
-    }
-  })
+      reject(new Error(request.error?.message ?? 'Failed to save to IndexedDB'));
+    };
+    transaction.onabort = () => {
+      reject(new Error(transaction.error?.message ?? 'IndexedDB save was aborted'));
+    };
+    transaction.oncomplete = () => {
+      resolve();
+    };
+  });
 }
 
 /**
@@ -152,40 +168,36 @@ export async function saveToIndexedDB(data: Uint8Array): Promise<void> {
 export function saveToIndexedDBSync(data: Uint8Array): void {
   if (idbConnectionRef) {
     // Use cached connection — starts the write immediately (no async open needed)
-    const transaction = idbConnectionRef.transaction(
-      INDEXEDDB_STORE,
-      'readwrite'
-    )
-    const store = transaction.objectStore(INDEXEDDB_STORE)
-    store.put(data, INDEXEDDB_KEY)
-    return
+    const transaction = idbConnectionRef.transaction(INDEXEDDB_STORE, 'readwrite');
+    transaction.onerror = () => {
+      console.error('saveToIndexedDBSync: transaction failed', transaction.error);
+    };
+    transaction.onabort = () => {
+      console.error('saveToIndexedDBSync: transaction aborted', transaction.error);
+    };
+    transaction.objectStore(INDEXEDDB_STORE).put(data, INDEXEDDB_KEY);
+    return;
   }
 
   // Fallback: open a new connection (may not complete before full unload)
-  const request = indexedDB.open(INDEXEDDB_NAME, 1)
+  const request = indexedDB.open(INDEXEDDB_NAME, 1);
 
   request.onerror = () => {
-    console.error(
-      'saveToIndexedDBSync: failed to open IndexedDB',
-      request.error
-    )
-  }
+    console.error('saveToIndexedDBSync: failed to open IndexedDB', request.error);
+  };
 
   request.onsuccess = () => {
-    const idb = request.result
+    const idb = request.result;
     try {
-      const transaction = idb.transaction(INDEXEDDB_STORE, 'readwrite')
+      const transaction = idb.transaction(INDEXEDDB_STORE, 'readwrite');
       transaction.onerror = () => {
-        console.error(
-          'saveToIndexedDBSync: transaction failed',
-          transaction.error
-        )
-      }
-      transaction.objectStore(INDEXEDDB_STORE).put(data, INDEXEDDB_KEY)
+        console.error('saveToIndexedDBSync: transaction failed', transaction.error);
+      };
+      transaction.objectStore(INDEXEDDB_STORE).put(data, INDEXEDDB_KEY);
     } catch (err) {
-      console.error('saveToIndexedDBSync: unexpected error', err)
+      console.error('saveToIndexedDBSync: unexpected error', err);
     }
-  }
+  };
 }
 
 // =============================================================================
@@ -198,7 +210,7 @@ export function saveToIndexedDBSync(data: Uint8Array): void {
  * @param db - Database instance or null
  */
 export function setDatabaseRef(db: Database | null): void {
-  databaseRef = db
+  databaseRef = db;
 }
 
 /**
@@ -206,53 +218,53 @@ export function setDatabaseRef(db: Database | null): void {
  * Groups rapid writes into a single IndexedDB save.
  */
 export function schedulePersist(): void {
-  if (!databaseRef) return
+  if (!databaseRef) return;
 
   // Clear any pending debounce timer
   if (persistDebounceTimer) {
-    clearTimeout(persistDebounceTimer)
+    clearTimeout(persistDebounceTimer);
   }
 
   // Schedule persist after debounce delay
   persistDebounceTimer = setTimeout(() => {
-    persistDebounceTimer = null
-    void executePersist()
-  }, PERSIST_DEBOUNCE_MS)
+    persistDebounceTimer = null;
+    void executePersist();
+  }, PERSIST_DEBOUNCE_MS);
 }
 
 /**
  * Execute a persist operation, handling concurrency.
  */
 async function executePersist(): Promise<void> {
-  if (!databaseRef) return
+  if (!databaseRef) return;
 
   // If already persisting, queue for later
   if (isPersisting) {
-    persistQueuedWhileBusy = true
-    return
+    persistQueuedWhileBusy = true;
+    return;
   }
 
-  isPersisting = true
+  isPersisting = true;
 
   const promise = saveToIndexedDB(databaseRef.export())
     .catch(() => {
       // Surface the failure as a toast, but don't throw – persistence failure shouldn't crash the app
-      const { error } = useToast()
-      error('Failed to auto-save. Your recent changes may not be saved.')
+      const { error } = useToast();
+      error('Failed to auto-save. Your recent changes may not be saved.');
     })
     .finally(() => {
-      isPersisting = false
-      currentPersistPromise = null
+      isPersisting = false;
+      currentPersistPromise = null;
 
       // If writes occurred during persist, do another persist
       if (persistQueuedWhileBusy) {
-        persistQueuedWhileBusy = false
-        void executePersist()
+        persistQueuedWhileBusy = false;
+        void executePersist();
       }
-    })
+    });
 
-  currentPersistPromise = promise
-  await promise
+  currentPersistPromise = promise;
+  await promise;
 }
 
 /**
@@ -262,23 +274,23 @@ async function executePersist(): Promise<void> {
 export async function persistImmediately(): Promise<void> {
   // Cancel any pending debounced persist
   if (persistDebounceTimer) {
-    clearTimeout(persistDebounceTimer)
-    persistDebounceTimer = null
+    clearTimeout(persistDebounceTimer);
+    persistDebounceTimer = null;
   }
 
-  if (!databaseRef) return
+  if (!databaseRef) return;
 
   // Await any in-progress persist before writing, to avoid overwriting
   // in-flight data with a stale snapshot.
-  if (currentPersistPromise) await currentPersistPromise
+  if (currentPersistPromise) await currentPersistPromise;
 
-  await saveToIndexedDB(databaseRef.export())
+  await saveToIndexedDB(databaseRef.export());
 }
 
 /**
  * Synchronously persist database - last resort for beforeunload.
  */
 export function persistSync(): void {
-  if (!databaseRef) return
-  saveToIndexedDBSync(databaseRef.export())
+  if (!databaseRef) return;
+  saveToIndexedDBSync(databaseRef.export());
 }

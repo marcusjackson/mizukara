@@ -60,28 +60,24 @@ const {
   searchTerm,
   selectedOptions
 } = useComboboxMulti(model, options, { disabled, name, required })
+
+/** reka-ui types the emitted value as one option even in multiple mode, so accept both shapes. */
+function onModelUpdate(value: ComboboxOption | ComboboxOption[]) {
+  handleModelUpdate(Array.isArray(value) ? value : [value])
+}
 </script>
 
 <template>
   <div class="base-combobox">
-    <label
-      v-if="label"
-      class="base-combobox-label"
-      :for="comboboxId"
-    >
+    <label v-if="label" class="base-combobox-label" :for="comboboxId">
       {{ label }}
-      <span
-        v-if="required"
-        aria-hidden="true"
-        class="base-combobox-required"
-        >*</span
-      >
+      <span v-if="required" aria-hidden="true" class="base-combobox-required">*</span>
     </label>
 
     <ComboboxRoot
       v-bind="comboboxRootProps"
       :model-value="selectedOptions"
-      @update:model-value="handleModelUpdate"
+      @update:model-value="onModelUpdate"
     >
       <ComboboxAnchor
         :class="[
@@ -97,10 +93,7 @@ const {
           class="base-combobox-input"
           :placeholder="placeholder ?? 'Search...'"
         />
-        <ComboboxTrigger
-          aria-label="Toggle options"
-          class="base-combobox-trigger"
-        >
+        <ComboboxTrigger aria-label="Toggle options" class="base-combobox-trigger">
           <svg
             aria-hidden="true"
             fill="none"
@@ -118,15 +111,9 @@ const {
       </ComboboxAnchor>
 
       <ComboboxPortal>
-        <ComboboxContent
-          class="base-combobox-content"
-          position="popper"
-          :side-offset="4"
-        >
+        <ComboboxContent class="base-combobox-content" position="popper" :side-offset="4">
           <ComboboxViewport class="base-combobox-viewport">
-            <ComboboxEmpty class="base-combobox-empty">
-              No results found
-            </ComboboxEmpty>
+            <ComboboxEmpty class="base-combobox-empty"> No results found </ComboboxEmpty>
 
             <ComboboxItem
               v-for="option in filteredOptions"
@@ -171,11 +158,7 @@ const {
         type="button"
         @click="removeItem(option.value)"
       >
-        <span
-          aria-hidden="true"
-          class="base-combobox-multi-chip-text"
-          >{{ option.label }}</span
-        >
+        <span aria-hidden="true" class="base-combobox-multi-chip-text">{{ option.label }}</span>
         <svg
           aria-hidden="true"
           class="base-combobox-multi-chip-remove"
@@ -193,12 +176,7 @@ const {
       </button>
     </div>
 
-    <p
-      v-if="error"
-      :id="`${comboboxId}-error`"
-      class="base-combobox-error"
-      role="alert"
-    >
+    <p v-if="error" :id="`${comboboxId}-error`" class="base-combobox-error" role="alert">
       {{ error }}
     </p>
   </div>

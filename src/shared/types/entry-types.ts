@@ -7,19 +7,19 @@
  */
 export interface Entry {
   /** UUID v4 primary key */
-  id: string
-  /** Item content (any length) */
-  content: string
+  id: string;
+  /** Entry text, at most 10,000 characters */
+  content: string;
   /** Creation timestamp in Unix milliseconds (e.g., 1707667200000) */
-  createdAt: number
+  createdAt: number;
   /** Last update timestamp in Unix milliseconds */
-  updatedAt: number
+  updatedAt: number;
   /** Assigned day in ISO format YYYY-MM-DD (e.g., '2026-02-11') */
-  assignedDay: string
+  assignedDay: string;
   /** Order position within day (for custom ordering) */
-  orderPosition: number
+  orderPosition: number;
   /** Soft delete flag */
-  isDeleted: boolean
+  isDeleted: boolean;
 }
 
 /**
@@ -27,9 +27,9 @@ export interface Entry {
  */
 export interface CreateEntryInput {
   /** Item content */
-  content: string
+  content: string;
   /** Assigned day (ISO string YYYY-MM-DD) */
-  assignedDay: string
+  assignedDay: string;
 }
 
 /**
@@ -37,9 +37,9 @@ export interface CreateEntryInput {
  */
 export interface UpdateEntryInput {
   /** Item content (optional) */
-  content?: string
+  content?: string;
   /** Assigned day (optional) */
-  assignedDay?: string
+  assignedDay?: string;
   /** Order position (optional) */
-  orderPosition?: number
+  orderPosition?: number;
 }

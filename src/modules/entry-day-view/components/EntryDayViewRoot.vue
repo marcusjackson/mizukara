@@ -118,29 +118,13 @@ useEntryDayViewShortcuts({
     </output>
 
     <!-- Error State -->
-    <div
-      v-else-if="error"
-      class="error-container"
-      data-testid="error-container"
-      role="alert"
-    >
-      <p class="error-message">
-        Error loading entries: {{ error?.message || 'Unknown error' }}
-      </p>
-      <button
-        class="retry-button"
-        type="button"
-        @click="refetchEntries"
-      >
-        Retry
-      </button>
+    <div v-else-if="error" class="error-container" data-testid="error-container" role="alert">
+      <p class="error-message">Error loading entries: {{ error?.message || 'Unknown error' }}</p>
+      <button class="retry-button" type="button" @click="refetchEntries">Retry</button>
     </div>
 
     <!-- Main Content -->
-    <div
-      v-else
-      class="content-container"
-    >
+    <div v-else class="content-container">
       <EntryDayViewSectionNavigation
         :current-date="currentDate"
         :is-today="isToday"
@@ -221,6 +205,7 @@ useEntryDayViewShortcuts({
 }
 
 .retry-button {
+  min-height: 44px;
   padding: var(--spacing-3) var(--spacing-5);
   border: none;
   border-radius: var(--radius-md);

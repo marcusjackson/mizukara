@@ -6,6 +6,8 @@
  */
 
 :root {
+  color-scheme: light;
+
   /* ========================================
    * Colors
    * ======================================== */
@@ -65,14 +67,12 @@
 
   /* Font Families */
   --font-family-sans:
-    -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue',
-    arial, sans-serif;
+    -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
   --font-family-serif:
-    'Georgia', 'Iowan Old Style', 'Apple Garamond', 'Baskerville',
-    'Times New Roman', 'Droid Serif', 'Times', serif;
+    'Georgia', 'Iowan Old Style', 'Apple Garamond', 'Baskerville', 'Times New Roman', 'Droid Serif',
+    'Times', serif;
   --font-family-mono:
-    'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono',
-    'Source Code Pro', monospace;
+    'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
 
   /* Font Sizes */
   --font-size-xs: 0.75rem; /* 12px */
@@ -133,10 +133,8 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
   --shadow-raised: 0 2px 4px rgb(0 0 0 / 20%);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%);
-  --shadow-lg:
-    0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
-  --shadow-xl:
-    0 20px 25px -5px rgb(0 0 0 / 10%), 0 8px 10px -6px rgb(0 0 0 / 10%);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 8px 10px -6px rgb(0 0 0 / 10%);
 
   /* ========================================
    * Transitions

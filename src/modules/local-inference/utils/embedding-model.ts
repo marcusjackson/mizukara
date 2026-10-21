@@ -9,16 +9,16 @@
  */
 
 export interface EmbeddingModelContract {
-  readonly repoId: string
+  readonly repoId: string;
   /** The weights file the download must contain; the quantised build. */
-  readonly file: string
+  readonly file: string;
   /** Transformers.js dtype name that selects `file`. */
-  readonly dtype: string
-  readonly pooling: string
-  readonly normalize: boolean
+  readonly dtype: string;
+  readonly pooling: string;
+  readonly normalize: boolean;
   /** Text prepended to every input. Empty: the model's retrieval prefix is not used. */
-  readonly prefix: string
-  readonly dimensions: number
+  readonly prefix: string;
+  readonly dimensions: number;
 }
 
 export const EMBEDDING_MODEL: EmbeddingModelContract = {
@@ -28,5 +28,5 @@ export const EMBEDDING_MODEL: EmbeddingModelContract = {
   normalize: true,
   pooling: 'mean',
   prefix: '',
-  repoId: 'Xenova/bge-small-en-v1.5'
-}
+  repoId: 'Xenova/bge-small-en-v1.5',
+};

@@ -1,19 +1,16 @@
-import { createEntry, updateEntry } from '@/api/entries/entry-mutations'
+import { createEntry, updateEntry } from '@/api/entries/entry-mutations';
 
-import { useDatabase } from '@/shared/composables/use-database'
-import { useToast } from '@/shared/composables/use-toast'
+import { useDatabase } from '@/shared/composables/use-database';
+import { useToast } from '@/shared/composables/use-toast';
 
-import type {
-  CreateEntryInput,
-  UpdateEntryInput
-} from '@/shared/types/entry-types'
+import type { CreateEntryInput, UpdateEntryInput } from '@/shared/types/entry-types';
 
 /**
  * Options for useEntryDayViewMutations composable
  */
 export interface UseEntryDayViewMutationsOptions {
   /** Callback invoked after successful mutations to refetch data */
-  onRefetch: () => Promise<void>
+  onRefetch: () => Promise<void>;
 }
 
 /**
@@ -21,12 +18,9 @@ export interface UseEntryDayViewMutationsOptions {
  */
 export interface UseEntryDayViewMutationsReturn {
   /** Create a new entry; resolves true on success, false after showing an error toast */
-  createNewEntry: (data: CreateEntryInput) => Promise<boolean>
+  createNewEntry: (data: CreateEntryInput) => Promise<boolean>;
   /** Update an existing entry; resolves true on success, false after showing an error toast */
-  updateExistingEntry: (
-    entryId: string,
-    data: UpdateEntryInput
-  ) => Promise<boolean>
+  updateExistingEntry: (entryId: string, data: UpdateEntryInput) => Promise<boolean>;
 }
 
 /**
@@ -48,9 +42,9 @@ export interface UseEntryDayViewMutationsReturn {
 export function useEntryDayViewMutations(
   options: UseEntryDayViewMutationsOptions
 ): UseEntryDayViewMutationsReturn {
-  const { onRefetch } = options
-  const { database } = useDatabase()
-  const { error: showError } = useToast()
+  const { onRefetch } = options;
+  const { database } = useDatabase();
+  const { error: showError } = useToast();
 
   /**
    * Run a database write followed by the refetch, turning any failure into an
@@ -62,16 +56,16 @@ export function useEntryDayViewMutations(
   ): Promise<boolean> => {
     try {
       if (!database.value) {
-        throw new Error('Database not initialized')
+        throw new Error('Database not initialized');
       }
-      mutate(database.value)
-      await onRefetch()
-      return true
+      mutate(database.value);
+      await onRefetch();
+      return true;
     } catch (err) {
-      showError(err instanceof Error ? err.message : fallbackMessage)
-      return false
+      showError(err instanceof Error ? err.message : fallbackMessage);
+      return false;
     }
-  }
+  };
 
   /**
    * Create a new entry
@@ -81,8 +75,8 @@ export function useEntryDayViewMutations(
    */
   const createNewEntry = (data: CreateEntryInput): Promise<boolean> =>
     runMutation((db) => {
-      createEntry(db, data)
-    }, 'Failed to create entry')
+      createEntry(db, data);
+    }, 'Failed to create entry');
 
   /**
    * Update an existing entry
@@ -91,16 +85,13 @@ export function useEntryDayViewMutations(
    * @param data - Entry update data
    * @returns Whether the entry was updated
    */
-  const updateExistingEntry = (
-    entryId: string,
-    data: UpdateEntryInput
-  ): Promise<boolean> =>
+  const updateExistingEntry = (entryId: string, data: UpdateEntryInput): Promise<boolean> =>
     runMutation((db) => {
-      updateEntry(db, entryId, data)
-    }, 'Failed to update entry')
+      updateEntry(db, entryId, data);
+    }, 'Failed to update entry');
 
   return {
     createNewEntry,
-    updateExistingEntry
-  }
+    updateExistingEntry,
+  };
 }

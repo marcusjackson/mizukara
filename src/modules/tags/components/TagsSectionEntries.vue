@@ -8,8 +8,6 @@
  * - Empty state when no tags are selected
  * - Empty state when selected tags yield no matching entries
  * - Clear filter action when at least one tag is active
- *
- * Includes `searchQuery` prop reserved for future text-search composition (req 4.6).
  */
 
 import { computed } from 'vue'
@@ -27,8 +25,6 @@ interface Props {
   entries: Entry[]
   /** IDs of currently selected filter tags */
   activeTagIds: string[]
-  /** Reserved for future text-search composition */
-  searchQuery?: string
 }
 
 const props = defineProps<Props>()
@@ -46,10 +42,7 @@ const hasEntries = computed(() => props.entries.length > 0)
 </script>
 
 <template>
-  <section
-    aria-label="Filtered entries"
-    class="tags-section-entries"
-  >
+  <section aria-label="Filtered entries" class="tags-section-entries">
     <div class="tags-section-entries__header">
       <h2 class="tags-section-entries__title">Entries</h2>
 
@@ -65,37 +58,19 @@ const hasEntries = computed(() => props.entries.length > 0)
     </div>
 
     <!-- No filter active -->
-    <p
-      v-if="!hasActiveFilter"
-      class="tags-section-entries__empty"
-      data-testid="empty-no-filter"
-    >
+    <p v-if="!hasActiveFilter" class="tags-section-entries__empty" data-testid="empty-no-filter">
       Select a tag to filter entries.
     </p>
 
     <!-- Filter active but no results -->
-    <p
-      v-else-if="!hasEntries"
-      class="tags-section-entries__empty"
-      data-testid="empty-no-results"
-    >
+    <p v-else-if="!hasEntries" class="tags-section-entries__empty" data-testid="empty-no-results">
       No entries found for the selected tags.
     </p>
 
     <!-- Entry list -->
-    <ol
-      v-else
-      class="tags-section-entries__list"
-    >
-      <li
-        v-for="entry in props.entries"
-        :key="entry.id"
-        class="tags-section-entries__item"
-      >
-        <SharedEntryCard
-          :entry="entry"
-          :show-edit-button="false"
-        />
+    <ol v-else class="tags-section-entries__list">
+      <li v-for="entry in props.entries" :key="entry.id" class="tags-section-entries__item">
+        <SharedEntryCard :entry="entry" :show-edit-button="false" />
       </li>
     </ol>
   </section>

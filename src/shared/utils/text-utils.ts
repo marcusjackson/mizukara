@@ -5,7 +5,7 @@
  */
 
 /** Default snippet length used by truncateSnippet. */
-export const SNIPPET_MAX_LENGTH = 200
+export const SNIPPET_MAX_LENGTH = 200;
 
 /**
  * Truncate content to a snippet of at most maxLength characters.
@@ -28,15 +28,12 @@ export const SNIPPET_MAX_LENGTH = 200
  * truncateSnippet('short content')
  * // 'short content'
  */
-export function truncateSnippet(
-  content: string,
-  maxLength: number = SNIPPET_MAX_LENGTH
-): string {
-  if (content.length <= maxLength) return content
+export function truncateSnippet(content: string, maxLength: number = SNIPPET_MAX_LENGTH): string {
+  if (content.length <= maxLength) return content;
 
-  const slice = content.slice(0, maxLength)
-  const boundaryMatch = /\s+\S*$/.exec(slice)
-  const cut = boundaryMatch ? slice.slice(0, boundaryMatch.index) : slice
+  const slice = content.slice(0, maxLength);
+  const boundaryMatch = /\s+\S*$/.exec(slice);
+  const cut = boundaryMatch ? slice.slice(0, boundaryMatch.index) : slice;
 
-  return `${cut}…`
+  return `${cut}…`;
 }

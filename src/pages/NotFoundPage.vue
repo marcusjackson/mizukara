@@ -12,11 +12,7 @@ import { ROUTES } from '@/router/routes'
   <div class="not-found-page">
     <h1>Page Not Found</h1>
     <p>The page you're looking for doesn't exist.</p>
-    <RouterLink
-      class="not-found-home-link"
-      :to="ROUTES.HOME"
-      >Go to home</RouterLink
-    >
+    <RouterLink class="not-found-home-link" :to="ROUTES.HOME">Go to home</RouterLink>
   </div>
 </template>
 

@@ -5,9 +5,9 @@
  * Single source of truth for column-order-to-property mapping.
  */
 
-import { assertNumber, assertString } from '@/api/row-assertions'
+import { assertNumber, assertString } from '@/api/row-assertions';
 
-import type { Tag } from '@/shared/types/tag-types'
+import type { Tag } from '@/shared/types/tag-types';
 
 /**
  * Convert SQLite query result row to Tag object
@@ -37,6 +37,6 @@ export function rowToTag(row: unknown[]): Tag {
     name: assertString(row[1], 'name', 'rowToTag'),
     createdAt: assertNumber(row[2], 'created_at', 'rowToTag'),
     updatedAt: assertNumber(row[3], 'updated_at', 'rowToTag'),
-    isDeleted: Boolean(row[4])
-  }
+    isDeleted: Boolean(row[4]),
+  };
 }

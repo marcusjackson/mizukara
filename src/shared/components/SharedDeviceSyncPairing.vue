@@ -57,10 +57,7 @@ defineExpose({ close: pairing.close })
 
 <template>
   <div class="shared-device-sync-pairing">
-    <BaseSpinner
-      v-if="pairing.phase.value === 'idle'"
-      label="Preparing…"
-    />
+    <BaseSpinner v-if="pairing.phase.value === 'idle'" label="Preparing…" />
 
     <template
       v-else-if="
@@ -83,26 +80,16 @@ defineExpose({ close: pairing.close })
         :show-paste-input="pairing.phase.value !== 'sharing-answer'"
         @submit="pairing.submitCode"
       />
-      <BaseButton
-        size="sm"
-        variant="ghost"
-        @click="toggleInputMode"
-      >
+      <BaseButton size="sm" variant="ghost" @click="toggleInputMode">
         {{ inputMode === 'qr' ? 'Use a code instead' : 'Use camera instead' }}
       </BaseButton>
     </template>
 
-    <BaseSpinner
-      v-else-if="pairing.phase.value === 'connecting'"
-      label="Connecting…"
-    />
+    <BaseSpinner v-else-if="pairing.phase.value === 'connecting'" label="Connecting…" />
 
     <p v-else-if="pairing.phase.value === 'connected'">Devices paired.</p>
 
-    <p
-      v-else-if="pairing.phase.value === 'error'"
-      role="alert"
-    >
+    <p v-else-if="pairing.phase.value === 'error'" role="alert">
       {{ pairing.error.value }}
     </p>
   </div>

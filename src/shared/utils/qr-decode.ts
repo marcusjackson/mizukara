@@ -1,4 +1,4 @@
-import jsQR from 'jsqr'
+import jsQR from 'jsqr';
 
 /**
  * Decodes a single camera-frame RGBA pixel buffer for a QR code. Thin
@@ -10,5 +10,5 @@ export function decodeQrFromImageData(
   width: number,
   height: number
 ): string | null {
-  return jsQR(data, width, height)?.data ?? null
+  return jsQR(data, width, height)?.data ?? null;
 }

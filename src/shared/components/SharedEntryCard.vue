@@ -80,38 +80,21 @@ const handleEditClick = () => {
 </script>
 
 <template>
-  <article
-    class="entry-card"
-    data-testid="entry-card"
-  >
-    <div
-      class="entry-content"
-      data-testid="entry-content"
-    >
+  <article class="entry-card" data-testid="entry-card">
+    <div class="entry-content" data-testid="entry-content">
       {{ entry.content }}
     </div>
 
     <div class="entry-metadata">
-      <time
-        class="created-at"
-        data-testid="created-at"
-        :datetime="createdAtISO"
-      >
+      <time class="created-at" data-testid="created-at" :datetime="createdAtISO">
         Created: {{ formattedCreatedAt }}
       </time>
-      <span
-        v-if="hasBeenUpdated"
-        class="updated-indicator"
-        data-testid="updated-indicator"
-      >
+      <span v-if="hasBeenUpdated" class="updated-indicator" data-testid="updated-indicator">
         (edited)
       </span>
     </div>
 
-    <SharedEntryCardTags
-      v-if="resolvedTags.length > 0"
-      :tags="resolvedTags"
-    />
+    <SharedEntryCardTags v-if="resolvedTags.length > 0" :tags="resolvedTags" />
 
     <button
       v-if="showEditButton"

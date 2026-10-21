@@ -7,15 +7,15 @@
  */
 export interface SeedTagInput {
   /** Override auto-generated UUID for predictable test IDs */
-  id?: string
+  id?: string;
   /** Tag name (defaults to 'test-tag') */
-  name?: string
+  name?: string;
   /** Test soft-deleted tags (defaults to false) */
-  isDeleted?: boolean
+  isDeleted?: boolean;
   /** Override timestamp (defaults to Date.now()) */
-  createdAt?: number
+  createdAt?: number;
   /** Override timestamp (defaults to Date.now()) */
-  updatedAt?: number
+  updatedAt?: number;
 }
 
 /**
@@ -23,18 +23,18 @@ export interface SeedTagInput {
  */
 export interface SeedEntryTagInput {
   /** Override auto-generated UUID for predictable test IDs */
-  id?: string
+  id?: string;
   /** Entry ID to associate */
-  entryId: string
+  entryId: string;
   /** Tag ID to associate */
-  tagId: string
+  tagId: string;
   /** Test soft-deleted associations (defaults to false) */
-  isDeleted?: boolean
+  isDeleted?: boolean;
   /** Override timestamp (defaults to Date.now()) */
-  createdAt?: number
+  createdAt?: number;
   /** Override timestamp (defaults to Date.now()) */
-  updatedAt?: number
+  updatedAt?: number;
 }
 
 // Re-export types for convenience
-export type { EntryTag, Tag } from '@/shared/types/tag-types'
+export type { EntryTag, Tag } from '@/shared/types/tag-types';

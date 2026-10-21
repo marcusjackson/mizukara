@@ -65,20 +65,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="shared-device-sync-code-exchange">
-    <div
-      v-if="code !== null"
-      class="shared-device-sync-code-exchange-share"
-    >
+    <div v-if="code !== null" class="shared-device-sync-code-exchange-share">
       <span class="shared-device-sync-code-exchange-share-label">
         {{ shareLabel }}
       </span>
       <div class="shared-device-sync-code-exchange-share-row">
         <code class="shared-device-sync-code-exchange-code">{{ code }}</code>
-        <BaseButton
-          size="sm"
-          variant="secondary"
-          @click="handleCopy"
-        >
+        <BaseButton size="sm" variant="secondary" @click="handleCopy">
           {{ justCopied ? 'Copied!' : 'Copy' }}
         </BaseButton>
       </div>
@@ -89,17 +82,8 @@ onBeforeUnmount(() => {
       class="shared-device-sync-code-exchange-paste"
       @submit.prevent="handleSubmit"
     >
-      <BaseInput
-        v-model="pastedCode"
-        :label="pasteLabel"
-        placeholder="Paste code here"
-      />
-      <BaseButton
-        :disabled="!pastedCode.trim()"
-        type="submit"
-      >
-        Continue
-      </BaseButton>
+      <BaseInput v-model="pastedCode" :label="pasteLabel" placeholder="Paste code here" />
+      <BaseButton :disabled="!pastedCode.trim()" type="submit"> Continue </BaseButton>
     </form>
   </div>
 </template>

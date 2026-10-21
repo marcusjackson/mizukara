@@ -32,17 +32,24 @@ const error = ref<string | null>(null)
 
 watch(
   () => props.value,
-  async (value) => {
+  async (value, _previous, onCleanup) => {
+    const run = { stale: false }
+    onCleanup(() => {
+      run.stale = true
+    })
     imageDataUrl.value = null
     error.value = null
     try {
-      imageDataUrl.value = await QRCode.toDataURL(value, {
+      const url = await QRCode.toDataURL(value, {
         margin: 1,
         width: QR_CODE_PIXEL_SIZE
       })
+      if (!run.stale) imageDataUrl.value = url
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : 'Failed to generate QR code'
+      if (!run.stale) {
+        error.value =
+          err instanceof Error ? err.message : 'Failed to generate QR code'
+      }
     }
   },
   { immediate: true }
@@ -57,17 +64,10 @@ watch(
       class="shared-device-sync-qr-display-image"
       :src="imageDataUrl"
     />
-    <p
-      v-else-if="error"
-      class="shared-device-sync-qr-display-error"
-      role="alert"
-    >
+    <p v-else-if="error" class="shared-device-sync-qr-display-error" role="alert">
       {{ error }}
     </p>
-    <BaseSpinner
-      v-else
-      :label="`Generating ${label.toLowerCase()}…`"
-    />
+    <BaseSpinner v-else :label="`Generating ${label.toLowerCase()}…`" />
   </div>
 </template>
 

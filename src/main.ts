@@ -1,15 +1,15 @@
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 
-import App from './App.vue'
-import router from './router'
+import App from './App.vue';
+import router from './router';
 
 // Import global styles
-import './styles/tokens.css'
-import './styles/base.css'
-import './styles/toast.css'
+import './styles/tokens.css';
+import './styles/base.css';
+import './styles/toast.css';
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(router)
+app.use(router);
 
-app.mount('#app')
+app.mount('#app');

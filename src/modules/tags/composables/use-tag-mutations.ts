@@ -8,14 +8,13 @@
 import {
   createTag as createTagApi,
   renameTag as renameTagApi,
-  softDeleteTag as softDeleteTagApi
-} from '@/api/tags/tag-mutations'
-import { TagValidationError } from '@/api/tags/tag-validation'
+  softDeleteTag as softDeleteTagApi,
+} from '@/api/tags/tag-mutations';
 
-import { useDatabase } from '@/shared/composables/use-database'
-import { useToast } from '@/shared/composables/use-toast'
+import { useDatabase } from '@/shared/composables/use-database';
+import { useToast } from '@/shared/composables/use-toast';
 
-import type { Tag } from '@/shared/types/tag-types'
+import type { Tag } from '@/shared/types/tag-types';
 
 // =============================================================================
 // Types
@@ -23,11 +22,19 @@ import type { Tag } from '@/shared/types/tag-types'
 
 export interface UseTagMutationsReturn {
   /** Create a new tag. Returns the tag on success, null if validation fails (toast shown). */
-  createTag: (name: string) => Promise<Tag | null>
+  createTag: (name: string) => Promise<Tag | null>;
   /** Rename an existing tag. Returns true on success, false on error (toast shown). */
-  renameTag: (id: string, name: string) => Promise<boolean>
+  renameTag: (id: string, name: string) => Promise<boolean>;
   /** Soft-delete a tag and cascade to its entry_tags associations. Returns true on success, false on error (toast shown). */
-  deleteTag: (id: string) => Promise<boolean>
+  deleteTag: (id: string) => Promise<boolean>;
+}
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+function messageOf(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
 }
 
 // =============================================================================
@@ -35,8 +42,8 @@ export interface UseTagMutationsReturn {
 // =============================================================================
 
 export function useTagMutations(): UseTagMutationsReturn {
-  const { database } = useDatabase()
-  const { error: showError } = useToast()
+  const { database } = useDatabase();
+  const { error: showError } = useToast();
 
   /**
    * Create a new tag by name.
@@ -45,17 +52,13 @@ export function useTagMutations(): UseTagMutationsReturn {
    * Returns the created tag or null on any failure (Toast shown on error).
    */
   function createTag(name: string): Promise<Tag | null> {
-    if (!database.value) return Promise.resolve(null)
+    if (!database.value) return Promise.resolve(null);
 
     try {
-      return Promise.resolve(createTagApi(database.value, { name }))
+      return Promise.resolve(createTagApi(database.value, { name }));
     } catch (err) {
-      const message =
-        err instanceof TagValidationError || err instanceof Error
-          ? err.message
-          : 'Failed to create tag'
-      showError(message)
-      return Promise.resolve(null)
+      showError(messageOf(err, 'Failed to create tag'));
+      return Promise.resolve(null);
     }
   }
 
@@ -66,18 +69,14 @@ export function useTagMutations(): UseTagMutationsReturn {
    * Returns true on success, false on error.
    */
   function renameTag(id: string, name: string): Promise<boolean> {
-    if (!database.value) return Promise.resolve(false)
+    if (!database.value) return Promise.resolve(false);
 
     try {
-      renameTagApi(database.value, id, name)
-      return Promise.resolve(true)
+      renameTagApi(database.value, id, name);
+      return Promise.resolve(true);
     } catch (err) {
-      const message =
-        err instanceof TagValidationError || err instanceof Error
-          ? err.message
-          : 'Failed to rename tag'
-      showError(message)
-      return Promise.resolve(false)
+      showError(messageOf(err, 'Failed to rename tag'));
+      return Promise.resolve(false);
     }
   }
 
@@ -88,24 +87,20 @@ export function useTagMutations(): UseTagMutationsReturn {
    * Shows toast on any failure. Returns true on success, false on error.
    */
   function deleteTag(id: string): Promise<boolean> {
-    if (!database.value) return Promise.resolve(false)
+    if (!database.value) return Promise.resolve(false);
 
     try {
-      softDeleteTagApi(database.value, id)
-      return Promise.resolve(true)
+      softDeleteTagApi(database.value, id);
+      return Promise.resolve(true);
     } catch (err) {
-      const message =
-        err instanceof TagValidationError || err instanceof Error
-          ? err.message
-          : 'Failed to delete tag'
-      showError(message)
-      return Promise.resolve(false)
+      showError(messageOf(err, 'Failed to delete tag'));
+      return Promise.resolve(false);
     }
   }
 
   return {
     createTag,
     deleteTag,
-    renameTag
-  }
+    renameTag,
+  };
 }

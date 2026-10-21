@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 
 import type {
   LocalInferenceModel,
   LocalInferenceState,
-  LocalInferenceUnsupportedReason
-} from './local-inference-types'
+  LocalInferenceUnsupportedReason,
+} from './local-inference-types';
 
 /**
  * These types carry no runtime code. What is worth testing is that the state
@@ -14,24 +14,24 @@ import type {
 function describeState(state: LocalInferenceState): string {
   switch (state) {
     case 'unsupported':
-      return 'unsupported'
+      return 'unsupported';
     case 'no-model':
-      return 'no model'
+      return 'no model';
     case 'downloading':
-      return 'downloading'
+      return 'downloading';
     case 'loading':
-      return 'loading'
+      return 'loading';
     case 'idle':
-      return 'idle'
+      return 'idle';
     case 'ready':
-      return 'ready'
+      return 'ready';
     case 'working':
-      return 'working'
+      return 'working';
     case 'error':
-      return 'error'
+      return 'error';
     default: {
-      const exhaustive: never = state
-      return exhaustive
+      const exhaustive: never = state;
+      return exhaustive;
     }
   }
 }
@@ -46,11 +46,11 @@ describe('local inference types', () => {
       'idle',
       'ready',
       'working',
-      'error'
-    ]
+      'error',
+    ];
 
-    expect(states.map(describeState)).toHaveLength(states.length)
-  })
+    expect(states.map(describeState)).toHaveLength(states.length);
+  });
 
   it('should accept a fully specified model when building a registry entry', () => {
     const model: LocalInferenceModel = {
@@ -59,18 +59,15 @@ describe('local inference types', () => {
       name: 'Test',
       note: 'Test',
       repoId: 'org/repo',
-      weightsFile: 'model_quantized.onnx'
-    }
+      weightsFile: 'model_quantized.onnx',
+    };
 
-    expect(model.dtype).toBe('q8')
-  })
+    expect(model.dtype).toBe('q8');
+  });
 
   it('should distinguish the two unsupported reasons, which have different fixes', () => {
-    const reasons: LocalInferenceUnsupportedReason[] = [
-      'no-worker',
-      'no-webassembly'
-    ]
+    const reasons: LocalInferenceUnsupportedReason[] = ['no-worker', 'no-webassembly'];
 
-    expect(new Set(reasons).size).toBe(2)
-  })
-})
+    expect(new Set(reasons).size).toBe(2);
+  });
+});

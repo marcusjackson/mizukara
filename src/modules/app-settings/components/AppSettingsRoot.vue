@@ -19,11 +19,7 @@ import AppSettingsSectionLocalInference from './AppSettingsSectionLocalInference
 <template>
   <main class="app-settings-root">
     <div class="app-settings-header">
-      <RouterLink
-        aria-label="Back to entries"
-        class="app-settings-back-link"
-        :to="ROUTES.HOME"
-      >
+      <RouterLink aria-label="Back to entries" class="app-settings-back-link" :to="ROUTES.HOME">
         ← Back
       </RouterLink>
       <h1 class="app-settings-title">Settings</h1>

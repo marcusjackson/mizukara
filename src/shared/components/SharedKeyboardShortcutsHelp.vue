@@ -5,8 +5,6 @@
  * Displays a keyboard shortcuts reference dialog.
  * Includes a "?" trigger button and registers the "?" keyboard shortcut
  * to open the dialog when no input is focused.
- *
- * @requirements 7.5, 7.6
  */
 
 import { ref } from 'vue'
@@ -27,9 +25,9 @@ const isMac =
 const modKey = isMac ? 'Cmd' : 'Ctrl'
 
 const shortcuts: ShortcutEntry[] = [
-  { keys: `${modKey} + N`, description: 'Create new entry' },
-  { keys: 'J', description: 'Next day' },
-  { keys: 'K', description: 'Previous day' },
+  { keys: `${modKey} + N`, description: 'Focus the Content box' },
+  { keys: 'J or Arrow Down', description: 'Next day' },
+  { keys: 'K or Arrow Up', description: 'Previous day' },
   { keys: 'G', description: 'Jump to date' },
   { keys: `${modKey} + S`, description: 'Save entry' },
   { keys: 'Escape', description: 'Cancel / Clear' },

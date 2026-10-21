@@ -23,10 +23,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div
-    class="base-tag-input-chips"
-    data-testid="tag-chips"
-  >
+  <div class="base-tag-input-chips" data-testid="tag-chips">
     <button
       v-for="option in props.selectedOptions"
       :key="option.value"

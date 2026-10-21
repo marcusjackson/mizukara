@@ -5,58 +5,55 @@
  * assignTag, removeTag, createAndAssignTag.
  */
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest';
 
-import { TagValidationError } from '@/api/tags/tag-validation'
+import { TagValidationError } from '@/api/tags/tag-validation';
 
 // =============================================================================
 // Mocks
 // =============================================================================
 
-const mockDatabase = {}
+const mockDatabase = {};
 
 vi.mock('@/shared/composables/use-database', () => ({
   useDatabase: () => ({
-    database: { value: mockDatabase }
-  })
-}))
+    database: { value: mockDatabase },
+  }),
+}));
 
-const mockShowError = vi.fn()
+const mockShowError = vi.fn();
 
 vi.mock('@/shared/composables/use-toast', () => ({
   useToast: () => ({
-    error: mockShowError
-  })
-}))
+    error: mockShowError,
+  }),
+}));
 
-const {
-  mockAssignTagApi,
-  mockCreateTagApi,
-  mockRemoveTagApi,
-  mockSoftDeleteTagApi
-} = vi.hoisted(() => ({
-  mockSoftDeleteTagApi: vi.fn(),
-  mockAssignTagApi: vi.fn(),
-  mockCreateTagApi: vi.fn(),
-  mockRemoveTagApi: vi.fn()
-}))
+const { mockAssignTagApi, mockCreateTagApi, mockRemoveTagApi, mockSoftDeleteTagApi } = vi.hoisted(
+  () => ({
+    mockSoftDeleteTagApi: vi.fn(),
+    mockAssignTagApi: vi.fn(),
+    mockCreateTagApi: vi.fn(),
+    mockRemoveTagApi: vi.fn(),
+  })
+);
 
 vi.mock('@/api/entry-tags/entry-tag-mutations', () => ({
   assignTag: mockAssignTagApi,
   removeTag: mockRemoveTagApi,
-  softDeleteByTagId: vi.fn()
-}))
+  softDeleteByTagId: vi.fn(),
+}));
 
 vi.mock('@/api/tags/tag-mutations', () => ({
   createTag: mockCreateTagApi,
   renameTag: vi.fn(),
-  softDeleteTag: mockSoftDeleteTagApi
-}))
+  softDeleteTag: mockSoftDeleteTagApi,
+}));
 
 // Import after mocks
-import { useEntryTagMutations } from './use-entry-tag-mutations'
+import { useEntryTagMutations } from './use-entry-tag-mutations';
 
-import type { Tag } from '@/shared/types/tag-types'
+import type { Tag } from '@/shared/types/tag-types';
 
 // =============================================================================
 // Fixtures
@@ -69,8 +66,8 @@ function makeTag(overrides: Partial<Tag> = {}): Tag {
     createdAt: 1000,
     updatedAt: 1000,
     isDeleted: false,
-    ...overrides
-  }
+    ...overrides,
+  };
 }
 
 function makeEntryTag() {
@@ -80,8 +77,8 @@ function makeEntryTag() {
     tagId: 'tag-1',
     createdAt: 1000,
     updatedAt: 1000,
-    isDeleted: false
-  }
+    isDeleted: false,
+  };
 }
 
 // =============================================================================
@@ -89,195 +86,188 @@ function makeEntryTag() {
 // =============================================================================
 
 function resetMocks() {
-  mockAssignTagApi.mockReset()
-  mockRemoveTagApi.mockReset()
-  mockCreateTagApi.mockReset()
-  mockSoftDeleteTagApi.mockReset()
-  mockShowError.mockReset()
+  mockAssignTagApi.mockReset();
+  mockRemoveTagApi.mockReset();
+  mockCreateTagApi.mockReset();
+  mockSoftDeleteTagApi.mockReset();
+  mockShowError.mockReset();
 }
 
 describe('useEntryTagMutations', () => {
   describe('interface', () => {
     it('returns expected interface', () => {
-      resetMocks()
-      const result = useEntryTagMutations()
+      resetMocks();
+      const result = useEntryTagMutations();
 
-      expect(result).toHaveProperty('assignTag')
-      expect(result).toHaveProperty('removeTag')
-      expect(result).toHaveProperty('createAndAssignTag')
-    })
-  })
+      expect(result).toHaveProperty('assignTag');
+      expect(result).toHaveProperty('removeTag');
+      expect(result).toHaveProperty('createAndAssignTag');
+    });
+  });
 
   describe('assignTag', () => {
     it('calls assignTag API with database, entryId, and tagId', async () => {
-      resetMocks()
-      mockAssignTagApi.mockReturnValue(makeEntryTag())
+      resetMocks();
+      mockAssignTagApi.mockReturnValue(makeEntryTag());
 
-      const { assignTag } = useEntryTagMutations()
-      await assignTag('entry-1', 'tag-1')
+      const { assignTag } = useEntryTagMutations();
+      await assignTag('entry-1', 'tag-1');
 
       expect(mockAssignTagApi).toHaveBeenCalledWith(mockDatabase, {
         entryId: 'entry-1',
-        tagId: 'tag-1'
-      })
-    })
+        tagId: 'tag-1',
+      });
+    });
 
     it('shows error toast on API failure', async () => {
-      resetMocks()
+      resetMocks();
       mockAssignTagApi.mockImplementation(() => {
-        throw new Error('DB error')
-      })
+        throw new Error('DB error');
+      });
 
-      const { assignTag } = useEntryTagMutations()
-      await assignTag('entry-1', 'tag-1')
+      const { assignTag } = useEntryTagMutations();
+      await assignTag('entry-1', 'tag-1');
 
-      expect(mockShowError).toHaveBeenCalledOnce()
-    })
-  })
+      expect(mockShowError).toHaveBeenCalledOnce();
+    });
+  });
 
   describe('removeTag', () => {
     it('calls removeTag API with database, entryId, and tagId', async () => {
-      resetMocks()
-      mockRemoveTagApi.mockReturnValue(undefined)
+      resetMocks();
+      mockRemoveTagApi.mockReturnValue(undefined);
 
-      const { removeTag } = useEntryTagMutations()
-      await removeTag('entry-1', 'tag-1')
+      const { removeTag } = useEntryTagMutations();
+      await removeTag('entry-1', 'tag-1');
 
-      expect(mockRemoveTagApi).toHaveBeenCalledWith(
-        mockDatabase,
-        'entry-1',
-        'tag-1'
-      )
-    })
+      expect(mockRemoveTagApi).toHaveBeenCalledWith(mockDatabase, 'entry-1', 'tag-1');
+    });
 
     it('shows error toast on API failure', async () => {
-      resetMocks()
+      resetMocks();
       mockRemoveTagApi.mockImplementation(() => {
-        throw new Error('DB error')
-      })
+        throw new Error('DB error');
+      });
 
-      const { removeTag } = useEntryTagMutations()
-      await removeTag('entry-1', 'tag-1')
+      const { removeTag } = useEntryTagMutations();
+      await removeTag('entry-1', 'tag-1');
 
-      expect(mockShowError).toHaveBeenCalledOnce()
-    })
-  })
+      expect(mockShowError).toHaveBeenCalledOnce();
+    });
+  });
 
   describe('createAndAssignTag', () => {
     it('creates tag and assigns it to the entry', async () => {
-      resetMocks()
-      const tag = makeTag()
-      mockCreateTagApi.mockReturnValue(tag)
-      mockAssignTagApi.mockReturnValue(makeEntryTag())
+      resetMocks();
+      const tag = makeTag();
+      mockCreateTagApi.mockReturnValue(tag);
+      mockAssignTagApi.mockReturnValue(makeEntryTag());
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      const result = await createAndAssignTag('entry-1', 'work')
+      const { createAndAssignTag } = useEntryTagMutations();
+      const result = await createAndAssignTag('entry-1', 'work');
 
       expect(mockCreateTagApi).toHaveBeenCalledWith(mockDatabase, {
-        name: 'work'
-      })
+        name: 'work',
+      });
       expect(mockAssignTagApi).toHaveBeenCalledWith(mockDatabase, {
         entryId: 'entry-1',
-        tagId: tag.id
-      })
-      expect(result).toEqual(tag)
-    })
+        tagId: tag.id,
+      });
+      expect(result).toEqual(tag);
+    });
 
     it('returns the created tag on success', async () => {
-      resetMocks()
-      const tag = makeTag({ id: 'new-tag', name: 'ideas' })
-      mockCreateTagApi.mockReturnValue(tag)
-      mockAssignTagApi.mockReturnValue(makeEntryTag())
+      resetMocks();
+      const tag = makeTag({ id: 'new-tag', name: 'ideas' });
+      mockCreateTagApi.mockReturnValue(tag);
+      mockAssignTagApi.mockReturnValue(makeEntryTag());
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      const result = await createAndAssignTag('entry-1', 'ideas')
+      const { createAndAssignTag } = useEntryTagMutations();
+      const result = await createAndAssignTag('entry-1', 'ideas');
 
-      expect(result).toEqual(tag)
-    })
+      expect(result).toEqual(tag);
+    });
 
     it('returns null and shows toast when createTag fails with TagValidationError', async () => {
-      resetMocks()
+      resetMocks();
       mockCreateTagApi.mockImplementation(() => {
-        throw new TagValidationError('Tag name must not be empty')
-      })
+        throw new TagValidationError('Tag name must not be empty');
+      });
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      const result = await createAndAssignTag('entry-1', '')
+      const { createAndAssignTag } = useEntryTagMutations();
+      const result = await createAndAssignTag('entry-1', '');
 
-      expect(result).toBeNull()
-      expect(mockShowError).toHaveBeenCalledOnce()
-    })
+      expect(result).toBeNull();
+      expect(mockShowError).toHaveBeenCalledOnce();
+    });
 
     it('does not call assignTag if createTag fails (no orphan association)', async () => {
-      resetMocks()
+      resetMocks();
       mockCreateTagApi.mockImplementation(() => {
-        throw new TagValidationError('A tag named "work" already exists')
-      })
+        throw new TagValidationError('A tag named "work" already exists');
+      });
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      await createAndAssignTag('entry-1', 'work')
+      const { createAndAssignTag } = useEntryTagMutations();
+      await createAndAssignTag('entry-1', 'work');
 
-      expect(mockAssignTagApi).not.toHaveBeenCalled()
-    })
+      expect(mockAssignTagApi).not.toHaveBeenCalled();
+    });
 
     it('returns null and shows toast when assignTag fails', async () => {
-      resetMocks()
-      const tag = makeTag()
-      mockCreateTagApi.mockReturnValue(tag)
+      resetMocks();
+      const tag = makeTag();
+      mockCreateTagApi.mockReturnValue(tag);
       mockAssignTagApi.mockImplementation(() => {
-        throw new Error('DB error during assign')
-      })
+        throw new Error('DB error during assign');
+      });
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      const result = await createAndAssignTag('entry-1', 'work')
+      const { createAndAssignTag } = useEntryTagMutations();
+      const result = await createAndAssignTag('entry-1', 'work');
 
-      expect(result).toBeNull()
-      expect(mockShowError).toHaveBeenCalledOnce()
-    })
+      expect(result).toBeNull();
+      expect(mockShowError).toHaveBeenCalledOnce();
+    });
 
     it('soft-deletes the tag it just created when the assignment fails', async () => {
-      resetMocks()
-      const tag = makeTag({ id: 'orphan-candidate' })
-      mockCreateTagApi.mockReturnValue(tag)
+      resetMocks();
+      const tag = makeTag({ id: 'orphan-candidate' });
+      mockCreateTagApi.mockReturnValue(tag);
       mockAssignTagApi.mockImplementation(() => {
-        throw new Error('DB error during assign')
-      })
+        throw new Error('DB error during assign');
+      });
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      await createAndAssignTag('entry-1', 'work')
+      const { createAndAssignTag } = useEntryTagMutations();
+      await createAndAssignTag('entry-1', 'work');
 
-      expect(mockSoftDeleteTagApi).toHaveBeenCalledWith(
-        mockDatabase,
-        'orphan-candidate'
-      )
-    })
+      expect(mockSoftDeleteTagApi).toHaveBeenCalledWith(mockDatabase, 'orphan-candidate');
+    });
 
     it('still reports the assignment error when the undo also fails', async () => {
-      resetMocks()
-      mockCreateTagApi.mockReturnValue(makeTag())
+      resetMocks();
+      mockCreateTagApi.mockReturnValue(makeTag());
       mockAssignTagApi.mockImplementation(() => {
-        throw new Error('assign failed')
-      })
+        throw new Error('assign failed');
+      });
       mockSoftDeleteTagApi.mockImplementation(() => {
-        throw new Error('undo failed')
-      })
+        throw new Error('undo failed');
+      });
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      const result = await createAndAssignTag('entry-1', 'work')
+      const { createAndAssignTag } = useEntryTagMutations();
+      const result = await createAndAssignTag('entry-1', 'work');
 
-      expect(result).toBeNull()
-      expect(mockShowError).toHaveBeenCalledWith('assign failed')
-    })
+      expect(result).toBeNull();
+      expect(mockShowError).toHaveBeenCalledWith('assign failed');
+    });
 
     it('does not soft-delete anything when the assignment succeeds', async () => {
-      resetMocks()
-      mockCreateTagApi.mockReturnValue(makeTag())
-      mockAssignTagApi.mockReturnValue(makeEntryTag())
+      resetMocks();
+      mockCreateTagApi.mockReturnValue(makeTag());
+      mockAssignTagApi.mockReturnValue(makeEntryTag());
 
-      const { createAndAssignTag } = useEntryTagMutations()
-      await createAndAssignTag('entry-1', 'work')
+      const { createAndAssignTag } = useEntryTagMutations();
+      await createAndAssignTag('entry-1', 'work');
 
-      expect(mockSoftDeleteTagApi).not.toHaveBeenCalled()
-    })
-  })
-})
+      expect(mockSoftDeleteTagApi).not.toHaveBeenCalled();
+    });
+  });
+});

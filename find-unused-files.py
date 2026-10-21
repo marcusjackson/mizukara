@@ -15,8 +15,8 @@ Notes:
     - Source files: .vue, .ts, .js (excluding .test.ts, .d.ts)
     - Searches for import statements in all files (including test files)
     - Resolves @/, @test/ aliases and relative imports
-    - Skips directories: node_modules, .git, dist, build, playwright-report, test-results, coverage
-    - Ignores: config files, entry points, barrel exports
+    - Skips directories: node_modules, .git, .claude, dist, build, playwright-report, test-results, _local, coverage
+    - Ignores: config files, entry points, barrel exports, and the paths in find_files_config.py
     - This helps identify dead code and unused files
 """
 
@@ -25,6 +25,10 @@ import sys
 import re
 from pathlib import Path
 from typing import List, Optional, Set, Tuple
+
+from find_files_config import ORPHAN_TEST_SKIP_DIRS
+from find_files_config import UNUSED_IGNORED_DIRS as IGNORED_SOURCE_DIRS
+from find_files_config import UNUSED_IGNORED_FILES as IGNORED_SOURCE_FILES
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -53,44 +57,7 @@ SKIP_DIRS = frozenset(
     }
 )
 
-# Directories whose source files are excluded from the unused-file check.
-# (They may still be *searched* for imports of other files.)
-IGNORED_SOURCE_DIRS = frozenset({"scripts", "ignore"})
 
-# Files excluded from the unused-file check (relative paths from project root).
-IGNORED_SOURCE_FILES = frozenset({
-    # Referenced only as new Worker(new URL(...)), which this regex-based
-    # resolver cannot see, the same way test/mocks/pwa-register.ts is reached
-    # only through a Vitest alias.
-    "src/modules/local-inference/inference-worker.ts",
-    "eslint.config.ts",
-    "playwright.config.ts",
-    "playwright.production.config.ts",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "stylelint.config.mjs",
-    "src/router/index.ts",
-    "src/main.ts",
-    "src/env.d.ts",
-    "src/App.vue",
-    "test/setup.ts",
-    # Barrel/re-export index files — referenced only through their barrel
-    "src/shared/components/index.ts",
-    "src/shared/composables/index.ts",
-    "src/base/components/index.ts",
-    "src/base/composables/index.ts",
-    # api/index.ts is a barrel — its internal modules are excluded from the check
-    # because they're only accessible through the barrel itself.
-    "src/api/types.ts",
-    # Vitest module-alias mock: mapped as virtual:pwa-register/vue in vitest.config.ts,
-    # so it is never imported via a file path — invisible to static analysis.
-    "test/mocks/pwa-register.ts",
-    # Test infrastructure helper: may be used in future tests; not a dead-code risk.
-    "test/helpers/render.ts",
-    # Re-exported via export * from './seeders' in test/helpers/tags/index.ts.
-    # The script cannot trace wildcard re-exports, so this is a false positive.
-    "test/helpers/tags/seeders.ts",
-})
 
 # Pattern matching files that contain "config" in their name.
 CONFIG_PATTERN = re.compile(r"config", re.IGNORECASE)
@@ -410,19 +377,21 @@ def _has_source_file(filenames: List[str], base_name: str) -> bool:
     """Return True if any source variant of base_name exists in the directory.
 
     A JSON data asset counts: a test named for the asset it checks
-    (tag-head.test.ts for tag-head.json) is not orphaned.
+    (tag-head.test.ts for tag-head.json) is not orphaned. A test split by
+    topic is named `<source>.<topic>.test.ts`, so only the part before the
+    first dot has to match a source file.
     """
+    source_name = base_name.split(".", 1)[0]
     return any(
-        base_name + ext in filenames for ext in (*SOURCE_EXTENSIONS, ".json")
+        source_name + ext in filenames for ext in (*SOURCE_EXTENSIONS, ".json")
     )
 
 
 def _should_skip_orphan_dir(rel_dir: str) -> bool:
     """Return True if orphaned test detection should skip this directory."""
     # e2e/  — Playwright tests; no .ts source counterpart expected
-    # src/db/migrations/ — test file names don't match source file names
-    #   (e.g. 001-create-entries.test.ts tests index.ts, not 001-create-entries.ts)
-    skip = IGNORED_SOURCE_DIRS | frozenset({"e2e", "e2e-production", "src/db/migrations"})
+    # ORPHAN_TEST_SKIP_DIRS — this repo's own, from find_files_config.py
+    skip = IGNORED_SOURCE_DIRS | ORPHAN_TEST_SKIP_DIRS | frozenset({"e2e"})
     return any(
         rel_dir == ignored or rel_dir.startswith(ignored + "/")
         for ignored in skip
@@ -502,4 +471,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

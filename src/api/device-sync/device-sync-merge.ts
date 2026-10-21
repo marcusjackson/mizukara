@@ -8,26 +8,36 @@
  * docs/units/device-sync/atlas.md.
  */
 
-import { schedulePersist } from '@/db/indexeddb'
-import tagsNameActiveUniqueIndexSql from '@/db/migrations/003-tags-name-unique-index.sql?raw'
+import { schedulePersist } from '@/db/indexeddb';
+import tagsNameActiveUniqueIndexSql from '@/db/migrations/003-tags-name-unique-index.sql?raw';
 
-import { dedupeActiveTags } from './device-sync-tag-dedupe'
+import { dedupeActiveTags } from './device-sync-tag-dedupe';
 
 import type {
   SyncEntryRow,
   SyncEntryTagRow,
   SyncPayload,
   SyncTableName,
-  SyncTagRow
-} from '@/shared/types/device-sync-payload-types'
-import type { Database, SqlValue } from 'sql.js'
+  SyncTagRow,
+} from '@/shared/types/device-sync-payload-types';
+import type { Database, SqlValue } from 'sql.js';
 
 /**
  * Name of the partial unique index migration 003 adds on `tags`
  * (`LOWER(name) WHERE is_deleted = 0`). The merge below drops it for the
  * duration of the tag merge and dedupe — see `applySyncPayload`.
  */
-const TAGS_NAME_ACTIVE_UNIQUE_INDEX = 'idx_tags_name_active_unique'
+const TAGS_NAME_ACTIVE_UNIQUE_INDEX = 'idx_tags_name_active_unique';
+
+/**
+ * Migration 003's SQL without its `PRAGMA user_version = 3` line. Re-running
+ * the file as-is would set the stored schema version back to 3 after every
+ * sync, so the next launch would re-run migration 004 (FTS) on top of itself.
+ */
+const RESTORE_TAGS_NAME_INDEX_SQL = tagsNameActiveUniqueIndexSql.replace(
+  /^\s*PRAGMA\s+user_version\s*=.*$/gim,
+  ''
+);
 
 const ENTRY_COLUMNS = [
   'id',
@@ -36,16 +46,16 @@ const ENTRY_COLUMNS = [
   'updated_at',
   'assigned_day',
   'order_position',
-  'is_deleted'
-] as const satisfies readonly (keyof SyncEntryRow)[]
+  'is_deleted',
+] as const satisfies readonly (keyof SyncEntryRow)[];
 
 const TAG_COLUMNS = [
   'id',
   'name',
   'created_at',
   'updated_at',
-  'is_deleted'
-] as const satisfies readonly (keyof SyncTagRow)[]
+  'is_deleted',
+] as const satisfies readonly (keyof SyncTagRow)[];
 
 const ENTRY_TAG_COLUMNS = [
   'id',
@@ -53,12 +63,12 @@ const ENTRY_TAG_COLUMNS = [
   'tag_id',
   'created_at',
   'updated_at',
-  'is_deleted'
-] as const satisfies readonly (keyof SyncEntryTagRow)[]
+  'is_deleted',
+] as const satisfies readonly (keyof SyncEntryTagRow)[];
 
 interface SyncRowBase {
-  id: string
-  updated_at: number
+  id: string;
+  updated_at: number;
 }
 
 /**
@@ -73,32 +83,24 @@ function upsertRow<Row extends SyncRowBase>(
   columns: readonly (keyof Row & string)[],
   row: Row
 ): void {
-  const existing = db.exec(`SELECT updated_at FROM ${table} WHERE id = ?`, [
-    row.id
-  ])
-  const existingUpdatedAt = existing[0]?.values[0]?.[0]
+  const existing = db.exec(`SELECT updated_at FROM ${table} WHERE id = ?`, [row.id]);
+  const existingUpdatedAt = existing[0]?.values[0]?.[0];
 
   if (existingUpdatedAt === undefined) {
-    const placeholders = columns.map(() => '?').join(', ')
+    const placeholders = columns.map(() => '?').join(', ');
     db.run(
       `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`,
       columns.map((col) => row[col] as SqlValue)
-    )
-    return
+    );
+    return;
   }
 
-  if (
-    typeof existingUpdatedAt === 'number' &&
-    row.updated_at > existingUpdatedAt
-  ) {
-    const updateColumns = columns.filter((col) => col !== 'id')
-    const assignments = updateColumns.map((col) => `${col} = ?`).join(', ')
-    const values = updateColumns.map((col) => row[col] as SqlValue)
+  if (typeof existingUpdatedAt === 'number' && row.updated_at > existingUpdatedAt) {
+    const updateColumns = columns.filter((col) => col !== 'id');
+    const assignments = updateColumns.map((col) => `${col} = ?`).join(', ');
+    const values = updateColumns.map((col) => row[col] as SqlValue);
 
-    db.run(`UPDATE ${table} SET ${assignments} WHERE id = ?`, [
-      ...values,
-      row.id
-    ])
+    db.run(`UPDATE ${table} SET ${assignments} WHERE id = ?`, [...values, row.id]);
   }
 }
 
@@ -112,15 +114,15 @@ function mergeTable<Row extends SyncRowBase>(
   columns: readonly (keyof Row & string)[],
   rows: readonly Row[]
 ): void {
-  db.run('BEGIN TRANSACTION')
+  db.run('BEGIN TRANSACTION');
   try {
     for (const row of rows) {
-      upsertRow(db, table, columns, row)
+      upsertRow(db, table, columns, row);
     }
-    db.run('COMMIT')
+    db.run('COMMIT');
   } catch (error) {
-    db.run('ROLLBACK')
-    throw error
+    db.run('ROLLBACK');
+    throw error;
   }
 }
 
@@ -146,16 +148,16 @@ function mergeTable<Row extends SyncRowBase>(
  * @param payload - The peer's serialized `entries`/`tags`/`entry_tags` state
  */
 export function applySyncPayload(db: Database, payload: SyncPayload): void {
-  mergeTable(db, 'entries', ENTRY_COLUMNS, payload.entries)
+  mergeTable(db, 'entries', ENTRY_COLUMNS, payload.entries);
 
-  db.run(`DROP INDEX IF EXISTS ${TAGS_NAME_ACTIVE_UNIQUE_INDEX}`)
+  db.run(`DROP INDEX IF EXISTS ${TAGS_NAME_ACTIVE_UNIQUE_INDEX}`);
   try {
-    mergeTable(db, 'tags', TAG_COLUMNS, payload.tags)
-    mergeTable(db, 'entry_tags', ENTRY_TAG_COLUMNS, payload.entry_tags)
-    dedupeActiveTags(db)
+    mergeTable(db, 'tags', TAG_COLUMNS, payload.tags);
+    mergeTable(db, 'entry_tags', ENTRY_TAG_COLUMNS, payload.entry_tags);
+    dedupeActiveTags(db);
   } finally {
-    db.exec(tagsNameActiveUniqueIndexSql)
+    db.exec(RESTORE_TAGS_NAME_INDEX_SQL);
   }
 
-  schedulePersist()
+  schedulePersist();
 }

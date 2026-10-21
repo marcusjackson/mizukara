@@ -4,34 +4,32 @@
  * Renders a 404 not-found message for unmatched routes.
  */
 
-import { render, screen } from '@testing-library/vue'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/vue';
+import { describe, expect, it } from 'vitest';
 
-import NotFoundPage from './NotFoundPage.vue'
+import NotFoundPage from './NotFoundPage.vue';
 
 describe('NotFoundPage', () => {
   const renderPage = () =>
     render(NotFoundPage, {
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } }
-    })
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    });
 
   it('displays a not-found heading', () => {
-    renderPage()
+    renderPage();
 
-    expect(
-      screen.getByRole('heading', { name: /page not found/i })
-    ).toBeInTheDocument()
-  })
+    expect(screen.getByRole('heading', { name: /page not found/i })).toBeInTheDocument();
+  });
 
   it('displays a descriptive message', () => {
-    renderPage()
+    renderPage();
 
-    expect(screen.getByText(/the page you.+looking for/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/the page you.+looking for/i)).toBeInTheDocument();
+  });
 
   it('renders a link to go home', () => {
-    renderPage()
+    renderPage();
 
-    expect(screen.getByText('Go to home')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText('Go to home')).toBeInTheDocument();
+  });
+});
